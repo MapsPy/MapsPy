@@ -43,7 +43,7 @@ import shutil
 import maps_generate_img_dat
 import maps_definitions
 import maps_elements
-import maps_hdf5
+import io.maps_hdf5
 import maps_fit_parameters
 import maps_calibration
 import make_maps
@@ -982,7 +982,7 @@ def main(wdir='', a=1,b=0,c=0,d=0,e=0):
                     os.rename(os.path.join(current_directory,'maps_fit_parameters_override.txt'), 
                               os.path.join(current_directory,'old_maps_fit_parameters_override.txt')) 
                 except:
-                    print 'could not rename file maps_fit_parameters_override.txt'
+                    print 'could not rename file', os.path.join(current_directory,'maps_fit_parameters_override.txt')
             try:
                 os.remove(os.path.join(current_directory, 'maps_fit_parameters_override.txt'+suffix))
             except:

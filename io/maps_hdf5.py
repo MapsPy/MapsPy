@@ -845,8 +845,9 @@ class h5:
                 dataset_id[...] = data
          
             units = ['-' for x in range(XRFmaps_info.n_used_dmaps+XRFmaps_info.n_used_chan)]
+            print 'len units  =',len(units)
             units[0:XRFmaps_info.n_used_dmaps] = XRFmaps_info.dmaps_units[:]
-            units[XRFmaps_info.n_used_dmaps:XRFmaps_info.n_used_dmaps+XRFmaps_info.n_used_chan] =  XRFmaps_info.chan_units[:, 2-drop_vtwo] 
+            units[XRFmaps_info.n_used_dmaps:XRFmaps_info.n_used_dmaps+XRFmaps_info.n_used_chan] =  XRFmaps_info.chan_units[: 2-drop_vtwo] 
 
             names = ['' for x in range(XRFmaps_info.n_used_dmaps+XRFmaps_info.n_used_chan)]
             names[0:XRFmaps_info.n_used_dmaps] = XRFmaps_info.dmaps_names[:]
@@ -892,7 +893,10 @@ class h5:
                 ds_data.attrs['comments'] = comment
             else:
                 dataset_id = excGrp[entryname]
-                dataset_id[...] = data         
+                if (len(data),) == dataset_id.shape:
+                    dataset_id[...] = data         
+                else:
+                    print 'Error: could not update ', dataset_id.name,' dataset shapes are different! dataset(',dataset_id.shape,') : data(',len(data),')'
 
          
             f.close()

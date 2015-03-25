@@ -45,12 +45,12 @@ import sys
 import multiprocessing
 import csv
 
-import maps_mda
-import maps_nc
+import io.maps_mda
+import io.maps_nc
 import maps_elements
 import maps_definitions
 import maps_detector
-import maps_hdf5
+import io.maps_hdf5
 import maps_fit_parameters
 import maps_analyze
 import maps_tools
