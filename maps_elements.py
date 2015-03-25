@@ -81,7 +81,7 @@ class maps_elements:
         #Number of elements in table
         nels = 100  
         
-        els_file = 'xrf_library.csv'
+        els_file = 'reference/xrf_library.csv'
         
         try:
             f = open(els_file, 'r')

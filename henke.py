@@ -431,7 +431,7 @@ class henke:
         verbose = False
         expected_pos = 0
         
-        filename = 'henke.xdr'
+        filename = 'reference/henke.xdr'
         try:
             file = open(str(filename),'rb')
         except:
