@@ -38,7 +38,7 @@ import numpy as np
 import os
 
 import h5py
-import io.maps_hdf5
+from file_io import maps_hdf5
 
 """ ------------------------------------------------------------------------------------------------"""
 def main(file1, file2):

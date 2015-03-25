@@ -37,14 +37,14 @@ import multiprocessing
 import numpy as np
 import time as t
 
-import io.maps_mda
+from file_io import maps_mda
+from file_io import maps_hdf5
 import maps_generate_img_dat
 import maps_definitions
 import maps_elements
 
 
 import maps_detector
-import io.maps_hdf5
 import maps_fit_parameters
 import maps_analyze
 import maps_calibration

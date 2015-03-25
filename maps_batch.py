@@ -43,7 +43,7 @@ import shutil
 import maps_generate_img_dat
 import maps_definitions
 import maps_elements
-import io.maps_hdf5
+from file_io import maps_hdf5
 import maps_fit_parameters
 import maps_calibration
 import make_maps
