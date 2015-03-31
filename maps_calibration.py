@@ -42,7 +42,7 @@ from matplotlib.ticker import MultipleLocator, FormatStrFormatter
 import maps_definitions
 import maps_analyze
 import maps_fit_parameters
-import maps_generate_img_dat
+#import maps_generate_img_dat
 import maps_tools
 import henke
 

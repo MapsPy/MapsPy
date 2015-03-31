@@ -35,10 +35,8 @@ SUCH DAMAGE.
 import os
 import multiprocessing
 import numpy as np
-import time as t
+import time
 
-from file_io import maps_mda
-from file_io import maps_hdf5
 import maps_generate_img_dat
 import maps_definitions
 import maps_elements
@@ -111,7 +109,6 @@ def mp_make_maps(info_elements, main, maps_conf, header, mdafilename, this_detec
                  quick_dirty, nnls, xrf_bin, max_no_processors_lines):
     
     makemaps = maps_generate_img_dat.analyze(info_elements, main, maps_conf, use_fit = use_fit)
-    #makemaps.generate_img_dat(header, mdafilename, this_detector, total_number_detectors = total_number_detectors)
     makemaps.generate_img_dat_threaded(header, mdafilename, this_detector, total_number_detectors, 
                                        quick_dirty, nnls, max_no_processors_lines, xrf_bin)
  
@@ -422,7 +419,7 @@ def main(wdir='', force_fit=0, no_fit = False):
 
     
         if nnls == 0: 
-            print 'Calculating nnls. Start time: ', t.time()
+            print 'Calculating nnls. Start time: ', time.time()
             # Compute the singular value decomposition of A:  
             #SVDC, fitmatrix_reduced, W, U, V, /double
             U, w, V = np.linalg.svd(fitmatrix_reduced, full_matrices=False)
@@ -440,7 +437,7 @@ def main(wdir='', force_fit=0, no_fit = False):
                 #solution = V ## WP ## TRANSPOSE(U) ## B  
 
             sol_intermediate = np.dot(np.dot(V.T,wp),U.T)
-            print 'SVD finished. Time: ', t.time()
+            print 'SVD finished. Time: ', time.time()
         else:
             # make sure that sol_intermediate is defined, even if we do not
             # use it.
@@ -515,30 +512,11 @@ def main(wdir='', force_fit=0, no_fit = False):
     
         filepath = os.path.join(main['output_dir'],'mapsprocessinfo_'+'.txt')
         text_file = open(filepath, "w")
-        text_file.write(t.strftime("%a, %d %b %Y %H:%M:%S"))
+        text_file.write(time.strftime("%a, %d %b %Y %H:%M:%S"))
         text_file.close()
     
       
-    #     # read scan info
-    #     mda = maps_mda.mda()
-    #             
-    #     if (main['beamline'] == '2-ID-E') or (main['beamline'] == '2-ID-D') or (main['beamline'] == '2-ID-B') or (main['beamline'] == '2-BM') :
-    #         for ii in range(no_files): 
-    #             temp_info = mda.read_scan_info(os.path.join(main['mda_dir'],filenames[ii]))
-    #             if temp_info > 0: 
-    #                 if temp_info.rank == 3 : scan_sizes[ii] = temp_info.dims[0]*temp_info.dims[1]
-    #                 if temp_info.rank == 2 :
-    #                     # do a '2d' mda file only if the 2nd dimension is NOT
-    #                     # a spectrum, ie, it makes it a fly scan with full
-    #                     # spectra saved as netcdf elsewhere
-    #                     if temp_info.spectrum[1] == 0 : scan_sizes[ii] = temp_info.dims[0]*temp_info.dims[1]
-    #         inds = np.flipud(scan_sizes.argsort()) 
-    #         filenames = np.take(filenames, inds)
-    
-    
-    
-        
-        seconds_start = t.time()
+        seconds_start = time.time()
     
     
         #make sure the output directory exists, if not, create it. 
@@ -574,15 +552,13 @@ def main(wdir='', force_fit=0, no_fit = False):
                 header, scan_ext= os.path.splitext(filenames[pp])
                 mdafilename = os.path.join(main['mda_dir'],header+scan_ext)
                 print 'Single processor file version: doing filen #: ',  mdafilename, ' this detector', this_detector
-                #Old routine that doesn't use multiprocessing
-                #makemaps.generate_img_dat(header, mdafilename, this_detector, total_number_detectors, quick_dirty, xrf_bin)
                 
                 #Routine with multiprocessing
                 #print 'this_detector, total_number_detectors', this_detector, total_number_detectors
                 makemaps.generate_img_dat_threaded(header, mdafilename, this_detector, total_number_detectors, quick_dirty, nnls, max_no_processors_lines, xrf_bin)
                 
 
-    seconds_end = t.time()
+    seconds_end = time.time()
     print  'fitting of all scans took a total of ',  int((seconds_end-seconds_start)/3600.), ' hours and ', \
              (seconds_end-seconds_start)/60. - 60.*int((seconds_end-seconds_start)/3600.), ' minutes'
 
