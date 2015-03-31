@@ -33,20 +33,23 @@ SUCH DAMAGE.
 '''
 
 import os
+import sys
 import shutil
 from time import gmtime, strftime
 import time
+import platform
 
 import maps_batch
 
 """ ------------------------------------------------------------------------------------------------"""
-def main(computer = ''):
+def main(computer, jobs_path):
 
 
     working_dir = os.getcwd()   
-
-    jobs_path = 'Y:\data\jobs'
-    done_path = 'Y:\data\jobs\done'
+    #todo: create folders if they don't exist
+    processing_path = jobs_path+'/processing'
+    info_path = jobs_path+'/finished_info'
+    done_path = jobs_path+'/done'
     os.chdir(jobs_path)
     print 'changed into ', jobs_path
   
@@ -101,6 +104,8 @@ def main(computer = ''):
             nnls = 0
             xanes_scan = 0
             detector_to_start_with = 0
+            #default beamline to use for now is 2-id-e , we will change this in the future
+            beamline = '2-ID-E'
      
             print 'found a job waiting, in file: ', filenames[0]
             print 'read data file'
@@ -144,8 +149,8 @@ def main(computer = ''):
             except: print 'Could not read file: ',     filenames[0]
          
      
-            print 'move job into done directory'
-            shutil.copy(filenames[0], os.path.join(done_path,filenames[0]))     
+            print 'move job into processing directory'
+            shutil.copy(filenames[0], os.path.join(processing_path,filenames[0]))     
             os.remove(filenames[0])   
 
             if keyword_f == 1:
@@ -173,18 +178,15 @@ def main(computer = ''):
                 f.write('STANDARD:' + item.strip()+'\n')   
             f.close() 
              
-#             #For testing
-#             print keyword_a,keyword_b,keyword_c,keyword_d,keyword_e
-#             keyword_a = 1
-#             keyword_b = 0
-#             keyword_c = 0
-#             keyword_d = 0
-#             keyword_e = 0                
-                
             os.chdir(working_dir)
             maps_batch.main(wdir=directory, a=keyword_a, b=keyword_b, c=keyword_c, d=keyword_d, e=keyword_e)
 
-            os.chdir(jobs_path)
+            os.chdir(processing_path)
+            print 'move job into processing directory'
+            shutil.copy(os.path.join(processing_path,filenames[0]), os.path.join(done_path,filenames[0]))     
+            os.remove(filenames[0])   
+
+            os.chdir(info_path)
         
             f = open('finished_'+filenames[0], 'w') 
 
@@ -213,16 +215,21 @@ def main(computer = ''):
             f.write('DETECTOR_TO_START_WITH:' + str(detector_to_start_with).strip()+'\n')         
             f.close() 
             
+            os.chdir(jobs_path)
+
             os.remove(statusfile+'_working.txt') 
       
-
      
     return
 
 
 #-----------------------------------------------------------------------------   
 if __name__ == '__main__':
-    
-        
-    main()
+    if len(sys.argv) < 2:
+        print 'Usage: python maps_monitor.py <jobs_path>'
+        sys.exit(1)
+    jobs_path = sys.argv[1]
+    print 'Starting maps_monitor with jobs_path = ',jobs_path
+    computer_name =  str(platform.node())
+    main(computer_name, jobs_path)
         
