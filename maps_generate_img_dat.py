@@ -37,7 +37,6 @@ import string
 import datetime
 import time as tm
 import numpy as np
-import scipy as scp
 import os
 from stat import * 
 import matplotlib as mplot
@@ -48,13 +47,13 @@ import csv
 from file_io import maps_mda
 from file_io import maps_nc
 from file_io import maps_hdf5
-#import maps_elements
 import maps_definitions
 import maps_detector
 import maps_fit_parameters
 import maps_analyze
 import maps_tools
 
+import h5py
 
 NO_MATRIX = 0
 
@@ -1448,7 +1447,6 @@ class analyze:
             
             gzip = 7
 
-            import h5py
             f = h5py.File(filename, 'w')
             # create a group for maps to hold the data
             pcaGrp = f.create_group('PCA')
@@ -1555,8 +1553,6 @@ class analyze:
         
         print "Generating average image"
 
-        import h5py
-        import maps_hdf5
         h5p = maps_hdf5.h5()
         
         imgdat_filenames = []

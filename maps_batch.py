@@ -34,7 +34,6 @@ SUCH DAMAGE.
 
 import os
 import getopt
-import multiprocessing
 import numpy as np
 from time import gmtime, strftime
 import h5py
