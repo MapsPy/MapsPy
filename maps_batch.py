@@ -963,8 +963,9 @@ def main(wdir='', a=1,b=0,c=0,d=0,e=0):
 #             if (first_run == 1) and (this_detector_element == 0) : 
 #                 fitp, avg_fitp, spectra = calib.do_fits(this_w_uname, fitp, dofit_spec, spectra, maxiter = 10, per_pix = 1, generate_img = 1,  suffix = suffix, info_elements = info_elements)  # do the first fit twice, because the very first spectrum is nevere fitted right (not sure why), need to fix it later
 #                 first_run = 0
+            #print 'do_fits',type(this_w_uname), type(fitp), type(dofit_spec), type(spectra), type(suffix) , type(info_elements), type(calib), type(calib.do_fits)
+            #fitp, avg_fitp, spectra = calib.do_fits(this_w_uname, fitp, dofit_spec, spectra, 1, 1, 500, suffix, info_elements) 
             fitp, avg_fitp, spectra = calib.do_fits(this_w_uname, fitp, dofit_spec, spectra, maxiter = 500, per_pix = 1, generate_img = 1, suffix = suffix, info_elements = info_elements) 
-    
 
     
             #move AND rename the old AND new override files:
@@ -985,9 +986,13 @@ def main(wdir='', a=1,b=0,c=0,d=0,e=0):
             try:
                 os.remove(os.path.join(current_directory, 'maps_fit_parameters_override.txt'+suffix))
             except:
-                pass            
-            os.rename(os.path.join(current_directory,'average_resulting_maps_fit_parameters_override.txt'),
-                os.path.join(current_directory,'maps_fit_parameters_override.txt'+suffix))
+                pass
+            try:
+               os.rename(os.path.join(current_directory,'average_resulting_maps_fit_parameters_override.txt'),
+                   os.path.join(current_directory,'maps_fit_parameters_override.txt'+suffix))
+            except:
+                print 'error renaming average_resulting_maps_fit_parameters_override to maps_fit_parameters_override'
+                pass
             
             
         dirlist = os.listdir(current_directory)
@@ -999,7 +1004,7 @@ def main(wdir='', a=1,b=0,c=0,d=0,e=0):
                 os.remove(thisfile)
         else:
             os.makedirs(os.path.join(current_directory,'output_old'))
-            
+        #todo: create directory if it does not exist 
         #Copy files to output_fits
         src_files = os.listdir(os.path.join(current_directory,'output'))
         print src_files

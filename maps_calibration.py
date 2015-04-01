@@ -2932,7 +2932,6 @@ class calibration:
        
 #-----------------------------------------------------------------------------    
     def do_fits(self, this_w_uname, fitp, dofit_spec, spectra, per_pix = 0, generate_img = 0, maxiter = 500, suffix = '', info_elements = 0):
-        
         beamline = self.main['beamline']
         keywords = fitp.keywords
         
@@ -2961,7 +2960,8 @@ class calibration:
         wo = np.where(np.array(used_chan) > 0)[0]
         tot_wo = len(wo)
         #print 'fiting n spectra', tot_wo
-        if tot_wo == 0 : return  
+        if tot_wo == 0 :
+            return (0, 0, spectra)
         names = ['none']
         for i in range(len(spectra)):
             if spectra[i].name != '': names.append(spectra[i].name)
@@ -2970,6 +2970,7 @@ class calibration:
         
         #n_names = len(names)
         # now go one by one through all spectra loaded into the plot_spec window
+        print 'tot_wo', tot_wo
         for i in range(tot_wo):    
             old_fitp = fp.define_fitp(beamline, info_elements)
             old_fitp.s.val[:]=fitp.s.val[:]
@@ -3019,7 +3020,7 @@ class calibration:
                     which_par_str = 'found override file (maps_fit_parameters_override.txt). Using the contained parameters.', test_string
                 except:        
                     print 'warning: did not find override file (maps_fit_parameters_override.txt). Will abort this action'
-                    return
+                    return (0, 0, spectra)
                 for jj in range(fitp.g.n_fitp) : 
                     if fitp.s.name[jj] in test_string:
                         #wo_a = test_string.index(fitp.s.name[jj])
@@ -3159,7 +3160,7 @@ class calibration:
                     os.makedirs(dirt)
                     if not os.path.exists(dirt):
                         print 'warning: did not find the output directory, and could not create a new output directory. Will abort this action'
-                        return 0
+                        return (0, 0, spectra)
             else:
                 if generate_img > 0 :
                     filename = os.path.join(self.main['output_dir'],'fit_'+names[wo[i]+1])
@@ -3176,7 +3177,7 @@ class calibration:
         avgfilename = os.path.join(self.main['master_dir'],'average_resulting_maps_fit_parameters_override.txt')
         fp.write_fit_parameters(self.main, avg_fitp, avgfilename, test_string, pileup_string = pileup_string, suffix = suffix)
         
-                                    
+        print 'fitp',fitp, 'avg_fitp',  avg_fitp, 'spectra', spectra
         return fitp, avg_fitp, spectra
 
 
