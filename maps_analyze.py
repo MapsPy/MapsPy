@@ -998,7 +998,7 @@ class analyze:
                  values_line, bkgnd_line, tfy_line,
                  info_elements, fitp, old_fitp, add_pars, keywords, add_matrixfit_pars, xrf_bin, calib):
         
-        
+
         n_channels = len(data_line[:, 0])
         fitted_line = np.zeros((n_channels, n_rows))
         ka_line = np.zeros((n_channels, n_rows))

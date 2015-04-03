@@ -730,6 +730,7 @@ class mda:
             return -1
     
         buf = file.read(100)        # to read header for scan of up to 5 dimensions
+        print 'buf', buf
         u = Unpacker(buf)
 
         # read file header
@@ -754,7 +755,7 @@ class mda:
                 
         
         file.seek(pmain_scan)
-        buf = file.read(3000) # enough to read scan header
+        buf = file.read(5000) # enough to read scan header
         u = Unpacker(buf)
             
         scan_rank = u.unpack_int()

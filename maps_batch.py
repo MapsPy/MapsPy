@@ -1089,7 +1089,7 @@ def main(wdir='', a=1,b=0,c=0,d=0,e=0):
 
 
     #Generate average images
-    if (total_number_detectors > 1) : 
+    if (total_number_detectors > 1 and b > 0) : 
         print ' we are now going to create the maps_generate_average...'
         n_channels = 2048
         energy_channels = spectra[0].calib['off'] + spectra[0].calib['lin'] * np.arange((n_channels), dtype=np.float)
