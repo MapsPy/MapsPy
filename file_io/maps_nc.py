@@ -80,26 +80,27 @@ class nc:
 
         invalid_file = invalid_file[0]
 
-        time = scan.detector_arr[:, :, 0]/25000000.
+        det_time = scan.detector_arr[:, :, 0]/25000000.
         det_des = '2xfm:mcs:mca1.VAL'
         if det_des in scan.detector_description_arr:
             #Does this have to be here? Not in IDL. 
             #ind = scan.detector_description_arr.index(det_des)
             #scan.detector_description_arr[ind] = '2xfm:scaler3_cts1.A'
-            time = time
+            #time = time
+            pass
         else:
-            time[:,:] = 1. 
+            det_time[:,:] = 1. 
                     
         det_des = '2xfm:mcs:mca2.VAL'
         if det_des in scan.detector_description_arr:
             ind = scan.detector_description_arr.index(det_des)
             scan.detector_description_arr[ind] = '2xfm:scaler3_cts1.B'
-            scan.detector_arr[:, :, ind] = scan.detector_arr[:, :, ind]/time
+            scan.detector_arr[:, :, ind] = scan.detector_arr[:, :, ind]/det_time
         det_des = '2xfm:mcs:mca3.VAL'
         if det_des in scan.detector_description_arr:
             ind = scan.detector_description_arr.index(det_des)
             scan.detector_description_arr[ind] = '2xfm:scaler3_cts1.C'
-            scan.detector_arr[:, :, ind] = scan.detector_arr[:, :, ind]/time
+            scan.detector_arr[:, :, ind] = scan.detector_arr[:, :, ind]/det_time
         det_des = '2xfm:mcs:mca4.VAL'
         if det_des in scan.detector_description_arr:
             ind = scan.detector_description_arr.index(det_des)
@@ -189,16 +190,14 @@ class nc:
         
         new_det_len = len(scan.detector_description_arr)
  
-        
         new_detector_arr=np.zeros((scan.x_pixels, scan.y_pixels, new_det_len))
         new_detector_arr[:, :, 0:old_det_len] = scan.detector_arr[:, :, 0:old_det_len]  
         scan.detector_arr = new_detector_arr
 
         for i_lines in range(n_rows):
-             
             ncfile = os.path.join(path,'flyXRF', header+'_2xfm3__'+str(i_lines)+'.nc' )
 
-            xmapdat = read_xmap_netcdf(ncfile)
+            xmapdat = read_xmap_netcdf(ncfile,True)
  
             for ix in range(n_cols): 
                 if ix < len(xmapdat.liveTime[:, 0]):
@@ -210,7 +209,6 @@ class nc:
 
   
 
-        
         return scan
         
         
@@ -274,24 +272,23 @@ def read_xmap_netcdf(fname, verbose=False):
     t0 = time.time()
     # read data from array_data variable of netcdf file
     fh = netcdf_open(fname,'r')
-    array_data = fh.variables['array_data'][:]
-    fh.close()
+    data_var = fh.variables['array_data']
+    array_data = data_var.data
     t1 = time.time()
-
     # array_data will normally be 3d:
     #  shape = (narrays, nmodules, buffersize)
     # but nmodules and narrays could be 1, so that
     # array_data could be 1d or 2d.
     #
     # here we force the data to be 3d
-    shape = array_data.shape
+    shape = array_data.shape 
     if len(shape) == 1:
         array_data.shape = (1,1,shape[0])
     elif len(shape) == 2:
         array_data.shape = (1,shape[0],shape[1])
 
     narrays,nmodules,buffersize = array_data.shape
-    modpixs    = array_data[0,0,8]
+    modpixs = array_data[0,0,8]
     if modpixs < 124: modpixs = 124
     npix_total = 0
     clocktick  = 320.e-9
@@ -351,4 +348,5 @@ def read_xmap_netcdf(fname, verbose=False):
         print '   time to extract data = %5.1f ms' % ((t2-t1)*1000)
         print '   read %i pixels ' %  npix_total
         print '   data shape:    ' ,  xmapdat.data.shape
+    fh.close()
     return xmapdat
