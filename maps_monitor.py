@@ -262,6 +262,8 @@ def main(mySettings):
 
 #-----------------------------------------------------------------------------   
 if __name__ == '__main__':
+    if len(sys.argv) > 1:
+        settings_filename = sys.argv[1]
     settings = Settings.SettingsIO()
     settings.load(settings_filename)
     if settings.checkSectionKeys(Settings.SECTION_MONITOR, Settings.MONITOR_KEYS) == False:
