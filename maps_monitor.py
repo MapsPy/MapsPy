@@ -39,18 +39,55 @@ from time import gmtime, strftime
 import time
 import platform
 
+import Settings
 import maps_batch
 
-""" ------------------------------------------------------------------------------------------------"""
-def main(computer, jobs_path):
+settings_filename = 'settings.ini'
 
+#-----------------------------------------------------------------------------------------------------
+def check_for_alias(directory_str, alias_dict):
+    ret_str = directory_str
+    for key in alias_dict.iterkeys():
+        if directory_str.startswith(key):
+            ret_str = directory_str.replace(key, alias_dict[key])
+            break
+    return ret_str
+
+#-----------------------------------------------------------------------------------------------------
+def parse_aliases(alias_str):
+    all_aliases = alias_str.split(';')
+    alias_dict = dict()
+    for single_set in all_aliases:
+        split_single = single_set.split(',')
+        if len(split_single) > 1:
+            alias_dict[split_single[0]] = split_single[1]
+    return alias_dict
+
+#-----------------------------------------------------------------------------------------------------
+def main(mySettings):
+
+    jobs_path = mySettings[Settings.MONITOR_JOBS_PATH]
+    processing_path = mySettings[Settings.MONITOR_PROCESSING_PATH]
+    info_path = mySettings[Settings.MONITOR_FINISHED_INFO_PATH]
+    done_path = mySettings[Settings.MONITOR_DONE_PATH]
+    computer = mySettings[Settings.MONITOR_COMPUTER_NAME]
+    check_interval = int(mySettings[Settings.MONITOR_CHECK_INTERVAL])
+
+    alias_dict = parse_aliases(mySettings[Settings.MONITOR_DIR_ALIAS])
 
     working_dir = os.getcwd()   
     #todo: create folders if they don't exist
-    processing_path = jobs_path+'/processing'
-    info_path = jobs_path+'/finished_info'
-    done_path = jobs_path+'/done'
     os.chdir(jobs_path)
+    print 'Starting maps_monitor with'
+    print 'jobs_path = ',jobs_path
+    print 'processing_path = ',processing_path
+    print 'finished_info_path = ',info_path
+    print 'done_path = ',done_path
+    print 'computer name = ',computer
+    print 'directory aliases = ',alias_dict
+    print 'checking every ',check_interval,'seconds'
+
+
     print 'changed into ', jobs_path
   
     #make sure the following are defined:
@@ -79,7 +116,7 @@ def main(computer, jobs_path):
         
         if no_files == 0 :
             #time.sleep(300.0)
-            time.sleep(10.0)
+            time.sleep(check_interval)
             print 'no jobs found, waiting ...'
             print strftime("%Y-%m-%d %H:%M:%S", gmtime())
             f = open(statusfile+'_idle.txt', 'w')
@@ -148,7 +185,7 @@ def main(computer, jobs_path):
                           
             except: print 'Could not read file: ',     filenames[0]
          
-     
+            directory = check_for_alias(directory, alias_dict)
             print 'move job into processing directory'
             shutil.copy(filenames[0], os.path.join(processing_path,filenames[0]))     
             os.remove(filenames[0])   
@@ -225,11 +262,15 @@ def main(computer, jobs_path):
 
 #-----------------------------------------------------------------------------   
 if __name__ == '__main__':
-    if len(sys.argv) < 2:
-        print 'Usage: python maps_monitor.py <jobs_path>'
+    settings = Settings.SettingsIO()
+    settings.load(settings_filename)
+    if settings.checkSectionKeys(Settings.SECTION_MONITOR, Settings.MONITOR_KEYS) == False:
+        print 'Error: Could not find all settings in ',settings_filename
+        print 'Please add the following keys to',settings_filename,'under the section',Settings.SECTION_MONITOR
+        for key in Settings.MONITOR_KEYS:
+            print key
         sys.exit(1)
-    jobs_path = sys.argv[1]
-    print 'Starting maps_monitor with jobs_path = ',jobs_path
-    computer_name =  str(platform.node())
-    main(computer_name, jobs_path)
+    monitorSettings = settings.getSetting(Settings.SECTION_MONITOR)
+    #computer_name =  str(platform.node())
+    main(monitorSettings)
         
