@@ -806,7 +806,7 @@ class analyze:
 
                             
                     
-                if these_counts.shape[0] >= 3 : these_counts = these_counts.sum(axis = 2)
+                if len(these_counts.shape) >= 3 : these_counts = these_counts.sum(axis = 2)
                 these_counts = these_counts/elt_arr
                 counts = counts+these_counts
                       
