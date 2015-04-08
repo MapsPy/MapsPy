@@ -805,8 +805,8 @@ class analyze:
                             these_counts = these_counts + scan.mca_arr[:, :, ii_temp, kk]
 
                             
-                    
-                if these_counts.shape[0] >= 3 : these_counts = these_counts.sum(axis = 2)
+                print 'these counts.shape=',these_counts.shape    
+                if len(these_counts.shape) >= 3 : these_counts = these_counts.sum(axis = 2)
                 these_counts = these_counts/elt_arr
                 counts = counts+these_counts
                       
