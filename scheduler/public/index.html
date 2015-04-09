@@ -6,6 +6,32 @@
      <script type="text/javascript">
        $(document).ready(function() {
 
+
+         $.get( "/process_node", function( data ) {
+           var $table = $("#process_node_table");
+           $.each(data, function(idx, item){
+             //alert(item)
+
+/*
+$.each(item, function(idx, col){
+alert(col)
+})
+*/
+
+           //$table.append( $("<tr>").text( item ) );
+           var $tr = $("<tr>");
+           $.each(item, function(idx2, col){
+             $tr.append( $("<td>").text(col))
+           })
+           $table.append( $tr);
+
+
+//             var arr = item.split(",");
+ //            alert(arr[0])
+  //           $table.append( "<tr><td>"+ arr[0]+ "</td> </tr>"  );
+           })
+         } , "json" );
+/*
          $("#generate-string").click(function(e) {
            $.post("/generator", {"length": $("input[name='length']").val()})
             .done(function(string) {
@@ -38,10 +64,24 @@
            e.preventDefault();
          });
 
+       setInterval(function(){
+           $.ajax({ url: "/process_node", success: function(data){
+           //Update your dashboard gauge
+           //salesGauge.setValue(data.value);
+           }, dataType: "json"});
+       }, 30000);
+
+*/
        });
      </script>
    </head>
    <body>
+     <div id="process_nodes_div">
+         <table id="process_node_table">
+           <tr> <td> Computer Name </td> <td> Number of Threads </td> <td> Status </td> <td> Heartbeat </td> </tr>
+         </table>
+     </div>
+<!--
      <input type="text" value="8" name="length" />
      <button id="generate-string">Give it now!</button>
      <div id="the-string">
@@ -49,5 +89,6 @@
          <button id="replace-string">Replace</button>
          <button id="delete-string">Delete it</button>
      </div>
+-->
    </body>
 </html>

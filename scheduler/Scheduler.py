@@ -1,11 +1,14 @@
 import os, os.path
 
 import Settings
-from handlers.JobStatusHandler import JobStatusHandler, ComputerNodeWebService
-#from plugins.BaseDatabasePlugin import BaseDatabasePlugin
-#from plugins.SQLiteDB import SQLiteDB
+from handlers.JobStatusHandler import JobStatusHandler, JobsWebService
+from handlers.ProcessNodeHandler import ProcessNodeWebService
+from plugins.DatabasePlugin import DatabasePlugin
+from plugins.SQLiteDB import SQLiteDB
 
 import cherrypy
+
+db = DatabasePlugin(cherrypy.engine, SQLiteDB)
 
 class Scheduler(object):
 	def __init__(self, settings):
@@ -30,7 +33,8 @@ class Scheduler(object):
 	
 	def run(self):
 		webapp = JobStatusHandler()
-		#BaseDatabasePlugin(cherrypy.engine, SQLiteDB).subscribe()
-		webapp.process_node = ComputerNodeWebService()
+		db.subscribe()
+		db.create_tables()
+		webapp.process_node = ProcessNodeWebService(db)
 		cherrypy.quickstart(webapp, '/', self.conf)
 
