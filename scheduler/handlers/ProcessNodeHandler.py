@@ -1,4 +1,3 @@
-import random
 import string
 import json
 import cherrypy
@@ -9,6 +8,7 @@ class ProcessNodeWebService(object):
 		self.db = db
 
 	@cherrypy.tools.accept(media='text/plain')
+	#@cherrypy.tools.json_out()
 	#get list of computer nodes
 	def GET(self, computer_name=None):
 		result = None
@@ -20,16 +20,21 @@ class ProcessNodeWebService(object):
 		return jenc.encode(result)
 
 	#add process node
-	def POST(self, ComputerName, NumThreads, Status, Heartbeat):
-		proc_node = {'ComputerName':ComputerName,'NumThreads':NumThreads,'Status':Status,'Heartbeat':Heartbeat}
+	def POST(self):
+		cl = cherrypy.request.headers['Content-Length']
+		rawbody = cherrypy.request.body.read(int(cl))
+		proc_node = json.loads(rawbody)
 		self.db.insert_process_node(proc_node)
-		return 'inserted'
+		return 'inserted process node'
 
 	#change process node status
-	def PUT(self, ComputerName, NumThreads, Status, Heartbeat):
-		proc_node = {'ComputerName':ComputerName,'NumThreads':NumThreads,'Status':Status,'Heartbeat':Heartbeat}
+	def PUT(self):
+		cl = cherrypy.request.headers['Content-Length']
+		rawbody = cherrypy.request.body.read(int(cl))
+		proc_node = json.loads(rawbody)
+		print proc_node
 		self.db.insert_process_node(proc_node)
-		return 'updated'
+		return 'updated process node'
 
 	#computer node went offline, remove from list
 	def DELETE(self):

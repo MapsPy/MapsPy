@@ -5,6 +5,7 @@
     <script src="http://code.jquery.com/jquery-2.0.3.min.js"></script>
     <script type="text/javascript">
       $(document).ready(function() {
+        //get all process nodes
         $.get( "/process_node", function( data ) {
           var $table = $("#process_node_table");
           $.each(data, function(idx, item){
@@ -15,7 +16,17 @@
           $table.append( $tr);
           })
         } , "json" );
-
+        //get all jobs
+        $.get( "/job", function( data ) {
+          var $table = $("#job_table");
+          $.each(data, function(idx, item){
+            var $tr = $("<tr id='data_entry'>");
+            $.each(item, function(key, col){
+              $tr.append( $("<td>").text(col))
+            })
+          $table.append( $tr);
+          })
+        } , "json" );
 
       $('.header').click(function(){
         $(this).toggleClass('expand').nextUntil('tr.header').slideToggle(100);
@@ -84,7 +95,7 @@
          </table>
      </div>
      <div id="jobs_div">
-         <table id="jobs_table">
+         <table id="job_table">
            <tr class="header expand"> <th colsnap="4"> <span class="sign"> </snap> Jobs  </th> </tr>
            
          </table>

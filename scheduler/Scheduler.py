@@ -25,6 +25,11 @@ class Scheduler(object):
 				'tools.response_headers.on': True,
 				'tools.response_headers.headers': [('Content-Type', 'text/plain')],
 			},
+			'/job': {
+				'request.dispatch': cherrypy.dispatch.MethodDispatcher(),
+				'tools.response_headers.on': True,
+				'tools.response_headers.headers': [('Content-Type', 'text/plain')],
+			},
 			'/static': {
 				'tools.staticdir.on': True,
 				'tools.staticdir.dir': './public'
@@ -36,5 +41,6 @@ class Scheduler(object):
 		db.subscribe()
 		db.create_tables()
 		webapp.process_node = ProcessNodeWebService(db)
+		webapp.job = JobsWebService(db)
 		cherrypy.quickstart(webapp, '/', self.conf)
 

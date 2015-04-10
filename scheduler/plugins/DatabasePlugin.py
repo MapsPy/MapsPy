@@ -23,11 +23,20 @@ class DatabasePlugin(plugins.SimplePlugin):
 	def insert_process_node(self, entity):
 		self.db.insert_process_node(entity)
 
+	def insert_job(self, job_dict):
+		self.db.insert_job(job_dict)
+
 	def get_all_process_nodes(self):
 		return self.db.get_all_process_nodes()
 
 	def get_process_node(self, node_name):
 		return self.db.get_process_node(node_name)
+
+	def get_all_jobs(self):
+		return self.db.get_all_jobs()
+
+	def get_job(self, job_id):
+		return self.db.get_job(job_id)
 
 	def save_it(self, entity):
 		self.db.save(entity)
