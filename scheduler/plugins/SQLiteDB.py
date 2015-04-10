@@ -62,6 +62,13 @@ class SQLiteDB:
 		cur.execute(SELECT_ALL_PROCESS_NODES)
 		con.commit()
 		return cur.fetchall()
+		'''
+		all_nodes = cur.fetchall()
+		ret_list = []
+		for node in all_nodes:
+			ret_list += [ {'ComputerName':node[0], 'NumThreads':node[1], 'Status': node[2], 'Heartbeat': node[3]} ]
+		return ret_list
+		'''
 
 	def save(self, entry):
 		print 'saving',entry
@@ -77,13 +84,8 @@ if __name__ == '__main__':
 	proc_node['Status'] = 'Offline'
 	proc_node['Heartbeat'] = datetime.datetime.now()
 	db.insert_process_node(proc_node)
-	#proc_node2 = db.get_process_node(proc_node['ComputerName'])
-	#print type(proc_node2)
-	#print proc_node2
 	import json
 	result = db.get_all_process_nodes()
 	jenc = json.JSONEncoder()
 	print jenc.encode(result)
 	
-	
-
