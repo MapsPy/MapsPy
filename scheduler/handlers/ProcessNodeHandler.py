@@ -8,7 +8,7 @@ class ProcessNodeWebService(object):
 		self.db = db
 
 	@cherrypy.tools.accept(media='text/plain')
-	#@cherrypy.tools.json_out()
+	@cherrypy.tools.json_out()
 	#get list of computer nodes
 	def GET(self, computer_name=None):
 		result = None

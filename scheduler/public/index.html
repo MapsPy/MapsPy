@@ -4,8 +4,48 @@
     <link href="/static/css/style.css" rel="stylesheet">
     <script src="http://code.jquery.com/jquery-2.0.3.min.js"></script>
     <script type="text/javascript">
-      $(document).ready(function() {
+      $(document).ready(function() 
+      {
         //get all process nodes
+        $.ajax(
+        {
+          url:"/process_node",
+          datatype: "text",
+          success: function(data) 
+          {
+            var $table = $("#process_node_table");
+            var nodes = $.parseJSON(data);
+            var $tr = $("<tr id='data_entry'>");
+            nodes.forEach( function(item) 
+            {
+              $tr.append( $("<td>").text(item.ComputerName));
+              $tr.append( $("<td>").text(item.NumThreads));
+              $tr.append( $("<td>").text(item.Status));
+              $tr.append( $("<td>").text(item.Heartbeat));
+            })
+            $table.append( $tr);
+          }
+        });
+        //get all jobs
+        $.ajax(
+        {
+          url:"/job",
+          datatype: "text",
+          success: function(data) 
+          {
+            var $table = $("#job_table");
+            var nodes = $.parseJSON(data);
+            var $tr = $("<tr id='data_entry'>");
+            nodes.forEach( function(item) 
+            {
+              $tr.append( $("<td>").text(item.Id));
+              $tr.append( $("<td>").text(item.DataPath));
+            })
+            $table.append( $tr);
+          }
+        });
+
+/*
         $.get( "/process_node", function( data ) {
           var $table = $("#process_node_table");
           $.each(data, function(idx, item){
@@ -16,6 +56,7 @@
           $table.append( $tr);
           })
         } , "json" );
+  
         //get all jobs
         $.get( "/job", function( data ) {
           var $table = $("#job_table");
@@ -27,7 +68,7 @@
           $table.append( $tr);
           })
         } , "json" );
-
+*/
       $('.header').click(function(){
         $(this).toggleClass('expand').nextUntil('tr.header').slideToggle(100);
       });

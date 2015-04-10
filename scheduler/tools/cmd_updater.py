@@ -27,9 +27,9 @@ if __name__ == '__main__':
 	if atype == 'pn':
 		url = url+'/process_node'
 		if action == 'post':
-			payload={'ComputerName':sys.argv[4],'NumThreads':2,'Status':'Bootup', 'Heartbeat':str(datetime.now())}
+			payload={'ComputerName':sys.argv[4],'NumThreads':2, 'Hostname':'127.0.0.1', 'Port':8080, 'Status':'Bootup', 'Heartbeat':str(datetime.now())}
 		elif action == 'put':
-			payload={'ComputerName':sys.argv[4],'NumThreads':2,'Status':sys.argv[5], 'Heartbeat':str(datetime.now())}
+			payload={'ComputerName':sys.argv[4],'NumThreads':2,'Hostname':'127.0.0.1', 'Port':8080, 'Status':sys.argv[5], 'Heartbeat':str(datetime.now())}
 	elif atype == 'job':
 		url = url+'/job'
 		payload = { 'DataPath':sys.argv[4], 'ProcMask':1, 'Version':'1.00', 'DetectorElements':int(sys.argv[5]), 'MaxFilesToProc':1, 'MaxLineToProc':11, 'QuickAndDirty':0, 'XRF_Bin':0, 'NNLS':0, 'XANES_Scan':0, 'DetectorToStartWith':0, 'BeamLine':'2-ID-E', 'Standards':''}
