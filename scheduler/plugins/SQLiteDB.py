@@ -53,6 +53,8 @@ class SQLiteDB:
 		con.commit()
 
 	def insert_job(self, job_dict):
+		print 'insert job', job_dict
+		print 'keys', job_dict.keys()
 		con = sql.connect(self.uri)
 		cur = con.cursor()
 		cur.execute(INSERT_JOB, job_dict)

@@ -15,15 +15,15 @@
           {
             var $table = $("#process_node_table");
             var nodes = $.parseJSON(data);
-            var $tr = $("<tr id='data_entry'>");
             nodes.forEach( function(item) 
             {
+              var $tr = $("<tr id='data_entry'>");
               $tr.append( $("<td>").text(item.ComputerName));
               $tr.append( $("<td>").text(item.NumThreads));
               $tr.append( $("<td>").text(item.Status));
               $tr.append( $("<td>").text(item.Heartbeat));
+              $table.append( $tr);
             })
-            $table.append( $tr);
           }
         });
         //get all jobs
@@ -35,44 +35,31 @@
           {
             var $table = $("#job_table");
             var nodes = $.parseJSON(data);
-            var $tr = $("<tr id='data_entry'>");
             nodes.forEach( function(item) 
             {
+              var $tr = $("<tr id='data_entry'>");
               $tr.append( $("<td>").text(item.Id));
               $tr.append( $("<td>").text(item.DataPath));
+              $table.append( $tr);
             })
-            $table.append( $tr);
           }
         });
 
-/*
-        $.get( "/process_node", function( data ) {
-          var $table = $("#process_node_table");
-          $.each(data, function(idx, item){
-            var $tr = $("<tr id='data_entry'>");
-            $.each(item, function(key, col){
-              $tr.append( $("<td>").text(col))
-            })
-          $table.append( $tr);
-          })
-        } , "json" );
-  
-        //get all jobs
-        $.get( "/job", function( data ) {
-          var $table = $("#job_table");
-          $.each(data, function(idx, item){
-            var $tr = $("<tr id='data_entry'>");
-            $.each(item, function(key, col){
-              $tr.append( $("<td>").text(col))
-            })
-          $table.append( $tr);
-          })
-        } , "json" );
-*/
       $('.header').click(function(){
         $(this).toggleClass('expand').nextUntil('tr.header').slideToggle(100);
       });
 
+      jQuery('.tabs .tab-links a').on('click', function(e)  {
+        var currentAttrValue = jQuery(this).attr('href');
+ 
+        // Show/Hide Tabs
+        jQuery('.tabs ' + currentAttrValue).show().siblings().hide();
+ 
+        // Change/remove current tab to active
+        jQuery(this).parent('li').addClass('active').siblings().removeClass('active');
+ 
+        e.preventDefault();
+    });
 /*
       setInterval(function(){
         $.ajax({ url: "/process_node", success: function(data){
@@ -89,16 +76,21 @@
           }, dataType: "json"});
       }, 3000);
 */
-/*
-         $("#generate-string").click(function(e) {
-           $.post("/generator", {"length": $("input[name='length']").val()})
-            .done(function(string) {
-               $("#the-string").show();
-               $("#the-string input").val(string);
-            });
-           e.preventDefault();
-         });
 
+         $("#Btn-Submit-Job").click(function(e) {
+          $.ajax(
+          {
+            type: 'POST',
+            url:"/job",
+            contentType: 'application/json; charset=utf-8',
+            data: JSON.stringify({'MaxFilesToProc': 1, 'ProcMask': 1, 'BeamLine': '2-ID-E', 'DataPath': $("#DataPath").val(), 'Version': '1.00', 'Standards': '', 'DetectorToStartWith': 0, 'XRF_Bin': 0, 'MaxLineToProc': 11, 'DetectorElements': parseInt($("#DetectorElements").val(), 10), 'XANES_Scan': 0, 'NNLS': 0, 'QuickAndDirty': 0}),
+            datatype: "json"
+          }).done(function(d)
+                   { 
+              alert("added job");
+                   });
+         });
+/*
          $("#replace-string").click(function(e) {
            $.ajax({
               type: "PUT",
@@ -121,9 +113,9 @@
            });
            e.preventDefault();
          });
-
-
 */
+
+
        });
      </script>
    </head>
@@ -141,6 +133,57 @@
            
          </table>
      </div>
+
+
+<div class="tabs">
+    <ul class="tab-links">
+        <li class="active"><a href="#tab1">2-ID-E</a></li>
+        <li><a href="#tab2">GSE CARS</a></li>
+    </ul>
+ 
+    <div class="tab-content">
+        <div id="tab1" class="tab active">
+            <p>2-ID-E</p>
+
+        <!--   <form> -->
+             <fieldset>
+               <legend>Job Information:</legend>
+               Job Path:
+               <input type="text" id="DataPath" value="/">
+               <br>
+               <input type="checkbox" id="analysis-type-a" value="A">A<br>
+               <input type="checkbox" id="analysis-type-b" value="B">B<br>
+               <input type="checkbox" id="analysis-type-c" value="C">C<br>
+               <input type="checkbox" id="analysis-type-d" value="D">D<br>
+               <input type="checkbox" id="analysis-tyoe-e" value="E">E<br>
+               Total Number of Detectors <br>
+               <input type="text" id="DetectorElements" value="4">
+<!--
+            version = 0
+            total_number_detectors = 1
+            max_no_processors_files = 1
+            max_no_processors_lines = 1
+            write_hdf = 0
+            quick_dirty = 0
+            xrf_bin = 0
+            nnls = 0
+            xanes_scan = 0
+            detector_to_start_with = 0
+            #default beamline to use for now is 2-id-e , we will change this in the future
+-->
+               <br><br>
+               <button id="Btn-Submit-Job">Submit Job</button>
+             </fieldset>
+      <!--     </form> -->
+         </div>
+ 
+        <div id="tab2" class="tab">
+            <p>GSE CARS</p>
+            <p>Submit Job</p>
+        </div>
+ 
+    </div>
+</div>
 <!--
      <input type="text" value="8" name="length" />
      <button id="generate-string">Give it now!</button>

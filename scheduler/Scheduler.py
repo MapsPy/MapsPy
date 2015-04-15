@@ -13,8 +13,6 @@ db = DatabasePlugin(cherrypy.engine, SQLiteDB)
 class Scheduler(object):
 	def __init__(self, settings):
 		self.settings = settings
-		HostName = settings[Settings.SERVER_HOSTNAME]
-		Port = int(settings[Settings.SERVER_PORT])
 		self.conf = {
 			'/': {
 				'tools.sessions.on': True,
@@ -42,5 +40,6 @@ class Scheduler(object):
 		db.create_tables()
 		webapp.process_node = ProcessNodeWebService(db)
 		webapp.job = JobsWebService(db)
+		cherrypy.server.socket_host = self.settings[Settings.SERVER_HOSTNAME]
 		cherrypy.quickstart(webapp, '/', self.conf)
 
