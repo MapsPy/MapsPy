@@ -34,8 +34,8 @@
           success: function(data) 
           {
             var $table = $("#job_table");
-            var nodes = $.parseJSON(data);
-            nodes.forEach( function(item) 
+            var jobs = $.parseJSON(data);
+            jobs.forEach( function(item) 
             {
               var $tr = $("<tr id='data_entry'>");
               $tr.append( $("<td>").text(item.Id));
@@ -60,22 +60,44 @@
  
         e.preventDefault();
     });
-/*
-      setInterval(function(){
-        $.ajax({ url: "/process_node", success: function(data){
+
+      //Poll every 3 seconds
+      setInterval(function()
+      {
+        $.ajax({ url: "/process_node", success: function(data)
+        {
           var $table = $("#process_node_table");
           $table.empty();
-          $.each(data, function(idx, item){
+          var $trCn = $('<tr class="header expand"> <th colsnap="4"> <span class="sign"> </snap> Computer Name  </th> </tr>');
+          $table.append($trCn);
+          var nodes = $.parseJSON(data);
+          nodes.forEach( function(item) 
+          {
             var $tr = $("<tr id='data_entry'>");
-            $.each(item, function(key, col){
-              $tr.append( $("<td>").text(col))
-            })
-          $table.append( $tr);
+            $tr.append( $("<td>").text(item.ComputerName));
+            $tr.append( $("<td>").text(item.NumThreads));
+            $tr.append( $("<td>").text(item.Status));
+            $tr.append( $("<td>").text(item.Heartbeat));
+            $table.append( $tr);
           })
-          
-          }, dataType: "json"});
+        }, dataType: "json"});
+        $.ajax({ url: "/job", success: function(data)
+        {
+          var $table = $("#job_table");
+          $table.empty();
+          var $trCn = $('<tr class="header expand"> <th colsnap="4"> <span class="sign"> </snap> Jobs  </th> </tr>');
+          $table.append($trCn);
+          var jobs = $.parseJSON(data);
+          jobs.forEach( function(item) 
+          {
+            var $tr = $("<tr id='data_entry'>");
+            $tr.append( $("<td>").text(item.Id));
+            $tr.append( $("<td>").text(item.DataPath));
+            $table.append( $tr);
+          })
+        }, dataType: "json"});
       }, 3000);
-*/
+
 
          $("#Btn-Submit-Job").click(function(e) {
           $.ajax(

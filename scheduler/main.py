@@ -1,6 +1,7 @@
 import sys
 import Settings
 from Scheduler import Scheduler
+from ProcessNode import ProcessNode
 
 settings_filename = 'settings.ini'
 
@@ -23,7 +24,7 @@ def main():
 		scheduler = Scheduler(serverSettings)
 		scheduler.run()
 	elif role == 'process_node':
-		process_node = ProcessNode(serverSettings)
+		process_node = ProcessNode(settings)
 		process_node.run()
 	else:
 		print 'Unknown role! exiting!'

@@ -14,6 +14,7 @@ class JobsWebService(object):
 		self.db = db
 
 	@cherrypy.tools.accept(media='text/plain')
+	@cherrypy.tools.json_out()
 	#return list of jobs in queue
 	def GET(self, job_id=None):
 		result = None

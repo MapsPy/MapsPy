@@ -4,9 +4,9 @@ from cherrypy.process import wspbus, plugins
 CHANNEL_DB_INSERT_PROCESS_NODE = 'ch_insert_process_node'
 
 class DatabasePlugin(plugins.SimplePlugin):
-	def __init__(self, bus, db_klass):
+	def __init__(self, bus, db_klass, db_name='MapsPy.db'):
 		plugins.SimplePlugin.__init__(self, bus)
-		self.db = db_klass()
+		self.db = db_klass(db_name)
 
 	def start(self):
 		self.bus.log('Starting up DB access')

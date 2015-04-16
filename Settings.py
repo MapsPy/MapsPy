@@ -8,8 +8,15 @@ SECTION_SERVER = 'Server'
 SERVER_ROLE     = 'role'
 SERVER_HOSTNAME = 'hostname'
 SERVER_PORT     = 'port'
+SERVER_SCHEDULER_HOSTNAME = 'scheduler_hostname'
+SERVER_SCHEDULER_PORT     = 'scheduler_port'
 SERVER_KEYS = [SERVER_ROLE, SERVER_HOSTNAME, SERVER_PORT]
 
+
+'''PROCESS NODE Keys'''
+SECTION_PROCESS_NODE = 'Process_Node'
+PROCESS_NODE_NAME = 'computer_name'
+PROCESS_NODE_THREADS = 'num_threads'
 
 '''MONITOR keys'''
 SECTION_MONITOR = 'Monitor'
@@ -23,8 +30,7 @@ MONITOR_CHECK_INTERVAL     = 'check_interval'
 MONITOR_KEYS = [MONITOR_JOBS_PATH, MONITOR_PROCESSING_PATH, MONITOR_FINISHED_INFO_PATH, MONITOR_DONE_PATH, MONITOR_COMPUTER_NAME, MONITOR_DIR_ALIAS, MONITOR_CHECK_INTERVAL]
 
 '''LISTS'''
-SECTIONS = [SECTION_SERVER]
-SECTIONS = [SECTION_MONITOR]
+SECTIONS = [SECTION_SERVER, SECTION_PROCESS_NODE, SECTION_MONITOR]
 
 
 '''CLASSES'''
@@ -67,7 +73,7 @@ class SettingsIO:
 	            dict1[option] = None
 	    return dict1
 
-
+#test
 if __name__ == '__main__':
 	#test
 	s = Settings()
