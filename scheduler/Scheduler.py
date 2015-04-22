@@ -1,8 +1,7 @@
 import os, os.path
 
 import Settings
-from handlers.JobStatusHandler import JobStatusHandler, JobsWebService
-from handlers.ProcessNodeHandler import ProcessNodeWebService
+from handlers.SchedulerHandlers import SchedulerHandler, SchedulerJobsWebService, SchedulerProcessNodeWebService
 from plugins.DatabasePlugin import DatabasePlugin
 from plugins.SQLiteDB import SQLiteDB
 
@@ -13,6 +12,11 @@ db = DatabasePlugin(cherrypy.engine, SQLiteDB)
 class Scheduler(object):
 	def __init__(self, settings):
 		self.settings = settings
+		cherrypy.config.update({
+			'server.socket_host': self.settings[Settings.SERVER_HOSTNAME],
+			'server.socket_port': int(self.settings[Settings.SERVER_PORT]),
+		})
+
 		self.conf = {
 			'/': {
 				'tools.sessions.on': True,
@@ -35,11 +39,10 @@ class Scheduler(object):
 		}
 	
 	def run(self):
-		webapp = JobStatusHandler()
+		webapp = SchedulerHandler()
 		db.subscribe()
 		db.create_tables()
-		webapp.process_node = ProcessNodeWebService(db)
-		webapp.job = JobsWebService(db)
-		cherrypy.server.socket_host = self.settings[Settings.SERVER_HOSTNAME]
+		webapp.process_node = SchedulerProcessNodeWebService(db)
+		webapp.job = SchedulerJobsWebService(db)
 		cherrypy.quickstart(webapp, '/', self.conf)
 

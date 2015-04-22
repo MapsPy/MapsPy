@@ -2,30 +2,33 @@ import string
 import json
 import cherrypy
 
-class JobStatusHandler(object):
+class ProcessNodeHandler(object):
 	
 	@cherrypy.expose
 	def index(self):
-		return file('public/index.html')
+		return file('public/process_node_index.html')
 
-class JobsWebService(object):
+class ProcessNodeJobsWebService(object):
+	'''
+	ProcessNode exposed /job_queue
+	'''
 	exposed = True
 	def __init__(self, db):
 		self.db = db
 
 	@cherrypy.tools.accept(media='text/plain')
 	@cherrypy.tools.json_out()
-	#return list of jobs in queue
+	#get list of jobs on this nodes queue
 	def GET(self, job_id=None):
 		result = None
-		if job_id == None:
+		if computer_name == None:
 			result = self.db.get_all_jobs()
 		else:
 			result = self.db.get_job(job_id)
 		jenc = json.JSONEncoder()
 		return jenc.encode(result)
 
-	#submit job to queue
+	#submit a job
 	def POST(self):
 		cl = cherrypy.request.headers['Content-Length']
 		rawbody = cherrypy.request.body.read(int(cl))
@@ -33,12 +36,11 @@ class JobsWebService(object):
 		self.db.insert_job(job)
 		return 'inserted job'
 
-	#change job properties (priority, ect...)
+	#update job
 	def PUT(self):
-		#cherrypy.session['mystring'] = another_string
-		pass
+		return 'updated process node'
 
-	#delete job from queue
+	#remove a job from the queue
 	def DELETE(self):
 		#cherrypy.session.pop('mystring', None)
 		pass

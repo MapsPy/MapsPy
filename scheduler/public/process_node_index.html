@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link href="/static/css/style.css" rel="stylesheet">
+    <script src="http://code.jquery.com/jquery-2.0.3.min.js"></script>
+    <script type="text/javascript">
+      $(document).ready(function() 
+      {
+        //get all jobs
+        $.ajax(
+        {
+          url:"/job_queue",
+          datatype: "text",
+          success: function(data) 
+          {
+            var $table = $("#job_table");
+            var jobs = $.parseJSON(data);
+            jobs.forEach( function(item) 
+            {
+              var $tr = $("<tr id='data_entry'>");
+              $tr.append( $("<td>").text(item.Id));
+              $tr.append( $("<td>").text(item.DataPath));
+              $table.append( $tr);
+            })
+          }
+        });
+       });
+     </script>
+   </head>
+   <body>
+     <div id="jobs_div">
+         <table id="job_table">
+           <tr class="header expand"> <th colsnap="4"> <span class="sign"> </snap> Jobs  </th> </tr>
+           
+         </table>
+     </div>
+
+
+   </body>
+</html>

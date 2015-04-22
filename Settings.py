@@ -4,29 +4,31 @@ import ConfigParser
 #Keys read from ConfigParser are all lower cased!
 
 '''SECTIONS'''
-SECTION_SERVER = 'Server'
-SERVER_ROLE     = 'role'
-SERVER_HOSTNAME = 'hostname'
-SERVER_PORT     = 'port'
-SERVER_SCHEDULER_HOSTNAME = 'scheduler_hostname'
-SERVER_SCHEDULER_PORT     = 'scheduler_port'
+SECTION_SERVER              = 'Server'
+SERVER_ROLE                 = 'role'
+SERVER_HOSTNAME             = 'hostname'
+SERVER_PORT                 = 'port'
+SERVER_SCHEDULER_HOSTNAME   = 'scheduler_hostname'
+SERVER_SCHEDULER_PORT       = 'scheduler_port'
 SERVER_KEYS = [SERVER_ROLE, SERVER_HOSTNAME, SERVER_PORT]
 
 
 '''PROCESS NODE Keys'''
-SECTION_PROCESS_NODE = 'Process_Node'
-PROCESS_NODE_NAME = 'computer_name'
-PROCESS_NODE_THREADS = 'num_threads'
+SECTION_PROCESS_NODE        = 'Process_Node'
+PROCESS_NODE_NAME           = 'computer_name'
+PROCESS_NODE_THREADS        = 'num_threads'
+PROCESS_NODE_DATABASE_NAME  = 'database_name'
+PROCESS_NODE_KEYS = [PROCESS_NODE_NAME, PROCESS_NODE_THREADS, PROCESS_NODE_DATABASE_NAME]
 
 '''MONITOR keys'''
 SECTION_MONITOR = 'Monitor'
-MONITOR_JOBS_PATH          = 'jobs_path'
-MONITOR_PROCESSING_PATH    = 'processing_path'
-MONITOR_FINISHED_INFO_PATH = 'finished_info_path'
-MONITOR_DONE_PATH          = 'done_path'
-MONITOR_COMPUTER_NAME      = 'computer_name'
-MONITOR_DIR_ALIAS          = 'dir_alias'
-MONITOR_CHECK_INTERVAL     = 'check_interval'
+MONITOR_JOBS_PATH           = 'jobs_path'
+MONITOR_PROCESSING_PATH     = 'processing_path'
+MONITOR_FINISHED_INFO_PATH  = 'finished_info_path'
+MONITOR_DONE_PATH           = 'done_path'
+MONITOR_COMPUTER_NAME       = 'computer_name'
+MONITOR_DIR_ALIAS           = 'dir_alias'
+MONITOR_CHECK_INTERVAL      = 'check_interval'
 MONITOR_KEYS = [MONITOR_JOBS_PATH, MONITOR_PROCESSING_PATH, MONITOR_FINISHED_INFO_PATH, MONITOR_DONE_PATH, MONITOR_COMPUTER_NAME, MONITOR_DIR_ALIAS, MONITOR_CHECK_INTERVAL]
 
 '''LISTS'''
