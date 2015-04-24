@@ -44,9 +44,9 @@ import sys
 import multiprocessing
 import csv
 
-from file_io import maps_mda
-from file_io import maps_nc
-from file_io import maps_hdf5
+from file_io import mda_io
+from file_io import netcdf_io
+from file_io import hdf5_io
 import maps_definitions
 import maps_detector
 import maps_fit_parameters
@@ -198,7 +198,7 @@ class analyze:
         if (beamline == '2-ID-E') or (beamline == '2-ID-D') or (beamline == '2-ID-B') or (beamline == '2-BM') or (beamline == 'Bionanoprobe'):
             
             # read scan info
-            mda = maps_mda.mda()
+            mda = mda_io.mda()
             info = mda.read_scan_info(mdafilename)
             
 
@@ -268,7 +268,7 @@ class analyze:
                 # this is a fly scan, but i found a netcdf file with matching
                 # name. this should be a fly scna with XRF
                 print 'trying to do the combined file'
-                nc = maps_nc.nc()
+                nc = netcdf_io.nc()
                 scan = nc.read_combined_nc_scans(mdafilename, self.main['master_dir'], header, this_detector, extra_pvs = True)
 
                 print 'Finished reading combined nc scan'
@@ -313,7 +313,7 @@ class analyze:
             filenameh5 =  os.path.basename(str(mdafilename))
             h5filename = os.path.join(os.path.join(self.main['master_dir'],'img.dat'), filenameh5)
             print 'filename=', h5filename
-            h5 = maps_hdf5.h5()
+            h5 = hdf5_io.h5()
             scan = h5.read_scan(h5filename)
             save_h5 = 0
             xanes = 0
@@ -491,7 +491,7 @@ class analyze:
             no_detectors = 1
             
         
-        h5 = maps_hdf5.h5()
+        h5 = hdf5_io.h5()
         if save_h5 == 1:
             #Save full spectra to HDF5 file
             h5file = os.path.join(self.main['img_dat_dir'],header+xrf_bin_ext+'.h5'+suffix)
@@ -1288,7 +1288,8 @@ class analyze:
                             data_line[0:scan.mca_arr[i_fit, jj, :].size, jj] = scan.mca_arr[i_fit, jj, :]
                         elt_line[:] = elt1_arr[i_fit, :]
   
-
+                        print 'fitting data_line',data_line.shape,
+                        print ' ',data_line
                                
                         output_dir = self.main['output_dir'] 
         
@@ -1553,7 +1554,7 @@ class analyze:
         
         print "Generating average image"
 
-        h5p = maps_hdf5.h5()
+        h5p = hdf5_io.h5()
         
         imgdat_filenames = []
         if this_file != '':

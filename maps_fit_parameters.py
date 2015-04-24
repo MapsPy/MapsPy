@@ -1180,11 +1180,6 @@ class maps_fit_parameters:
                     test_string = [x.strip() for x in test_string]    
                     print>>f, 'BRANCHING_RATIO_ADJUSTMENT_K: '+', '.join(test_string)
 
-                if tag == 'BRANCHING_RATIO_ADJUSTMENT_K' :  
-                    test_string = value.split(',')
-                    test_string = [x.strip() for x in test_string]    
-                    print>>f, 'BRANCHING_RATIO_ADJUSTMENT_K: '+', '.join(test_string)
-
                 elif tag == 'TAIL_FRACTION_ADJUST_SI' : 
                     temp = str(value)
                     print>>f, '    the two parameters below allow manual (multiplikative) adjustment of the Si tailing parameters. A value of one is nominal.  '

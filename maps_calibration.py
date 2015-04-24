@@ -42,7 +42,6 @@ from matplotlib.ticker import MultipleLocator, FormatStrFormatter
 import maps_definitions
 import maps_analyze
 import maps_fit_parameters
-#import maps_generate_img_dat
 import maps_tools
 import henke
 
@@ -2490,7 +2489,7 @@ class calibration:
                                          
                     axes.text(0.97, -0.08, 'mapspy', color = foreground_color, transform = axes.transAxes) 
                     image_filename = 'calib'+str(l)+'_'+str(k)+'.png'
-                    print 'saving ', os.path.join(dir,image_filename)
+                    print 'saving calib  ', os.path.join(dir,image_filename)
                     fig.savefig(os.path.join(dir, image_filename), dpi=dpi, facecolor=background_color, edgecolor=None)
                    
 
@@ -3177,7 +3176,7 @@ class calibration:
         avgfilename = os.path.join(self.main['master_dir'],'average_resulting_maps_fit_parameters_override.txt')
         fp.write_fit_parameters(self.main, avg_fitp, avgfilename, test_string, pileup_string = pileup_string, suffix = suffix)
         
-        print 'fitp',fitp, 'avg_fitp',  avg_fitp, 'spectra', spectra
+        #print 'fitp',fitp, 'avg_fitp',  avg_fitp, 'spectra', spectra
         return fitp, avg_fitp, spectra
 
 

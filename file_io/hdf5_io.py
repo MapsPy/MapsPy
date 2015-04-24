@@ -40,7 +40,7 @@ import h5py
 import time
 
 import maps_definitions
-import maps_mda
+import mda_io
 
 #-----------------------------------------------------------------------------
 class h5:
@@ -914,7 +914,7 @@ class h5:
 
         #filename= 'D:/mirna/Phyton/Diamond/src/testMapspy/img.dat/5730_sample588_1.h5'
         
-        scan_data = maps_mda.scan() 
+        scan_data = mda_io.scan() 
                 
         print filename
         f = h5py.File(filename, 'r') 

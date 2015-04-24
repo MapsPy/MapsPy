@@ -136,7 +136,12 @@ class scan:
         self.mca_arr = []        #nxmx2000xno.detectors array  ( 2000 energies)
         self.extra_pv = []
         self.extra_pv_key_list = []
-
+    def prnt(self):
+        print 'detecotr arr len = ',len(self.detector_arr), 'type',type(self.detector_arr),'shape',self.detector_arr.shape
+        print 'mca_arr len = ',len(self.mca_arr), 'type',type(self.mca_arr),'shape',self.mca_arr.shape
+        if len(self.mca_arr) > 0:
+            print 'type [0]',type(self.mca_arr[0]),'shape[0]',self.mca_arr[0].shape
+            print 'mca_arr [0] = ',self.mca_arr[0]
 #----------------------------------------------------------------------
 
 def detName(i):
@@ -166,7 +171,7 @@ class mda:
 #----------------------------------------------------------------------
     def read_scan_info(self, filename):
         
-        verbose = False
+        verbose = False 
         
         try:
             file = open(str(filename),'rb')
@@ -1330,7 +1335,7 @@ class mda:
         if extra_pvs == True:
             scan_data.extra_pv = extra_pv_dict
             scan_data.extra_pv_key_list = extra_pv_key_list
-                    
+        scan_data.prnt()
         return scan_data
     
     

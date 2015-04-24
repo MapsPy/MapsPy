@@ -106,6 +106,7 @@ class analyze:
 
 #-----------------------------------------------------------------------------      
     def residuals(self, p, y, x, weights):
+        print '\n\n\n------------------------------------------ RESIDUALS ---------------------------------------------\n\n\n'
         err = (y-self.model_spectrum(x,p))*weights
         return err
   
@@ -841,6 +842,9 @@ class analyze:
             u[keywords.added_params[1:4]] = parameters[parameters.size-offset+12:parameters.size-offset+15]
 
  
+            #print '\n\n\n----------------------------------------- If true  ----------------------------------------------\n\n\n'
+            #print '\n',x,'\n'
+            #print '\n',u,'\n'
             dummy = self.model_spectrum(x, u, allpars = True)
             
 #            import matplotlib.pyplot as plt 
@@ -907,7 +911,7 @@ class analyze:
             parameters[self.fipsuse_nonzero] = p1
             perror = np.zeros((len(parameters)))
             perror[self.fipsuse_nonzero] = perror1
-                
+            #print '\n\n\n---------------------------------------- else true -----------------------------------------------\n\n\n'
             fitted_spec = self.model_spectrum(x, p1)
             u = parameters
             

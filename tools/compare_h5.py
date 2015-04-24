@@ -41,7 +41,7 @@ sys.path.append('./')
 sys.path.append('file_io')
 
 import h5py
-import maps_hdf5
+import hdf5_io
 
 """ ------------------------------------------------------------------------------------------------"""
 def main(file1, file2):
@@ -108,8 +108,8 @@ def main(file1, file2):
         
         
     print '\nCompare HDF5 fields in the files.'
-    h51 = maps_hdf5.h5()
-    h52 = maps_hdf5.h5()    
+    h51 = hdf5_io.h5()
+    h52 = hdf5_io.h5()    
     
     entryname = 'mca_arr'
     this_xrfdata1, valid_read = h51.read_hdf5_core(maps_group_id1, entryname)

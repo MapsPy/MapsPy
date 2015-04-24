@@ -42,7 +42,7 @@ import shutil
 import maps_generate_img_dat
 import maps_definitions
 import maps_elements
-from file_io import maps_hdf5
+from file_io import hdf5_io
 import maps_fit_parameters
 import maps_calibration
 import make_maps
@@ -212,6 +212,7 @@ def load_spectrum( main, filename, spectra, append = 1):
     live_time = 0
     
     try:
+        print 'opening spectra file',filename
         f = open(filename, 'rt')                       
     except: 
         print 'Could not open file:', filename
@@ -583,7 +584,7 @@ def save_spectrum( main, filename, sfilename):
             ic1['sens_unit'] = float(temp[1])
             ic1['sens_factor'] = float(temp[2])
     
-    ch5 = maps_hdf5.h5()
+    ch5 = hdf5_io.h5()
     
     fh5 = h5py.File(filename, 'r') 
             
@@ -621,7 +622,7 @@ def save_spectrum( main, filename, sfilename):
             
     fh5.close()    
     
-    print 'saving', sfilename
+    print 'saving spectra', sfilename
     f = open(sfilename, 'w')
     print>>f, 'VERSION:    3.1'
     print>>f,  'ELEMENTS:  ' + str(no_specs)
@@ -943,14 +944,12 @@ def main(wdir='', a=1,b=0,c=0,d=0,e=0):
             #Load spectra into spectra structure 
             spectra = maps_def.define_spectra(main['max_spec_channels'], main['max_spectra'], main['max_ICs'], mode = 'plot_spec')
 
+            append_spec = 1
             if len(spectra_filenames) == 1:
-                    load_spectrum(main, spectra_filenames[0], spectra, append=0)
+                append_spec = 0
                 
-            if len(spectra_filenames) > 1:
-                for iii in range(len(spectra_filenames)):
-                    load_spectrum(main, spectra_filenames[iii], spectra)
-    
-       
+            for iii in range(len(spectra_filenames)):
+                load_spectrum(main, spectra_filenames[iii], spectra, append_spec)
         
             # now start the fitting of the integrated spectra we just loaded
             fp = maps_fit_parameters.maps_fit_parameters()
@@ -967,33 +966,42 @@ def main(wdir='', a=1,b=0,c=0,d=0,e=0):
             #fitp, avg_fitp, spectra = calib.do_fits(this_w_uname, fitp, dofit_spec, spectra, 1, 1, 500, suffix, info_elements) 
             fitp, avg_fitp, spectra = calib.do_fits(this_w_uname, fitp, dofit_spec, spectra, maxiter = 500, per_pix = 1, generate_img = 1, suffix = suffix, info_elements = info_elements) 
 
-    
+
+            avg_res_override_name = os.path.join(current_directory, 'average_resulting_maps_fit_parameters_override.txt')
+            old_override_name = os.path.join(current_directory, 'old_maps_fit_parameters_override.txt')
+            old_override_date_name = os.path.join(current_directory, 'old_'+strftime("%Y-%m-%d %H:%M:%S", gmtime())+'_maps_fit_parameters_override.txt')
+            old_override_suffix_date_name = os.path.join(current_directory, 'old_'+strftime("%Y-%m-%d %H:%M:%S", gmtime())+'_maps_fit_parameters_override.txt'+suffix)
+            maps_override_suffix_name = os.path.join(current_directory, 'maps_fit_parameters_override.txt'+suffix)
+            maps_override_name = os.path.join(current_directory,'maps_fit_parameters_override.txt')
+            #if os.path.isfile(avg_res_override_name):
             #move AND rename the old AND new override files:
             try:
-                os.remove(os.path.join(current_directory, 'old_maps_fit_parameters_override.txt'))
+                if os.path.isfile(old_override_name):
+                    print 'removing',old_override_name
+                    os.remove(old_override_name)
+                if os.path.isfile(maps_override_suffix_name):
+                    print 'renaming',maps_override_suffix_name, old_override_suffix_date_name
+                    os.rename(maps_override_suffix_name, old_override_suffix_date_name)
             except:
-                pass
-            try:
-                os.remove(os.path.join(current_directory, 'maps_fit_parameters_override.txt'+suffix))
-            except:
-                pass            
+                pass 
+            print 'total_num detectors = ',total_number_detectors
             if total_number_detectors <= 1 :
                 try:
-                    os.rename(os.path.join(current_directory,'maps_fit_parameters_override.txt'), 
-                              os.path.join(current_directory,'old_maps_fit_parameters_override.txt')) 
+                    if os.path.isfile(maps_override_name):
+                        print 'renaming',maps_override_name,'to', old_override_date_name
+                        os.rename(maps_override_name, old_override_date_name) 
                 except:
-                    print 'could not rename file', os.path.join(current_directory,'maps_fit_parameters_override.txt')
+                    print 'could not rename file', maps_override_name, 'to',old_override_date_name
             try:
-                os.remove(os.path.join(current_directory, 'maps_fit_parameters_override.txt'+suffix))
-            except:
-                pass
-            try:
-               os.rename(os.path.join(current_directory,'average_resulting_maps_fit_parameters_override.txt'),
-                   os.path.join(current_directory,'maps_fit_parameters_override.txt'+suffix))
+                if os.path.isfile(maps_override_name):
+                    print 'removing',maps_override_suffix_name
+                    os.remove(maps_override_suffix_name)
+                if os.path.isfile(avg_res_override_name):
+                    print 'renaming', avg_res_override_name,'to', maps_override_suffix_name
+                    os.rename(avg_res_override_name, maps_override_suffix_name)
             except:
                 print 'error renaming average_resulting_maps_fit_parameters_override to maps_fit_parameters_override'
                 pass
-            
             
         dirlist = os.listdir(current_directory)
         if 'output_old' in dirlist: 
@@ -1101,7 +1109,7 @@ def main(wdir='', a=1,b=0,c=0,d=0,e=0):
     #Section e adds exchange information
     if (e > 0): 
         print 'Adding exchange information'
-        ch5 = maps_hdf5.h5()
+        ch5 = hdf5_io.h5()
         
         ch5.add_exchange(main, maps_conf)
 
