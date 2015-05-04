@@ -40,7 +40,8 @@ import matplotlib as mplot
 from matplotlib.ticker import MultipleLocator, FormatStrFormatter
 
 import maps_definitions
-import maps_analyze
+from fitting import analysis
+from fitting import leastsqbound
 import maps_fit_parameters
 import maps_tools
 import henke
@@ -70,8 +71,6 @@ class calibration:
 
         suffix = ''
         
-        fit = maps_analyze.analyze()
-
 
         print 'called axo_calibration with these specifications: this detector: {0}; total_number_detectors: {1}.'.format(
                                                                 this_detector, total_number_detectors)
@@ -234,9 +233,8 @@ class calibration:
                     first = 1
                     calib = spectra[current_spec].calib
           
-                    
-                    u, fitted_spec, background, xmin, xmax, perror = fit.fit_spectrum(fitp, this_spectrum, used_chan, calib, 
-                                 first = first, matrix = True, maxiter = maxiter)
+                    counts_dict = dict()
+                    u, fitted_spec, background, xmin, xmax, perror = analysis.fit_spectrum(fitp, this_spectrum, used_chan, calib, counts_dict, 0, first, maxiter, True)
 
 
                 fitp.g.no_iters = 4
@@ -744,7 +742,7 @@ class calibration:
                     bounds.append((bmin,bmax))
     
                 
-                Clb = maps_analyze.leastsqbound()
+                Clb = leastsqbound()
 
                 p0 = np.array(parinfo_value)
                 p1,cov,infodict,mesg,self.success = Clb.leastsqbound(self.residuals, p0, bounds, args=(y, x), maxfev=maxiter, full_output = True)      
@@ -1142,8 +1140,6 @@ class calibration:
         
         suffix = ''
         
-        fit = maps_analyze.analyze()
-
         nnls = 0
         print '\ncalled nbs_calibration with these specifications: this detector: {0}; total_number_detectors: {1}.'.format(
                                                                 this_detector, total_number_detectors)
@@ -1366,9 +1362,8 @@ class calibration:
                         first = 1
                         calib = spectra[current_spec].calib
               
-                        
-                        u, fitted_spec, background, xmin, xmax, perror = fit.fit_spectrum(fitp, this_spectrum, used_chan, calib, 
-                                     first = first, matrix = True, maxiter = maxiter)
+                        counts_dict = dict()
+                        u, fitted_spec, background, xmin, xmax, perror = analysis.fit_spectrum(fitp, this_spectrum, used_chan, calib, counts_dict, 0, first, maxiter, True)
 
 
                     fitp.g.no_iters = 4
@@ -1550,9 +1545,7 @@ class calibration:
 #                 print 'elements to fit:'
 #                 print temp_fitp_name[which_elements_to_fit]    
                                  
-                fit = maps_analyze.analyze()
-            
-                fitmatrix = fit.generate_fitmatrix(fitp, x, parinfo_value)            
+                fitmatrix = analysis.generate_fitmatrix(fitp, x, parinfo_value)            
 
 
                 wo_use_this_par = (np.nonzero(fitp.keywords.use_this_par[0:(np.max(fitp.keywords.mele_pos)-np.min(fitp.keywords.kele_pos)+1)] == 1))[0]
@@ -1933,7 +1926,7 @@ class calibration:
                     bounds.append((bmin,bmax))
     
                 
-                Clb = maps_analyze.leastsqbound()
+                Clb = leastsqbound.leastsqbound()
 
                 p0 = np.array(parinfo_value)
                 p1,cov,infodict,mesg,self.success = Clb.leastsqbound(self.residuals, p0, bounds, args=(y, x), maxfev=maxiter, full_output = True)      
@@ -3074,24 +3067,37 @@ class calibration:
             print 'elements to fit:'
             print temp_fitp_name[which_elements_to_fit]  
         
-            fit = maps_analyze.analyze()
-            u, fitted_spec, background, xmin, xmax, perror = fit.fit_spectrum(fitp, spectra[wo[i]].data, spectra[wo[i]].used_chan, spectra[wo[i]].calib, 
-                            first = first, matrix = matrix, maxiter = maxiter)
-
-            counts_background, counts_ka, counts_kb, counts_l, counts_m, \
-            counts_elastic, counts_compton, counts_step, counts_tail, \
-            counts_pileup, counts_escape = fit.get_counts()
+            counts_dict = dict()
+            u, fitted_spec, background, xmin, xmax, perror, nfev = analysis.fit_spectrum(fitp, spectra[wo[i]].data, spectra[wo[i]].used_chan, spectra[wo[i]].calib, counts_dict, 0, first, maxiter, matrix)
+            counts_background = counts_dict['counts_background']
+            counts_ka = counts_dict['counts_ka']
+            counts_kb = counts_dict['counts_kb']
+            counts_l = counts_dict['counts_l']
+            counts_m = counts_dict['counts_m']
+            counts_elastic = counts_dict['counts_elastic']
+            counts_compton = counts_dict['counts_compton']
+            counts_step = counts_dict['counts_step']
+            counts_tail = counts_dict['counts_tail']
+            counts_pileup = counts_dict['counts_pileup']
+            counts_escape = counts_dict['counts_escape']
 
             if (this_w_uname == "DO_FIT_ALL_FREE") :                  
                 fitp.s.val[:] = u[:]       
                 fitp.s.val[keywords.peaks] = 10.0**u[keywords.peaks]
                 for j in range(keywords.kele_pos[0]): fitp.s.use[j] = fitp.s.batch[j, 3]
-                u, fitted_spec, background, xmin, xmax, perror = fit.fit_spectrum(fitp, spectra[wo[i]].data, spectra[wo[i]].used_chan, spectra[wo[i]].calib, 
-                                                                                  first = first, matrix = matrix, maxiter = maxiter)                
-
-                counts_background, counts_ka, counts_kb, counts_l, counts_m, \
-                counts_elastic, counts_compton, counts_step, counts_tail, \
-                counts_pileup, counts_escape = fit.get_counts()
+                counts_dict = dict()
+                u, fitted_spec, background, xmin, xmax, perror, nfev = analysis.fit_spectrum(fitp, spectra[wo[i]].data, spectra[wo[i]].used_chan, spectra[wo[i]].calib, counts_dict, 0, first, maxiter, matrix)                
+                counts_background = counts_dict['counts_background']
+                counts_ka = counts_dict['counts_ka']
+                counts_kb = counts_dict['counts_kb']
+                counts_l = counts_dict['counts_l']
+                counts_m = counts_dict['counts_m']
+                counts_elastic = counts_dict['counts_elastic']
+                counts_compton = counts_dict['counts_compton']
+                counts_step = counts_dict['counts_step']
+                counts_tail = counts_dict['counts_tail']
+                counts_pileup = counts_dict['counts_pileup']
+                counts_escape = counts_dict['counts_escape']
             
             add_plot_spectra = np.zeros((self.main['max_spec_channels'], 12))
             add_plot_names = ['fitted', 'K alpha', 'background', 'K beta', 'L lines', 'M lines', 'step', 'tail', 'elastic', 'compton', 'pileup', 'escape']

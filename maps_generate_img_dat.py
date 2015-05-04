@@ -50,7 +50,7 @@ from file_io import hdf5_io
 import maps_definitions
 import maps_detector
 import maps_fit_parameters
-import maps_analyze
+from fitting import analysis
 import maps_tools
 
 import h5py
@@ -90,8 +90,7 @@ def fit_line_threaded(i_fit, data_line, output_dir, n_rows,  matrix, spectral_bi
     print 'fitting row number ', i_fit
     
     
-    fit = maps_analyze.analyze()
-    fitted_line, ka_line, l_line, bkground_line,  values_line, bkgnd_line, tfy_line, xmin, xmax = fit.fit_line(data_line, 
+    fitted_line, ka_line, l_line, bkground_line,  values_line, bkgnd_line, tfy_line, xmin, xmax = analysis.fit_line(data_line, 
                         output_dir, n_rows, matrix, spectral_binning, elt_line, values_line, bkgnd_line, tfy_line, 
                         info_elements, fitp, old_fitp, add_pars, keywords, add_matrixfit_pars, xrf_bin, calib )    
 
@@ -1045,7 +1044,6 @@ class analyze:
         
         if (make_maps_conf.use_fit > 0) and (xrfflyscan == 0):
             
-            fit = maps_analyze.analyze()
             
             seconds_fit_start = tm.time()
             # note: spectral binning needs to be even !!
@@ -1288,12 +1286,12 @@ class analyze:
                             data_line[0:scan.mca_arr[i_fit, jj, :].size, jj] = scan.mca_arr[i_fit, jj, :]
                         elt_line[:] = elt1_arr[i_fit, :]
   
-                        print 'fitting data_line',data_line.shape,
-                        print ' ',data_line
+                        #print 'fitting data_line',data_line.shape,
+                        #print ' ',data_line
                                
                         output_dir = self.main['output_dir'] 
         
-                        fitted_line, ka_line, l_line, bkground_line,  values_line, bkgnd_line, tfy_line, xmin, xmax = fit.fit_line(data_line, 
+                        fitted_line, ka_line, l_line, bkground_line,  values_line, bkgnd_line, tfy_line, xmin, xmax = analysis.fit_line(data_line, 
                                                 output_dir, n_rows, matrix, spectral_binning, elt_line, values_line, bkgnd_line, tfy_line, 
                                                 info_elements, fitp, old_fitp, fitp.add_pars, keywords, add_matrixfit_pars, xrf_bin, calib )
                       

@@ -137,8 +137,8 @@ class scan:
         self.extra_pv = []
         self.extra_pv_key_list = []
     def prnt(self):
-        print 'detecotr arr len = ',len(self.detector_arr), 'type',type(self.detector_arr),'shape',self.detector_arr.shape
-        print 'mca_arr len = ',len(self.mca_arr), 'type',type(self.mca_arr),'shape',self.mca_arr.shape
+        #print 'detecotr arr len = ',len(self.detector_arr), 'type',type(self.detector_arr),'shape',self.detector_arr.shape
+        #print 'mca_arr len = ',len(self.mca_arr), 'type',type(self.mca_arr),'shape',self.mca_arr.shape
         if len(self.mca_arr) > 0:
             print 'type [0]',type(self.mca_arr[0]),'shape[0]',self.mca_arr[0].shape
             print 'mca_arr [0] = ',self.mca_arr[0]
@@ -735,7 +735,6 @@ class mda:
             return -1
     
         buf = file.read(100)        # to read header for scan of up to 5 dimensions
-        print 'buf', buf
         u = Unpacker(buf)
 
         # read file header
@@ -1358,7 +1357,7 @@ class mda:
         except:
             invalid_file = 1
 
-        if invalid_file == 1:      
+        if scan == None or invalid_file == 1:      
             print 'not read a valid mda flyscan file, filename: ', mdafilename
             #maps_change_xrf_resetvars, n_ev, n_rows, n_cols, n_energy, energy, energy_spec, scan_time_stamp, dataset_orig
             return

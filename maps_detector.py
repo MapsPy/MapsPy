@@ -40,7 +40,7 @@ import numpy as np
 
 
 import maps_fit_parameters
-import maps_analyze
+from fitting import analysis
 
 
 #----------------------------------------------------------------------
@@ -474,8 +474,7 @@ class detector_maps:
                 if make_maps_conf.dmaps[this_det].name == 'phase' : no_int = 1 
                 else: no_int = 0
                     
-                anl = maps_analyze.analyze()
-                nrml, ntmb, rdt = anl.maps_simple_dpc_integration(nrml, ntmb, no_int = no_int)
+                nrml, ntmb, rdt = analysis.maps_simple_dpc_integration(nrml, ntmb, no_int = no_int)
                 # notem nrml, ntmb, now normalized (what comes up ust go down)
                 if make_maps_conf.dmaps[this_det].name == 'H_dpc_norm' : 
                     dmaps_set[0:nx, 0:ny, this_det] = nrml

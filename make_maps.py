@@ -44,7 +44,7 @@ import maps_elements
 
 import maps_detector
 import maps_fit_parameters
-import maps_analyze
+from fitting import analysis
 import maps_calibration
 
 
@@ -398,9 +398,7 @@ def main(wdir='', force_fit=0, no_fit = False):
         print 'elements to fit:'
         print temp_fitp_name[which_elements_to_fit]    
                          
-        fit = maps_analyze.analyze()
-
-        fitmatrix = fit.generate_fitmatrix(fitp, x, parinfo_value)
+        fitmatrix = analysis.generate_fitmatrix(fitp, x, parinfo_value)
         
          
         
