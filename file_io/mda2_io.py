@@ -240,6 +240,10 @@ class mda_scan:
 			inner_scan = mda_scan()
 			inner_scan.load_header(file_ptr, False, verbose)
 			self.inner_scans += [inner_scan]
+	def get_child_num_detectors(self):
+		if self.rank > 1:
+			return self.inner_scans[0].get_child_num_detectors()
+		return self.num_detectors
 	def scan_header(self, file_ptr, verbose=False):
 		if file_ptr == None:
 			raise Exception( 'mda_scan Error: Null file pointer')
@@ -480,13 +484,15 @@ class mda_file:
 if __name__ == '__main__':
 	#test loading mda file
 	print 'test opening test.mda'
-	mda_f = mda_file('test.mda')
+	mda_f = mda_file('test4.mda')
 	mda_f.load_header()
 	print 'Dataset dims:',mda_f.header.dims
 	
 	dataset =  mda_f.get_scan((0,)  )
 	print 'len',len(dataset)
 	print 'len',len(dataset[0])
+	num_detectors = mda_f.scan.get_child_num_detectors()
+	print 'num detectors', num_detectors
 	#print 'len',len(dataset[0][0])
 	#print dataset
 	mda_f.close_file()
