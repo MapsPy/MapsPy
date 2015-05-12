@@ -435,8 +435,12 @@ class henke:
         try:
             file = open(str(filename),'rb')
         except:
-            print 'Could not open file ', filename
-            return -1
+            try:
+                filename = '../reference/henke.xdr'
+                file = open(str(filename),'rb')
+            except:
+                print 'Could not open file ', filename
+                return -1
         
         if verbose:
             print 'File: ', filename   

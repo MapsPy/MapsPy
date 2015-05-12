@@ -35,6 +35,7 @@ class SchedulerJobsWebService(object):
 		rawbody = cherrypy.request.body.read(int(cl))
 		job = json.loads(rawbody)
 		self.db.insert_job(job)
+		cherrypy.engine.publish("new_job", job)
 		return 'inserted job'
 
 	#change job properties (priority, ect...)

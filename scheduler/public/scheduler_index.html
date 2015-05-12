@@ -105,7 +105,7 @@
             type: 'POST',
             url:"/job",
             contentType: 'application/json; charset=utf-8',
-            data: JSON.stringify({'MaxFilesToProc': 1, 'ProcMask': 1, 'BeamLine': '2-ID-E', 'DataPath': $("#DataPath").val(), 'Version': '1.00', 'Standards': '', 'DetectorToStartWith': 0, 'XRF_Bin': 0, 'MaxLineToProc': 11, 'DetectorElements': parseInt($("#DetectorElements").val(), 10), 'XANES_Scan': 0, 'NNLS': 0, 'QuickAndDirty': 0}),
+            data: JSON.stringify({'MaxFilesToProc': 1, 'ProcMask': 1, 'BeamLine': '2-ID-E', 'DataPath': $("#DataPath").val(), 'Version': '1.00', 'Standards': '', 'DetectorToStartWith': 0, 'XRF_Bin': 0, 'MaxLinesToProc': 11, 'DetectorElements': parseInt($("#DetectorElements").val(), 10), 'XANES_Scan': 0, 'NNLS': 0, 'QuickAndDirty': 0}),
             datatype: "json"
           }).done(function(d)
                    { 

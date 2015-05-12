@@ -87,9 +87,14 @@ class maps_elements:
             f = open(els_file, 'r')
             csvf = csv.reader(f, delimiter=',')
         except:
-            print 'Error: Could not find xrf_library.csv file! Please get the library file (e.g., from runtime maps at'
-            print 'http://www.stefan.vogt.net/downloads.html) and make sure it is in the Python path'
-            return None
+            try:
+                els_file = '../reference/xrf_library.csv'
+                f = open(els_file, 'r')
+                csvf = csv.reader(f, delimiter=',')
+            except:
+                print 'Error: Could not find xrf_library.csv file! Please get the library file (e.g., from runtime maps at'
+                print 'http://www.stefan.vogt.net/downloads.html) and make sure it is in the Python path'
+                return None
         
         version = 0.
         for row in csvf:
