@@ -39,6 +39,7 @@ import time as t
 import matplotlib as mplot
 from matplotlib.ticker import MultipleLocator, FormatStrFormatter
 
+from fitting import leastsqbound
 import maps_definitions
 import maps_analyze
 import maps_fit_parameters
@@ -745,7 +746,7 @@ class calibration:
                     bounds.append((bmin,bmax))
     
                 
-                Clb = maps_analyze.leastsqbound()
+                Clb = leastsqbound
 
                 p0 = np.array(parinfo_value)
                 p1,cov,infodict,mesg,self.success = Clb.leastsqbound(self.residuals, p0, bounds, args=(y, x), maxfev=maxiter, full_output = True)      
@@ -1934,7 +1935,7 @@ class calibration:
                     bounds.append((bmin,bmax))
     
                 
-                Clb = maps_analyze.leastsqbound()
+                Clb = leastsqbound
 
                 p0 = np.array(parinfo_value)
                 p1,cov,infodict,mesg,self.success = Clb.leastsqbound(self.residuals, p0, bounds, args=(y, x), maxfev=maxiter, full_output = True)      

@@ -41,3 +41,5 @@ class DatabasePlugin(plugins.SimplePlugin):
 	def save_it(self, entity):
 		self.db.save(entity)
 
+	def update_job(self, job_dict):
+		self.db.update_job(job_dict)

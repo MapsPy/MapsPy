@@ -144,6 +144,9 @@ class ProcessNode(object):
 				print 'Error processing',job_dict['DataPath']
 				traceback.print_exc(file=sys.stdout)
 			print 'done processing job', job_dict['DataPath']
+			job_dict['Status'] = 'Completed'
+			#job_dict['StopWork'] = time.time()
+			self.db.update_job(job_dict)
 		self.pn_info[STR_STATUS] = 'Idle'
 		self.send_status_update()
 	def stop(self):

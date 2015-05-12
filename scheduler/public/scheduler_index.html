@@ -100,12 +100,33 @@
 
 
          $("#Btn-Submit-Job").click(function(e) {
+          var procMask = 0;
+          if ($('#analysis-type-a')[0].checked == true)
+          {
+            procMask += 1
+          }
+          if ($('#analysis-type-b')[0].checked == true)
+          {
+            procMask += 2
+          }
+          if ($('#analysis-type-c')[0].checked == true)
+          {
+            procMask += 4
+          }
+          if ($('#analysis-type-d')[0].checked == true)
+          {
+            procMask += 8
+          }
+          if ($('#analysis-type-e')[0].checked == true)
+          {
+            procMask += 16
+          }
           $.ajax(
           {
             type: 'POST',
             url:"/job",
             contentType: 'application/json; charset=utf-8',
-            data: JSON.stringify({'MaxFilesToProc': 1, 'ProcMask': 1, 'BeamLine': '2-ID-E', 'DataPath': $("#DataPath").val(), 'Version': '1.00', 'Standards': '', 'DetectorToStartWith': 0, 'XRF_Bin': 0, 'MaxLinesToProc': 11, 'DetectorElements': parseInt($("#DetectorElements").val(), 10), 'XANES_Scan': 0, 'NNLS': 0, 'QuickAndDirty': 0}),
+            data: JSON.stringify({'MaxFilesToProc': 1, 'ProcMask': procMask, 'BeamLine': '2-ID-E', 'DataPath': $("#DataPath").val(), 'Version': '1.00', 'Standards': '', 'DetectorToStartWith': 0, 'XRF_Bin': 0, 'MaxLinesToProc': 11, 'DetectorElements': parseInt($("#DetectorElements").val(), 10), 'XANES_Scan': 0, 'NNLS': 0, 'QuickAndDirty': 0}),
             datatype: "json"
           }).done(function(d)
                    { 
@@ -177,7 +198,7 @@
                <input type="checkbox" id="analysis-type-b" value="B">B<br>
                <input type="checkbox" id="analysis-type-c" value="C">C<br>
                <input type="checkbox" id="analysis-type-d" value="D">D<br>
-               <input type="checkbox" id="analysis-tyoe-e" value="E">E<br>
+               <input type="checkbox" id="analysis-type-e" value="E">E<br>
                Total Number of Detectors <br>
                <input type="text" id="DetectorElements" value="4">
 <!--
