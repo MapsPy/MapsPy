@@ -62,7 +62,8 @@ class ProcessNode(object):
 		self.scheduler_host = serverSettings[Settings.SERVER_SCHEDULER_HOSTNAME]
 		self.scheduler_port = serverSettings[Settings.SERVER_SCHEDULER_PORT]
 		self.session = requests.Session()
-		self.scheduler_url = 'http://'+self.scheduler_host+':'+self.scheduler_port+'/process_node'
+		self.scheduler_pn_url = 'http://'+self.scheduler_host+':'+self.scheduler_port+'/process_node'
+		self.scheduler_job_url = 'http://'+self.scheduler_host+':'+self.scheduler_port+'/job'
 		self.db_name = pnSettings[Settings.PROCESS_NODE_DATABASE_NAME]
 		self.db = DatabasePlugin(cherrypy.engine, SQLiteDB, self.db_name)
 		cherrypy.engine.subscribe("new_job", self.callback_new_job)
@@ -80,8 +81,8 @@ class ProcessNode(object):
 		cherrypy.tree.mount(webapp, '/', self.conf)
 		cherrypy.engine.start()
 		try:
-			print 'posting to scheduler',self.scheduler_url
-			self.session.post(self.scheduler_url, data=json.dumps(self.pn_info))
+			print 'posting to scheduler',self.scheduler_pn_url
+			self.session.post(self.scheduler_pn_url, data=json.dumps(self.pn_info))
 		except:
 			print 'Error sending post'
 		self.pn_info[STR_STATUS] = 'Idle'
@@ -102,6 +103,10 @@ class ProcessNode(object):
 		job_list = self.db.get_all_jobs()
 		for job_dict in job_list:
 			self.pn_info[STR_STATUS] = 'Processing'
+			job_dict['Status'] = 1 #1 = processing
+			#job_dict['StartProcWork'] = time.time()
+			#self.db.update_job(job_dict)
+			self.send_job_update(job_dict)
 			self.send_status_update()
 			print 'processing job', job_dict['DataPath']
 			maps_set_str = os.path.join(str(job_dict['DataPath']),'maps_settings.txt')
@@ -144,9 +149,10 @@ class ProcessNode(object):
 				print 'Error processing',job_dict['DataPath']
 				traceback.print_exc(file=sys.stdout)
 			print 'done processing job', job_dict['DataPath']
-			job_dict['Status'] = 'Completed'
+			job_dict['Status'] = 3 #3 = completed
 			#job_dict['StopWork'] = time.time()
 			self.db.update_job(job_dict)
+			self.send_job_update(job_dict)
 		self.pn_info[STR_STATUS] = 'Idle'
 		self.send_status_update()
 	def stop(self):
@@ -158,7 +164,7 @@ class ProcessNode(object):
 		except:
 			pass
 		try:
-			self.session.delete(self.scheduler_url, data=json.dumps(self.pn_info))
+			self.session.delete(self.scheduler_pn_url, data=json.dumps(self.pn_info))
 			cherrypy.engine.exit()
 		except:
 			pass
@@ -166,7 +172,14 @@ class ProcessNode(object):
 	def send_status_update(self):
 		try:
 			self.pn_info[STR_HEARTBEAT] = str(datetime.now())
-			self.session.put(self.scheduler_url, data=json.dumps(self.pn_info))
+			self.session.put(self.scheduler_pn_url, data=json.dumps(self.pn_info))
+		except:
+			print 'Error sending status update'
+
+	def send_job_update(self, job_dict):
+		try:
+			self.session.put(self.scheduler_job_url, data=json.dumps(job_dict))
+			print 'sent status'
 		except:
 			print 'Error sending status update'
 

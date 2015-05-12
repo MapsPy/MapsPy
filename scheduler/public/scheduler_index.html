@@ -40,6 +40,22 @@
               var $tr = $("<tr id='data_entry'>");
               $tr.append( $("<td>").text(item.Id));
               $tr.append( $("<td>").text(item.DataPath));
+			  if(item.Status == 0)
+              {
+                $tr.append( $("<td>").text("Waiting"));
+              }
+			  if(item.Status == 1)
+              {
+                $tr.append( $("<td>").text("Processing"));
+              }
+			  if(item.Status == 2)
+              {
+                $tr.append( $("<td>").text("Error Occured"));
+              }
+			  if(item.Status == 3)
+              {
+                $tr.append( $("<td>").text("Completed"));
+              }
               $table.append( $tr);
             })
           }
@@ -93,6 +109,7 @@
             var $tr = $("<tr id='data_entry'>");
             $tr.append( $("<td>").text(item.Id));
             $tr.append( $("<td>").text(item.DataPath));
+            $tr.append( $("<td>").text(item.Status));
             $table.append( $tr);
           })
         }, dataType: "json"});
@@ -126,7 +143,7 @@
             type: 'POST',
             url:"/job",
             contentType: 'application/json; charset=utf-8',
-            data: JSON.stringify({'MaxFilesToProc': 1, 'ProcMask': procMask, 'BeamLine': '2-ID-E', 'DataPath': $("#DataPath").val(), 'Version': '1.00', 'Standards': '', 'DetectorToStartWith': 0, 'XRF_Bin': 0, 'MaxLinesToProc': 11, 'DetectorElements': parseInt($("#DetectorElements").val(), 10), 'XANES_Scan': 0, 'NNLS': 0, 'QuickAndDirty': 0}),
+            data: JSON.stringify({'MaxFilesToProc': 1, 'ProcMask': procMask, 'BeamLine': '2-ID-E', 'DataPath': $("#DataPath").val(), 'Version': '1.00', 'Standards': '', 'DetectorToStartWith': 0, 'XRF_Bin': 0, 'MaxLinesToProc': 11, 'DetectorElements': parseInt($("#DetectorElements").val(), 10), 'XANES_Scan': 0, 'NNLS': 0, 'QuickAndDirty': 0, 'Status': 0, 'Priority': 5, 'StartProcTime': 0, 'FinishProcTime': 0}),
             datatype: "json"
           }).done(function(d)
                    { 

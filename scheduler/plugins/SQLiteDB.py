@@ -1,7 +1,7 @@
 import sqlite3 as sql
 
 CREATE_PROCESS_NODES_TABLE_STR = 'CREATE TABLE IF NOT EXISTS ProcessNodes(Id INTEGER PRIMARY KEY, ComputerName TEXT, NumThreads INTEGER, Hostname TEXT, Port INTEGER, Status TEXT, Heartbeat TIMESTAMP);'
-CREATE_JOBS_TABLE_STR = 'CREATE TABLE IF NOT EXISTS Jobs(Id INTEGER PRIMARY KEY, DataPath TEXT, ProcMask INTEGER, Version TEXT, DetectorElements INTEGER, MaxFilesToProc INTEGER, MaxLinesToProc INTEGER, QuickAndDirty INTEGER, XRF_Bin INTEGER, NNLS INTEGER, XANES_Scan INTEGER, DetectorToStartWith INTEGER, BeamLine TEXT, Standards TEXT);'
+CREATE_JOBS_TABLE_STR = 'CREATE TABLE IF NOT EXISTS Jobs(Id INTEGER PRIMARY KEY, DataPath TEXT, ProcMask INTEGER, Version TEXT, DetectorElements INTEGER, MaxFilesToProc INTEGER, MaxLinesToProc INTEGER, QuickAndDirty INTEGER, XRF_Bin INTEGER, NNLS INTEGER, XANES_Scan INTEGER, DetectorToStartWith INTEGER, BeamLine TEXT, Standards TEXT, Priority INTEGER, Status INTEGER, StartProcTime TIMESTAMP, FinishProcTime TIMESTAMP);'
 CREATE_JOB_QUEUE_TABLE_STR = 'CREATE TABLE IF NOT EXISTS JobQueue(Id INTEGER PRIMARY KEY, JobId INTEGER, PnId INTEGER, Status INTEGER, StartTime TIMESTAMP, StopStime TIMESTAMP, FOREIGN KEY(JobId) REFERENCES Jobs(Id), FOREIGN KEY(PnId) REFERENCES ProcessNodes(Id));'
 
 DROP_PROCESS_NODES_STR = 'DROP TABLE IF EXISTS ProcessNodes;'
@@ -9,7 +9,7 @@ DROP_JOBS_STR = 'DROP TABLE IF EXISTS Jobs;'
 DROP_JOB_QUEUE_STR = 'DROP TABLE IF EXISTS JobQueue;'
 
 INSERT_PROCESS_NODE = 'INSERT INTO ProcessNodes (ComputerName, NumThreads, Hostname, Port, Status, Heartbeat) VALUES(:ComputerName, :NumThreads, :Hostname, :Port, :Status, :Heartbeat)'
-INSERT_JOB = 'INSERT INTO Jobs (DataPath, ProcMask, Version, DetectorElements, MaxFilesToProc, MaxLinesToProc, QuickAndDirty, XRF_Bin, NNLS, XANES_Scan, DetectorToStartWith, BeamLine, Standards) VALUES(:DataPath, :ProcMask, :Version, :DetectorElements, :MaxFilesToProc, :MaxLinesToProc, :QuickAndDirty, :XRF_Bin, :NNLS, :XANES_Scan, :DetectorToStartWith, :BeamLine, :Standards)'
+INSERT_JOB = 'INSERT INTO Jobs (DataPath, ProcMask, Version, DetectorElements, MaxFilesToProc, MaxLinesToProc, QuickAndDirty, XRF_Bin, NNLS, XANES_Scan, DetectorToStartWith, BeamLine, Standards, Priority, Status, StartProcTime, FinishProcTime) VALUES(:DataPath, :ProcMask, :Version, :DetectorElements, :MaxFilesToProc, :MaxLinesToProc, :QuickAndDirty, :XRF_Bin, :NNLS, :XANES_Scan, :DetectorToStartWith, :BeamLine, :Standards, :Priority, :Status, NULL, NULL)'
 
 
 UPDATE_PROCESS_NODE_BY_ID = 'UPDATE ProcessNodes SET ComputerName=:ComputerName NumThreads=:NumThreads Hostname=:Hostname, Port=:Port Status=:Status Heartbeat=:Heartbeat WHERE Id=:Id'
@@ -18,8 +18,9 @@ UPDATE_JOB_BY_ID = 'UPDATE Jobs SET DataPath=:DataPath ProcMask=:ProcMask, Versi
 
 SELECT_ALL_PROCESS_NODES = 'SELECT ComputerName, NumThreads, Hostname, Port, Status, Heartbeat FROM ProcessNodes'
 SELECT_PROCESS_NODE_BY_NAME = 'SELECT Id, ComputerName, NumThreads, Status, Heartbeat FROM ProcessNodes WHERE ComputerName=:ComputerName'
-SELECT_ALL_JOBS = 'SELECT Id, DataPath, ProcMask, Version, DetectorElements, MaxFilesToProc, MaxLinesToProc, QuickAndDirty, XRF_Bin, NNLS, XANES_Scan, DetectorToStartWith, BeamLine, Standards FROM Jobs'
-SELECT_JOB_BY_ID = 'SELECT DataPath, ProcMask, Version, DetectorElements, MaxFilesToProc, MaxLinesToProc, QuickAndDirty, XRF_Bin, NNLS, XANES_Scan, DetectorToStartWith, BeamLine, Standards FROM Jobs WHERE Id=:Id'
+SELECT_ALL_JOBS = 'SELECT Id, DataPath, ProcMask, Version, DetectorElements, MaxFilesToProc, MaxLinesToProc, QuickAndDirty, XRF_Bin, NNLS, XANES_Scan, DetectorToStartWith, BeamLine, Standards, Priority, Status, StartProcTime, FinishProcTime FROM Jobs'
+SELECT_JOB_BY_ID = 'SELECT Id, DataPath, ProcMask, Version, DetectorElements, MaxFilesToProc, MaxLinesToProc, QuickAndDirty, XRF_Bin, NNLS, XANES_Scan, DetectorToStartWith, BeamLine, Standards, Priority, Status, StartProcTime, FinishProcTime FROM Jobs WHERE Id=:Id'
+SELECT_JOBS_BY_STATUS = 'SELECT Id, DataPath, ProcMask, Version, DetectorElements, MaxFilesToProc, MaxLinesToProc, QuickAndDirty, XRF_Bin, NNLS, XANES_Scan, DetectorToStartWith, BeamLine, Standards, Priority, Status, StartProcTime, FinishProcTime FROM Jobs WHERE Status=:Status ORDER BY Priority DESC'
 
 
 class SQLiteDB:
@@ -89,17 +90,24 @@ class SQLiteDB:
 		#return cur.fetchall()
 		all_nodes = cur.fetchall()
 		ret_list = []
-		#SELECT_ALL_JOBS = 'SELECT Id, DataPath, ProcMask, Version, DetectorElements, MaxFilesToProc, MaxLinesToProc, QuickAndDirty, XRF_Bin, NNLS, XANES_Scan, DetectorToStartWith, BeamLine, Standards FROM Jobs'
+		#SELECT_ALL_JOBS = 'SELECT Id, DataPath, ProcMask, Version, DetectorElements, MaxFilesToProc, MaxLinesToProc, QuickAndDirty, XRF_Bin, NNLS, XANES_Scan, DetectorToStartWith, BeamLine, Standards, Status, StartProcTime, FinishProcTime FROM Jobs'
 		for node in all_nodes:
-			ret_list += [ {'Id':node[0], 'DataPath':node[1], 'ProcMask': node[2], 'Version': node[3], 'DetectorElements':node[4], 'MaxFileToProc':node[5], 'MaxLinesToProc':node[6], 'QuickAndDirty':node[7], 'XRF_Bin':node[8], 'NNLS':node[9], 'XANES_Scan':node[10], 'DetectorToStartWith':node[11], 'BeamLine':node[12], 'Standards':node[13]  } ]
+			ret_list += [ {'Id':node[0], 'DataPath':node[1], 'ProcMask': node[2], 'Version': node[3], 'DetectorElements':node[4], 'MaxFileToProc':node[5], 'MaxLinesToProc':node[6], 'QuickAndDirty':node[7], 'XRF_Bin':node[8], 'NNLS':node[9], 'XANES_Scan':node[10], 'DetectorToStartWith':node[11], 'BeamLine':node[12], 'Standards':node[13], 'Priority':node[14], 'Status':node[15], 'StartProcTime':node[16], 'FinishProcTime':node[17]  } ]
 		return ret_list
 
 	def get_job(self, job_id):
 		con = sql.connect(self.uri)
 		cur = con.cursor()
-		cur.execute(SELECT_JOBS_BY_ID, {'Id':job_id})
+		cur.execute(SELECT_JOB_BY_ID, {'Id':job_id})
 		con.commit()
 		return cur.fetchone()
+
+	def get_jobs_by_status(self, status):
+		con = sql.connect(self.uri)
+		cur = con.cursor()
+		cur.execute(SELECT_JOBS_BY_STATUS, {'Status':status})
+		con.commit()
+		return cur.fetchall()
 
 	def update_job(self, job_dict):
 		print 'updating job', job_dict
@@ -115,7 +123,9 @@ if __name__ == '__main__':
 	import datetime
 	proc_node = { 'ComputerName':'Comp1', 'NumThreads':1, 'Hostname':'127.0.0.2', 'Port':8080, 'Status':'idle', 'Heartbeat':datetime.datetime.now()}
 	proc_node2 = { 'ComputerName':'Comp2', 'NumThreads':2, 'Hostname':'127.0.0.3', 'Port':8080, 'Status':'idle', 'Heartbeat':datetime.datetime.now()}
-	job1 = { 'DataPath':'/data/mapspy/', 'ProcMask':1, 'Version':'1.00', 'DetectorElements':1, 'MaxFilesToProc':1, 'MaxLinesToProc':11, 'QuickAndDirty':0, 'XRF_Bin':0, 'NNLS':0, 'XANES_Scan':0, 'DetectorToStartWith':0, 'BeamLine':'2-ID-E', 'Standards':''}
+	job1 = { 'DataPath':'/data/mapspy1/', 'ProcMask':1, 'Version':'1.00', 'DetectorElements':1, 'MaxFilesToProc':1, 'MaxLinesToProc':11, 'QuickAndDirty':0, 'XRF_Bin':0, 'NNLS':0, 'XANES_Scan':0, 'DetectorToStartWith':0, 'BeamLine':'2-ID-E', 'Standards':'', 'Priority':5, 'Status':0, 'StartProcTime':0, 'FinishProcTime':0 }
+	job2 = { 'DataPath':'/data/mapspy2/', 'ProcMask':4, 'Version':'1.00', 'DetectorElements':1, 'MaxFilesToProc':1, 'MaxLinesToProc':11, 'QuickAndDirty':0, 'XRF_Bin':0, 'NNLS':0, 'XANES_Scan':0, 'DetectorToStartWith':0, 'BeamLine':'2-ID-E', 'Standards':'', 'Priority':10, 'Status':0, 'StartProcTime':0, 'FinishProcTime':0 }
+	job3 = { 'DataPath':'/data/mapspy3/', 'ProcMask':8, 'Version':'1.00', 'DetectorElements':1, 'MaxFilesToProc':1, 'MaxLinesToProc':11, 'QuickAndDirty':0, 'XRF_Bin':0, 'NNLS':0, 'XANES_Scan':0, 'DetectorToStartWith':0, 'BeamLine':'2-ID-E', 'Standards':'', 'Priority':7, 'Status':3, 'StartProcTime':0, 'FinishProcTime':0 }
 	db = SQLiteDB('TestDatabase.db')
 	db.create_tables(True)
 	db.insert_process_node(proc_node)
@@ -129,5 +139,8 @@ if __name__ == '__main__':
 	print jenc.encode(result)
 	#add job
 	db.insert_job(job1)
-	print db.get_all_jobs()
+	db.insert_job(job2)
+	db.insert_job(job3)
+	print db.get_jobs_by_status(0)
+	#print db.get_all_jobs()
 	
