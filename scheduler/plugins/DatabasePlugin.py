@@ -24,7 +24,10 @@ class DatabasePlugin(plugins.SimplePlugin):
 		self.db.insert_process_node(entity)
 
 	def insert_job(self, job_dict):
-		self.db.insert_job(job_dict)
+		return self.db.insert_job(job_dict)
+
+	def insert_job_with_id(self, job_dict):
+		self.db.insert_job_with_id(job_dict)
 
 	def get_all_process_nodes(self):
 		return self.db.get_all_process_nodes()
@@ -34,6 +37,9 @@ class DatabasePlugin(plugins.SimplePlugin):
 
 	def get_all_jobs(self):
 		return self.db.get_all_jobs()
+
+	def get_all_unprocessed_jobs(self):
+		return self.db.get_all_unprocessed_jobs()
 
 	def get_job(self, job_id):
 		return self.db.get_job(job_id)

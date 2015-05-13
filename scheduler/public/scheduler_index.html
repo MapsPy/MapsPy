@@ -10,7 +10,7 @@
         $.ajax(
         {
           url:"/process_node",
-          datatype: "text",
+          datatype: "json",
           success: function(data) 
           {
             var $table = $("#process_node_table");
@@ -30,7 +30,7 @@
         $.ajax(
         {
           url:"/job",
-          datatype: "text",
+          datatype: "json",
           success: function(data) 
           {
             var $table = $("#job_table");
@@ -109,7 +109,23 @@
             var $tr = $("<tr id='data_entry'>");
             $tr.append( $("<td>").text(item.Id));
             $tr.append( $("<td>").text(item.DataPath));
-            $tr.append( $("<td>").text(item.Status));
+		    if(item.Status == 0)
+            {
+              $tr.append( $("<td>").text("Waiting"));
+            }
+		    if(item.Status == 1)
+            {
+              $tr.append( $("<td>").text("Processing"));
+            }
+		    if(item.Status == 2)
+            {
+              $tr.append( $("<td>").text("Error Occured"));
+            }
+		    if(item.Status == 3)
+            {
+              $tr.append( $("<td>").text("Completed"));
+            }
+            //$tr.append( $("<td>").text(item.Status));
             $table.append( $tr);
           })
         }, dataType: "json"});

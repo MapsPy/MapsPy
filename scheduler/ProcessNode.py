@@ -100,22 +100,22 @@ class ProcessNode(object):
 
 	def process_next_job(self):
 		print 'checking for jobs to process'
-		job_list = self.db.get_all_jobs()
+		job_list = self.db.get_all_unprocessed_jobs()
 		for job_dict in job_list:
-			self.pn_info[STR_STATUS] = 'Processing'
-			job_dict['Status'] = 1 #1 = processing
-			#job_dict['StartProcWork'] = time.time()
-			#self.db.update_job(job_dict)
-			self.send_job_update(job_dict)
-			self.send_status_update()
-			print 'processing job', job_dict['DataPath']
-			maps_set_str = os.path.join(str(job_dict['DataPath']),'maps_settings.txt')
 			try:
+				print 'processing job', job_dict['DataPath']
+				self.pn_info[STR_STATUS] = 'Processing'
+				job_dict['Status'] = 1 #1 = processing
+				#job_dict['StartProcWork'] = time.time()
+				self.db.update_job(job_dict)
+				self.send_job_update(job_dict)
+				self.send_status_update()
+				maps_set_str = os.path.join(str(job_dict['DataPath']),'maps_settings.txt')
 				f = open(maps_set_str, 'w')
 				f.write('	  This file will set some MAPS settings mostly to do with fitting'+'\n')
 				f.write('VERSION:' + str(job_dict['Version']).strip()+'\n')
 				f.write('DETECTOR_ELEMENTS:' + str(job_dict['DetectorElements']).strip()+'\n')
-				f.write('MAX_NUMBER_OF_FILES_TO_PROCESS:' + str(job_dict['MaxFileToProc']).strip()+'\n')
+				f.write('MAX_NUMBER_OF_FILES_TO_PROCESS:' + str(job_dict['MaxFilesToProc']).strip()+'\n')
 				f.write('MAX_NUMBER_OF_LINES_TO_PROCESS:' + str(job_dict['MaxLinesToProc']).strip()+'\n')
 				f.write('QUICK_DIRTY:' + str(job_dict['QuickAndDirty']).strip()+'\n')
 				f.write('XRF_BIN:' + str(job_dict['XRF_Bin']).strip()+'\n')
@@ -145,14 +145,16 @@ class ProcessNode(object):
 					key_e = 1
 				#os.chdir(job_dict['DataPath'])
 				maps_batch.main(wdir=job_dict['DataPath'], a=key_a, b=key_b, c=key_c, d=key_d, e=key_e)
+				job_dict['Status'] = 3 #3 = completed
 			except:
 				print 'Error processing',job_dict['DataPath']
 				traceback.print_exc(file=sys.stdout)
-			print 'done processing job', job_dict['DataPath']
-			job_dict['Status'] = 3 #3 = completed
-			#job_dict['StopWork'] = time.time()
+				job_dict['Status'] = 2 #2 = error
 			self.db.update_job(job_dict)
 			self.send_job_update(job_dict)
+			self.send_status_update()
+			print 'done processing job', job_dict['DataPath']
+		print 'Finished Processing, going to Idle'
 		self.pn_info[STR_STATUS] = 'Idle'
 		self.send_status_update()
 	def stop(self):
@@ -181,5 +183,5 @@ class ProcessNode(object):
 			self.session.put(self.scheduler_job_url, data=json.dumps(job_dict))
 			print 'sent status'
 		except:
-			print 'Error sending status update'
+			print 'Error sending job update'
 

@@ -34,14 +34,18 @@ class SchedulerJobsWebService(object):
 		cl = cherrypy.request.headers['Content-Length']
 		rawbody = cherrypy.request.body.read(int(cl))
 		job = json.loads(rawbody)
-		self.db.insert_job(job)
+		job['Id'] = self.db.insert_job(job)
 		cherrypy.engine.publish("new_job", job)
-		return 'inserted job'
+		return 'inserted job Id:'+str(job['Id'])
 
 	#change job properties (priority, ect...)
 	def PUT(self):
-		#cherrypy.session['mystring'] = another_string
-		pass
+		cl = cherrypy.request.headers['Content-Length']
+		rawbody = cherrypy.request.body.read(int(cl))
+		job = json.loads(rawbody)
+		self.db.update_job(job)
+		#cherrypy.engine.publish("new_job", job)
+		return 'updated job Id:'+str(job['Id'])
 
 	#delete job from queue
 	def DELETE(self):

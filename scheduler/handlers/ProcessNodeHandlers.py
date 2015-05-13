@@ -33,9 +33,13 @@ class ProcessNodeJobsWebService(object):
 		cl = cherrypy.request.headers['Content-Length']
 		rawbody = cherrypy.request.body.read(int(cl))
 		job = json.loads(rawbody)
-		self.db.insert_job(job)
-		cherrypy.engine.publish("new_job", job)
-		return 'inserted job'
+		if job != None:
+			self.db.insert_job_with_id(job)
+			cherrypy.engine.publish("new_job", job)
+			return 'inserted job'
+		else:
+			print 'Error: could not parse json job'
+			return 'Error: could not parse json job'
 
 	#update job
 	def PUT(self):
