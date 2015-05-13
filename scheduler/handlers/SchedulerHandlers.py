@@ -3,10 +3,31 @@ import json
 import cherrypy
 
 class SchedulerHandler(object):
-	
+
+	def __init__(self, db):
+		self.db = db
+
 	@cherrypy.expose
 	def index(self):
 		return file('public/scheduler_index.html')
+
+	@cherrypy.expose
+	def get_all_unprocessed_jobs(self):
+		result = self.db.get_all_unprocessed_jobs()
+		jenc = json.JSONEncoder()
+		return jenc.encode(result)
+
+	@cherrypy.expose
+	def get_all_processing_jobs(self):
+		result = self.db.get_all_processing_jobs()
+		jenc = json.JSONEncoder()
+		return jenc.encode(result)
+
+	@cherrypy.expose
+	def get_all_finished_jobs(self):
+		result = self.db.get_all_finished_jobs()
+		jenc = json.JSONEncoder()
+		return jenc.encode(result)
 
 class SchedulerJobsWebService(object):
 	'''
@@ -20,12 +41,8 @@ class SchedulerJobsWebService(object):
 	@cherrypy.tools.accept(media='text/plain')
 	@cherrypy.tools.json_out()
 	#return list of jobs in queue
-	def GET(self, job_id=None):
-		result = None
-		if job_id == None:
-			result = self.db.get_all_jobs()
-		else:
-			result = self.db.get_job(job_id)
+	def GET(self):
+		result = self.db.get_all_jobs()
 		jenc = json.JSONEncoder()
 		return jenc.encode(result)
 
@@ -51,6 +68,7 @@ class SchedulerJobsWebService(object):
 	def DELETE(self):
 		#cherrypy.session.pop('mystring', None)
 		pass
+
 
 class SchedulerProcessNodeWebService(object):
 	'''
@@ -88,6 +106,7 @@ class SchedulerProcessNodeWebService(object):
 		proc_node = json.loads(rawbody)
 		print proc_node
 		self.db.insert_process_node(proc_node)
+		cherrypy.engine.publish('process_node_update', proc_node)
 		return 'updated process node'
 
 	#computer node went offline, remove from list

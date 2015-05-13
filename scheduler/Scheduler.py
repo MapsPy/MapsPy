@@ -18,6 +18,7 @@ class Scheduler(object):
 			'server.socket_port': int(self.settings[Settings.SERVER_PORT]),
 		})
 		cherrypy.engine.subscribe("new_job", self.callback_new_job)
+		cherrypy.engine.subscribe("process_node_update", self.callback_process_node_update)
 		self.conf = {
 			'/': {
 				'tools.sessions.on': True,
@@ -51,10 +52,22 @@ class Scheduler(object):
 				print 'result', r.status_code,':',r.text
 				break
 
+	def callback_process_node_update(self, node):
+		print node
+		if node['Status'] == 'Idle':
+			job_list = db.get_all_unprocessed_jobs()
+			if len(job_list) > 0:
+				job = job_list[0]
+				url = 'http://' + str(node['Hostname']) + ':' + str(node['Port']) + '/job_queue'
+				print 'sending job to ',node['ComputerName'], 'url',url
+				s = requests.Session()
+				r = s.post(url, data=json.dumps(job))
+				print 'result', r.status_code,':',r.text
+
 	def run(self):
-		webapp = SchedulerHandler()
 		db.subscribe()
 		db.create_tables()
+		webapp = SchedulerHandler(db)
 		webapp.process_node = SchedulerProcessNodeWebService(db)
 		webapp.job = SchedulerJobsWebService(db)
 		cherrypy.quickstart(webapp, '/', self.conf)

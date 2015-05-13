@@ -20,9 +20,11 @@ UPDATE_JOB_BY_ID = 'UPDATE Jobs SET DataPath=:DataPath, ProcMask=:ProcMask, Vers
 SELECT_ALL_PROCESS_NODES = 'SELECT ComputerName, NumThreads, Hostname, Port, Status, Heartbeat FROM ProcessNodes'
 SELECT_PROCESS_NODE_BY_NAME = 'SELECT Id, ComputerName, NumThreads, Status, Heartbeat FROM ProcessNodes WHERE ComputerName=:ComputerName'
 SELECT_ALL_JOBS = 'SELECT Id, DataPath, ProcMask, Version, DetectorElements, MaxFilesToProc, MaxLinesToProc, QuickAndDirty, XRF_Bin, NNLS, XANES_Scan, DetectorToStartWith, BeamLine, Standards, Priority, Status, StartProcTime, FinishProcTime FROM Jobs'
-SELECT_ALL_UNPROCESSED_JOBS = 'SELECT Id, DataPath, ProcMask, Version, DetectorElements, MaxFilesToProc, MaxLinesToProc, QuickAndDirty, XRF_Bin, NNLS, XANES_Scan, DetectorToStartWith, BeamLine, Standards, Priority, Status, StartProcTime, FinishProcTime FROM Jobs WHERE Status<2'
-SELECT_JOB_BY_ID = 'SELECT Id, DataPath, ProcMask, Version, DetectorElements, MaxFilesToProc, MaxLinesToProc, QuickAndDirty, XRF_Bin, NNLS, XANES_Scan, DetectorToStartWith, BeamLine, Standards, Priority, Status, StartProcTime, FinishProcTime FROM Jobs WHERE Id=:Id'
-SELECT_JOBS_BY_STATUS = 'SELECT Id, DataPath, ProcMask, Version, DetectorElements, MaxFilesToProc, MaxLinesToProc, QuickAndDirty, XRF_Bin, NNLS, XANES_Scan, DetectorToStartWith, BeamLine, Standards, Priority, Status, StartProcTime, FinishProcTime FROM Jobs WHERE Status=:Status ORDER BY Priority DESC'
+SELECT_ALL_UNPROCESSED_JOBS = SELECT_ALL_JOBS + ' WHERE Status=0'
+SELECT_ALL_PROCESSING_JOBS = SELECT_ALL_JOBS + ' WHERE Status=1'
+SELECT_ALL_FINISHED_JOBS = SELECT_ALL_JOBS + ' WHERE Status=2'
+SELECT_JOB_BY_ID = SELECT_ALL_JOBS + ' WHERE Id=:Id'
+SELECT_JOBS_BY_STATUS = SELECT_ALL_JOBS + ' WHERE Status=:Status ORDER BY Priority DESC'
 
 
 class SQLiteDB:
@@ -91,12 +93,11 @@ class SQLiteDB:
 			ret_list += [ {'ComputerName':node[0], 'NumThreads':node[1], 'Hostname':node[2], 'Port':node[3], 'Status': node[4], 'Heartbeat': node[5]} ]
 		return ret_list
 
-	def get_all_jobs(self):
+	def _get_jobs_(self, sql_statement):
 		con = sql.connect(self.uri)
 		cur = con.cursor()
-		cur.execute(SELECT_ALL_JOBS)
+		cur.execute(sql_statement)
 		con.commit()
-		#return cur.fetchall()
 		all_nodes = cur.fetchall()
 		ret_list = []
 		#SELECT_ALL_JOBS = 'SELECT Id, DataPath, ProcMask, Version, DetectorElements, MaxFilesToProc, MaxLinesToProc, QuickAndDirty, XRF_Bin, NNLS, XANES_Scan, DetectorToStartWith, BeamLine, Standards, Status, StartProcTime, FinishProcTime FROM Jobs'
@@ -104,18 +105,17 @@ class SQLiteDB:
 			ret_list += [ {'Id':node[0], 'DataPath':node[1], 'ProcMask': node[2], 'Version': node[3], 'DetectorElements':node[4], 'MaxFilesToProc':node[5], 'MaxLinesToProc':node[6], 'QuickAndDirty':node[7], 'XRF_Bin':node[8], 'NNLS':node[9], 'XANES_Scan':node[10], 'DetectorToStartWith':node[11], 'BeamLine':node[12], 'Standards':node[13], 'Priority':node[14], 'Status':node[15], 'StartProcTime':node[16], 'FinishProcTime':node[17]  } ]
 		return ret_list
 
+	def get_all_jobs(self):
+		return self._get_jobs_(SELECT_ALL_JOBS)
+
 	def get_all_unprocessed_jobs(self):
-		con = sql.connect(self.uri)
-		cur = con.cursor()
-		cur.execute(SELECT_ALL_UNPROCESSED_JOBS)
-		con.commit()
-		#return cur.fetchall()
-		all_nodes = cur.fetchall()
-		ret_list = []
-		#SELECT_ALL_JOBS = 'SELECT Id, DataPath, ProcMask, Version, DetectorElements, MaxFilesToProc, MaxLinesToProc, QuickAndDirty, XRF_Bin, NNLS, XANES_Scan, DetectorToStartWith, BeamLine, Standards, Status, StartProcTime, FinishProcTime FROM Jobs'
-		for node in all_nodes:
-			ret_list += [ {'Id':node[0], 'DataPath':node[1], 'ProcMask': node[2], 'Version': node[3], 'DetectorElements':node[4], 'MaxFilesToProc':node[5], 'MaxLinesToProc':node[6], 'QuickAndDirty':node[7], 'XRF_Bin':node[8], 'NNLS':node[9], 'XANES_Scan':node[10], 'DetectorToStartWith':node[11], 'BeamLine':node[12], 'Standards':node[13], 'Priority':node[14], 'Status':node[15], 'StartProcTime':node[16], 'FinishProcTime':node[17]  } ]
-		return ret_list
+		return self._get_jobs_(SELECT_ALL_UNPROCESSED_JOBS)
+
+	def get_all_processing_jobs(self):
+		return self._get_jobs_(SELECT_ALL_PROCESSING_JOBS)
+
+	def get_all_finished_jobs(self):
+		return self._get_jobs_(SELECT_ALL_FINISHED_JOBS)
 
 	def get_job(self, job_id):
 		con = sql.connect(self.uri)

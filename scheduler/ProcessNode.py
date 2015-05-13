@@ -145,11 +145,11 @@ class ProcessNode(object):
 					key_e = 1
 				#os.chdir(job_dict['DataPath'])
 				maps_batch.main(wdir=job_dict['DataPath'], a=key_a, b=key_b, c=key_c, d=key_d, e=key_e)
-				job_dict['Status'] = 3 #3 = completed
+				job_dict['Status'] = 2 #3 = completed
 			except:
 				print 'Error processing',job_dict['DataPath']
 				traceback.print_exc(file=sys.stdout)
-				job_dict['Status'] = 2 #2 = error
+				job_dict['Status'] = 10 #2 = error
 			self.db.update_job(job_dict)
 			self.send_job_update(job_dict)
 			self.send_status_update()

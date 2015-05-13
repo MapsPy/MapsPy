@@ -6,14 +6,21 @@
     <script type="text/javascript">
       $(document).ready(function() 
       {
+          
+          
+       function get_process_nodes()
+       {
         //get all process nodes
         $.ajax(
         {
           url:"/process_node",
+          type: "GET",
           datatype: "json",
           success: function(data) 
           {
-            var $table = $("#process_node_table");
+            //var $table = $("#process_node_table");
+            var $table = $("#data_process_nodes");
+            $table.empty();
             var nodes = $.parseJSON(data);
             nodes.forEach( function(item) 
             {
@@ -23,44 +30,86 @@
               $tr.append( $("<td>").text(item.Status));
               $tr.append( $("<td>").text(item.Heartbeat));
               $table.append( $tr);
-            })
+            });
           }
         });
-        //get all jobs
+       }
+       function get_jobs(c_url, c_table)
+       {
         $.ajax(
         {
-          url:"/job",
+          url:c_url,
+          type: 'GET',
           datatype: "json",
           success: function(data) 
           {
-            var $table = $("#job_table");
+            var $table = $(c_table);
+            $table.empty();
             var jobs = $.parseJSON(data);
             jobs.forEach( function(item) 
             {
               var $tr = $("<tr id='data_entry'>");
               $tr.append( $("<td>").text(item.Id));
               $tr.append( $("<td>").text(item.DataPath));
-			  if(item.Status == 0)
+              if(item.Status === 0)
               {
                 $tr.append( $("<td>").text("Waiting"));
               }
-			  if(item.Status == 1)
+              if(item.Status === 1)
               {
                 $tr.append( $("<td>").text("Processing"));
               }
-			  if(item.Status == 2)
-              {
-                $tr.append( $("<td>").text("Error Occured"));
-              }
-			  if(item.Status == 3)
+              if(item.Status === 2)
               {
                 $tr.append( $("<td>").text("Completed"));
               }
+              if(item.Status > 2)
+              {
+                $tr.append( $("<td>").text("Error Occured"));
+              }
+              
+              var $procMaskStr = "";
+              if( (item.ProcMask & 1) === 1)
+              {
+                $procMaskStr += "A\n";
+              }
+              if( (item.ProcMask & 2) === 2)
+              {
+                $procMaskStr += "B\n";
+              }
+              if( (item.ProcMask & 4) === 4)
+              {
+                $procMaskStr += "C\n";
+              }
+              if( (item.ProcMask & 8) === 8)
+              {
+                $procMaskStr += "D\n";
+              }
+              if( (item.ProcMask & 16) === 16)
+              {
+                $procMaskStr += "E";
+              }
+              $tr.append( $("<td>").text($procMaskStr));
+              $tr.append( $("<td>").text(item.DetectorElements));
               $table.append( $tr);
-            })
+            });
           }
         });
-
+       }
+        
+      setInterval(function()
+      {
+          get_process_nodes();
+          get_jobs("/get_all_unprocessed_jobs", "#data_unprocessed_jobs");
+          get_jobs("/get_all_processing_jobs", "#data_processing_jobs");
+          get_jobs("/get_all_finished_jobs", "#data_finished_jobs");
+      }, 3000);
+     
+      get_process_nodes();
+      get_jobs("/get_all_unprocessed_jobs", "#data_unprocessed_jobs");
+      get_jobs("/get_all_processing_jobs", "#data_processing_jobs");
+      get_jobs("/get_all_finished_jobs", "#data_finished_jobs");
+     
       $('.header').click(function(){
         $(this).toggleClass('expand').nextUntil('tr.header').slideToggle(100);
       });
@@ -77,82 +126,27 @@
         e.preventDefault();
     });
 
-      //Poll every 3 seconds
-      setInterval(function()
-      {
-        $.ajax({ url: "/process_node", success: function(data)
-        {
-          var $table = $("#process_node_table");
-          $table.empty();
-          var $trCn = $('<tr class="header expand"> <th colsnap="4"> <span class="sign"> </snap> Computer Name  </th> </tr>');
-          $table.append($trCn);
-          var nodes = $.parseJSON(data);
-          nodes.forEach( function(item) 
-          {
-            var $tr = $("<tr id='data_entry'>");
-            $tr.append( $("<td>").text(item.ComputerName));
-            $tr.append( $("<td>").text(item.NumThreads));
-            $tr.append( $("<td>").text(item.Status));
-            $tr.append( $("<td>").text(item.Heartbeat));
-            $table.append( $tr);
-          })
-        }, dataType: "json"});
-        $.ajax({ url: "/job", success: function(data)
-        {
-          var $table = $("#job_table");
-          $table.empty();
-          var $trCn = $('<tr class="header expand"> <th colsnap="4"> <span class="sign"> </snap> Jobs  </th> </tr>');
-          $table.append($trCn);
-          var jobs = $.parseJSON(data);
-          jobs.forEach( function(item) 
-          {
-            var $tr = $("<tr id='data_entry'>");
-            $tr.append( $("<td>").text(item.Id));
-            $tr.append( $("<td>").text(item.DataPath));
-		    if(item.Status == 0)
-            {
-              $tr.append( $("<td>").text("Waiting"));
-            }
-		    if(item.Status == 1)
-            {
-              $tr.append( $("<td>").text("Processing"));
-            }
-		    if(item.Status == 2)
-            {
-              $tr.append( $("<td>").text("Error Occured"));
-            }
-		    if(item.Status == 3)
-            {
-              $tr.append( $("<td>").text("Completed"));
-            }
-            //$tr.append( $("<td>").text(item.Status));
-            $table.append( $tr);
-          })
-        }, dataType: "json"});
-      }, 3000);
-
-
          $("#Btn-Submit-Job").click(function(e) {
           var procMask = 0;
-          if ($('#analysis-type-a')[0].checked == true)
+          if ($('#analysis-type-a')[0].checked === true)
           {
-            procMask += 1
+            procMask += 1;
           }
-          if ($('#analysis-type-b')[0].checked == true)
+          if ($('#analysis-type-b')[0].checked === true)
           {
-            procMask += 2
+            procMask += 2;
           }
-          if ($('#analysis-type-c')[0].checked == true)
+          if ($('#analysis-type-c')[0].checked === true)
           {
-            procMask += 4
+            procMask += 4;
           }
-          if ($('#analysis-type-d')[0].checked == true)
+          if ($('#analysis-type-d')[0].checked === true)
           {
-            procMask += 8
+            procMask += 8;
           }
-          if ($('#analysis-type-e')[0].checked == true)
+          if ($('#analysis-type-e')[0].checked === true)
           {
-            procMask += 16
+            procMask += 16;
           }
           $.ajax(
           {
@@ -194,19 +188,28 @@
 
        });
      </script>
+     <title> MapsPy Scheduler </title>
    </head>
    <body>
      <div id="process_nodes_div">
          <table id="process_node_table">
          <!--  <tr class="header expand"> <th> <span class="sign">  <td> Computer Name </td> <td> Number of Threads </td> <td> Status </td> <td> Heartbeat </td> </span>  </th> </tr> -->
-           <tr class="header expand"> <th colsnap="4"> <span class="sign"> </snap> Computer Name  </th> </tr>
-           
+         <tr class="header expand"> <th> <span class="sign"> </span> Computer Name  </th> </tr>
+         <tbody id="data_process_nodes"/>
          </table>
      </div>
      <div id="jobs_div">
-         <table id="job_table">
-           <tr class="header expand"> <th colsnap="4"> <span class="sign"> </snap> Jobs  </th> </tr>
-           
+         <table id="table_unprocessed_jobs">
+           <tr class="header expand"> <th> <span class="sign"> </span> Waiting Jobs </th> </tr>
+           <tbody id="data_unprocessed_jobs"/>
+         </table>
+         <table id="table_processing_jobs">
+           <tr class="header expand"> <th> <span class="sign"> </span> Processing Jobs </th> </tr>
+           <tbody id="data_processing_jobs"/>
+         </table>
+          <table id="table_finished_jobs">
+           <tr class="header expand"> <th> <span class="sign"> </span> Finished Jobs  </th> </tr>
+           <tbody id="data_finished_jobs"/>
          </table>
      </div>
 
