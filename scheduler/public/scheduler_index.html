@@ -45,11 +45,17 @@
                     //alert(data);
                     var image_links = $.parseJSON(data);
                     var str = "";
+                    $ul = $('<ul>');
                     image_links.forEach( function(img_link) 
                     {
-                        str += '<p id=img_link>'+img_link+'</p>';
+                        var $li = $('<li>');
+                        var name = img_link.split('/');
+                        $li.attr('class','img_link');
+                        $li.attr('link',img_link);
+                        $li.text(name[name.length-1]);
+                        $ul.append( $li );
                     });
-                    $td.text(str);
+                    $td.append($ul);
                 }
             });           
         }
@@ -76,35 +82,40 @@
         
         function job_parse_proc_mask($tr, $item)
         {
-            var $procMaskStr = "";
+            var $procMask = $('<ul>');
             var $has_b = false;
             if( ($item.ProcMask & 1) === 1)
             {
-                $procMaskStr += "A\n";
+                $procMask.append( $('<li>').text('A') );
             }
             if( ($item.ProcMask & 2) === 2)
             {
-                $procMaskStr += "B\n";
+                $procMask.append( $('<li>').text('B') );
+                //$procMaskStr += "B\n";
                 $has_b = true;
             }
             if( ($item.ProcMask & 4) === 4)
             {
-                $procMaskStr += "C\n";
+                $procMask.append( $('<li>').text('C') );
+                //$procMaskStr += "C\n";
             }
             if( ($item.ProcMask & 8) === 8)
             {
-                $procMaskStr += "D\n";
+                $procMask.append( $('<li>').text('D') );
+                //$procMaskStr += "D\n";
             }
             if( ($item.ProcMask & 16) === 16)
             {
-                $procMaskStr += "E";
+                $procMask.append( $('<li>').text('E') );
+                //$procMaskStr += "E";
             }
-            $tr.append( $("<td>").text($procMaskStr));
+            //$tr.append( $("<td>").text($procMaskStr));
+            $tr.append( $("<td>").append($procMask));
             if($has_b === true)
             {
                 var $td =  $("<td>");
                 $tr.append( $td );
-                //job_get_img_list($td, $item.DataPath);
+                job_get_img_list($td, $item.DataPath);
             }
             else
             {
@@ -143,15 +154,21 @@
             get_jobs("/get_all_unprocessed_jobs", "#data_unprocessed_jobs");
             get_jobs("/get_all_processing_jobs", "#data_processing_jobs");
             get_jobs("/get_all_finished_jobs", "#data_finished_jobs");
-        }, 3000);
+        }, 10000);
      
         get_process_nodes();
         get_jobs("/get_all_unprocessed_jobs", "#data_unprocessed_jobs");
         get_jobs("/get_all_processing_jobs", "#data_processing_jobs");
         get_jobs("/get_all_finished_jobs", "#data_finished_jobs");
      
-        $('.header').click(function(){
-            $(this).toggleClass('expand').nextUntil('tr.header').slideToggle(100);
+        $('.header').click(function()
+        {
+            $(this).parent().parent().next('tbody').slideToggle(100);
+        });
+
+        $('.img_link').click(function()
+        {
+            alert($(this).attr('link'));
         });
 
         jQuery('.tabs .tab-links a').on('click', function(e)  
@@ -226,25 +243,52 @@
     <title> MapsPy Scheduler </title>
   </head>
   <body>
-     <div id="process_nodes_div">
-         <table id="process_node_table">
-         <tr class="header expand"> <th> <span class="sign"> </span> Computer Name  </th> </tr>
-         <tbody id="data_process_nodes"/>
+    <div id="process_nodes_div">
+        <table id="process_node_table">
+        <tr class="header">  
+            <th> <span class="sign"> </span>  Computer Name </th>
+            <th>Max Threads</th>
+            <th>Status</th>
+            <th>Heartbeat</th>
+        </tr>
+        <tbody id="data_process_nodes" class="expand"> </tbody>
          </table>
      </div>
+      <br>
+      <br>
      <div id="jobs_div">
-         <table id="table_unprocessed_jobs">
-           <tr class="header expand"> <th> <span class="sign"> </span> Waiting Jobs </th> </tr>
-           <tbody id="data_unprocessed_jobs"/>
-         </table>
-         <table id="table_processing_jobs">
-           <tr class="header expand"> <th> <span class="sign"> </span> Processing Jobs </th> </tr>
-           <tbody id="data_processing_jobs"/>
-         </table>
-          <table id="table_finished_jobs">
-           <tr class="header expand"> <th> <span class="sign"> </span> Finished Jobs  </th> </tr>
-           <tbody id="data_finished_jobs"/>
-         </table>
+    <table id="table_unprocessed_jobs">
+        <tr>  
+            <th class="header"> <span class="sign"> </span> Queued Jobs </th>
+            <th>Path</th>
+            <th>Status</th>
+            <th>Analysis</th>
+            <th>Output</th>
+        </tr>
+        <tbody id="data_unprocessed_jobs"> </tbody>
+    </table>
+    <br>
+    <table id="table_processing_jobs">
+        <tr>  
+            <th class="header expand"> <span class="sign"> </span> Processing Jobs </th>
+            <th>Path</th>
+            <th>Status</th>
+            <th>Analysis</th>
+            <th>Output</th>
+        </tr>
+        <tbody id="data_processing_jobs"> </tbody>
+    </table>
+    <br>
+    <table id="table_finished_jobs">
+        <tr>  
+            <th class="header expand"> <span class="sign"> </span> Finished Jobs</th>
+            <th>Path</th>
+            <th>Status</th>
+            <th>Analysis</th>
+            <th>Output</th>
+        </tr>
+        <tbody id="data_finished_jobs"> <tbody>
+    </table>
      </div>
 
 
