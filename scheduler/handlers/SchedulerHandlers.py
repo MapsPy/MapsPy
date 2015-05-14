@@ -1,6 +1,10 @@
 import string
 import json
 import cherrypy
+import glob
+import os
+import traceback
+import base64
 
 class SchedulerHandler(object):
 
@@ -10,6 +14,36 @@ class SchedulerHandler(object):
 	@cherrypy.expose
 	def index(self):
 		return file('public/scheduler_index.html')
+
+	@cherrypy.expose
+	def jstree(self):
+		return file('public/jstree_test.html')
+
+	@cherrypy.expose
+	@cherrypy.tools.json_out()
+	def get_spectrum_image_list(self, job_path):
+		try:
+			img_path = os.path.join(job_path, 'output_old/*.png')
+			print img_path
+			img_list = glob.glob(img_path)
+			jenc = json.JSONEncoder()
+			return jenc.encode(img_list)
+		except:
+			exc_str = traceback.format_exc()
+			return exc_str
+
+	@cherrypy.expose
+	def get_spectrum_image(self, image_path):
+		try:
+			encoded_string = ''
+			with open(image_path, "rb") as image_file:
+				encoded_string = base64.b64encode(image_file.read())
+			str = '<img alt="My Image" src="data:image/png;base64,'+ encoded_string + '" />'
+			return str
+			#return file(image_path)
+		except:
+			exc_str = traceback.format_exc()
+			return exc_str
 
 	@cherrypy.expose
 	def get_all_unprocessed_jobs(self):
