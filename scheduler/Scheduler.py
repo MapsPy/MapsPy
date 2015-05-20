@@ -12,7 +12,8 @@ db = DatabasePlugin(cherrypy.engine, SQLiteDB)
 
 class Scheduler(object):
 	def __init__(self, settings):
-		self.settings = settings
+		self.all_settings = settings
+		self.settings = settings.getSetting(Settings.SECTION_SERVER)
 		cherrypy.config.update({
 			'server.socket_host': self.settings[Settings.SERVER_HOSTNAME],
 			'server.socket_port': int(self.settings[Settings.SERVER_PORT]),
@@ -67,7 +68,7 @@ class Scheduler(object):
 	def run(self):
 		db.subscribe()
 		db.create_tables()
-		webapp = SchedulerHandler(db)
+		webapp = SchedulerHandler(db, self.all_settings)
 		webapp.process_node = SchedulerProcessNodeWebService(db)
 		webapp.job = SchedulerJobsWebService(db)
 		cherrypy.quickstart(webapp, '/', self.conf)

@@ -26,7 +26,7 @@ def main():
 	role = str(serverSettings[Settings.SERVER_ROLE])
 	print 'Role =',role
 	if role == 'scheduler':
-		scheduler = Scheduler(serverSettings)
+		scheduler = Scheduler(settings)
 		scheduler.run()
 	elif role == 'process_node':
 		process_node = ProcessNode(settings)

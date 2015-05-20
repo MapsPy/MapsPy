@@ -5,11 +5,31 @@ import glob
 import os
 import traceback
 import base64
+import Settings
+
+def gen_job_dir_dict(text, opened, children):
+	d_dict = dict()
+	d_dict['text'] = text
+	d_dict['state'] = dict()
+	d_dict['state']['opened'] = opened
+	d_dict['children'] = children
+	return d_dict
+
+def get_dirs(path, level):
+	dir_list = [ {'id': os.path.join(path, name), 'parent':path, 'text': name} for name in os.listdir(path) if os.path.isdir(os.path.join(path, name)) ]
+	if level > 0:
+		level -= 1
+		new_list = []
+		for sub_path_dict in dir_list:
+			new_list += get_dirs(sub_path_dict['id'], level) 
+		dir_list += new_list
+	return dir_list
 
 class SchedulerHandler(object):
 
-	def __init__(self, db):
+	def __init__(self, db, settings=None):
 		self.db = db
+		self.settings = settings
 
 	@cherrypy.expose
 	def index(self):
@@ -18,6 +38,30 @@ class SchedulerHandler(object):
 	@cherrypy.expose
 	def jstree(self):
 		return file('public/jstree_test.html')
+
+	@cherrypy.expose
+	@cherrypy.tools.json_out()
+	def get_dataset_dirs_list(self, job_root, depth=0):
+		try:
+			depth = int(depth)
+			#job_dir_dict = gen_job_dir_dict(job_root, True, []) 
+			job_roots_dict = self.settings.getSetting(Settings.SECTION_JOB_DIR_ROOTS)
+			path = job_roots_dict[job_root]
+			dir_list = [{'id': path, 'parent':'#', 'text':job_root, 'state':{'opened':True} }]
+			#dir_list = [{'id': path, 'parent':'#', 'text':job_root}]) if os.path.isdir(os.path.join(path, name)) ]
+			#job_dir_dict['children'] = dir_list
+			dir_list += get_dirs(path, depth)
+			print dir_list
+			#print job_dir_dict
+			dd = dict()
+			dd['core'] = dict()
+			#dd['core']['data'] = [job_dir_dict]
+			dd['core']['data'] = dir_list
+			jenc = json.JSONEncoder()
+			return jenc.encode(dd)
+		except:
+			exc_str = traceback.format_exc()
+			return exc_str
 
 	@cherrypy.expose
 	@cherrypy.tools.json_out()

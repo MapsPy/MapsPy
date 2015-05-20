@@ -2,7 +2,9 @@
 <html>
   <head>
     <link href="/static/css/style.css" rel="stylesheet">
+    <link rel="stylesheet" href="static/jstree_dist/themes/default/style.min.css" />
     <script src="/static/jquery/jquery-2.0.3.min.js"></script> 
+    <script src="/static/jstree_dist/jstree.min.js"></script> 
     <script type="text/javascript">
     $(document).ready(function() 
     {
@@ -56,10 +58,17 @@
                     {
                         var $li = $('<li>');
                         var name = img_link.split('/');
+                        /*
                         $li.attr('class','img_link');
                         $li.attr('link',img_link);
                         $li.click('click', display_image);
                         $li.text(name[name.length-1]);
+                        */
+                        var $href = $('<a>');
+                        $href.click('click', display_image);
+                        $href.attr('link',img_link);
+                        $href.text(name[name.length-1]);
+                        $li.append($href);
                         $ul.append( $li );
                     });
                     $td.append($ul);
@@ -240,6 +249,34 @@
                 alert("added job");
             });
         });
+        
+        $('.overlay').hide();
+        
+        $('#Btn-Select-Dir').click(function(e)
+        {
+            $('.overlay').hide();
+            var $tree = $('#jstree').jstree(true);
+            var $sel = $tree.get_selected();
+            $('#DataPath').val( $sel[0] );
+        });
+        
+        $("#Btn-Brouse-2IDE").click(function(e) 
+        {
+            $.ajax(
+            {
+                type: 'POST',
+                url:"/get_dataset_dirs_list",
+                data: {'job_root': '2ide', 'depth': 1},
+                datatype: "json",
+                success: function(data) 
+                {
+                    var $ul = $('#browse-jobs-list');
+                    var $job_dirs = $.parseJSON(data);
+                    $('#jstree').jstree($job_dirs);
+                    $('.overlay').show();
+                }
+            });
+        });
     });
     </script>
     <title> MapsPy Scheduler </title>
@@ -308,7 +345,19 @@
              <fieldset>
                <legend>Job Information:</legend>
                Job Path:
-               <input type="text" id="DataPath" value="/"> <button id='Brouse_2IDE'>Browse</button>
+               <input type="text" id="DataPath" value="/"> <button id='Btn-Brouse-2IDE'>Browse</button>
+               <div id="browse-jobs" class="overlay">
+                    <div class="popup">
+                        <h2>Jobs</h2>
+                        <a class="close" href="/">&times;</a>
+                        <div class="content"> 
+                            <div id='jstree'>
+
+                            </div>
+                        </div>
+                        <button id='Btn-Select-Dir'>Select</button>
+                    </div>
+                </div>
                <br>
                <input type="checkbox" id="analysis-type-a" value="A">A<br>
                <input type="checkbox" id="analysis-type-b" value="B">B<br>
@@ -344,5 +393,6 @@
     </div>
     </div>
 
+    
   </body>
 </html>
