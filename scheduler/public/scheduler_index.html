@@ -31,6 +31,12 @@
                 }
             });
         }
+
+        function display_image(e)
+        {
+            var $url = '/get_spectrum_image?image_path='+$(this).attr('link');
+            window.open($url);
+        }
        
         function job_get_img_list($td, job_path)
         {
@@ -52,6 +58,7 @@
                         var name = img_link.split('/');
                         $li.attr('class','img_link');
                         $li.attr('link',img_link);
+                        $li.click('click', display_image);
                         $li.text(name[name.length-1]);
                         $ul.append( $li );
                     });
@@ -164,11 +171,6 @@
         $('.header').click(function()
         {
             $(this).parent().parent().next('tbody').slideToggle(100);
-        });
-
-        $('.img_link').click(function()
-        {
-            alert($(this).attr('link'));
         });
 
         jQuery('.tabs .tab-links a').on('click', function(e)  
