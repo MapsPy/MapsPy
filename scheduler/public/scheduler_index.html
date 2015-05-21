@@ -5,6 +5,7 @@
     <link rel="stylesheet" href="static/jstree_dist/themes/default/style.min.css" />
     <script src="/static/jquery/jquery-2.0.3.min.js"></script> 
     <script src="/static/jstree_dist/jstree.min.js"></script> 
+    <script src="/static/notify.min.js"></script> 
     <script type="text/javascript">
     $(document).ready(function() 
     {
@@ -58,15 +59,10 @@
                     {
                         var $li = $('<li>');
                         var name = img_link.split('/');
-                        /*
-                        $li.attr('class','img_link');
-                        $li.attr('link',img_link);
-                        $li.click('click', display_image);
-                        $li.text(name[name.length-1]);
-                        */
                         var $href = $('<a>');
                         $href.click('click', display_image);
                         $href.attr('link',img_link);
+                        $href.attr('href','#');
                         $href.text(name[name.length-1]);
                         $li.append($href);
                         $ul.append( $li );
@@ -218,9 +214,24 @@
             return procMask;
         }
 
+        function get_check_value(name)
+        {
+            var val = 0;
+            if( $(name)[0].checked)
+            {
+                val = 1;
+            }
+            return val;
+        }
+        
         $("#Btn-Submit-Job").click(function(e) 
         {
             var $procMask = gen_job_mask();
+            var $quickNdirty = get_check_value('#option-quick-and-dirty');
+            var $xrfbin = get_check_value('#option-xrf-bin');
+            var $nnls = get_check_value('#option-nnls');
+            var $xanes = get_check_value('#option-xanes');
+            
             $.ajax(
             {
                 type: 'POST',
@@ -233,12 +244,12 @@
                     'Version': '1.00',
                     'Standards': '',
                     'DetectorToStartWith': 0,
-                    'XRF_Bin': 0,
+                    'XRF_Bin': $xrfbin,
                     'MaxLinesToProc': 11,
-                    'DetectorElements': parseInt($("#DetectorElements").val(), 10),
-                    'XANES_Scan': 0,
-                    'NNLS': 0,
-                    'QuickAndDirty': 0,
+                    'DetectorElements': parseInt($("#option-detector-elements").val(), 10),
+                    'XANES_Scan': $xanes,
+                    'NNLS': $nnls,
+                    'QuickAndDirty': $quickNdirty,
                     'Status': 0,
                     'Priority': 5,
                     'StartProcTime': 0,
@@ -246,7 +257,8 @@
                 datatype: "json"
             }).done(function(d)
             { 
-                alert("added job");
+                //alert("added job");
+                $.notify("Queued Job: "+$("#DataPath").val(), "success");
             });
         });
         
@@ -364,29 +376,28 @@
                <input type="checkbox" id="analysis-type-c" value="C">C<br>
                <input type="checkbox" id="analysis-type-d" value="D">D<br>
                <input type="checkbox" id="analysis-type-e" value="E">E<br>
-               Total Number of Detectors <br>
-               <input type="text" id="DetectorElements" value="4">
+               Total Number of Detectors:
+               <input type="text" id="option-detector-elements" value="4"><br>
+               Number Processors Per File:
+               <input type="text" id="option-proc-per-file" value="1">
+               Number Processors Per Line:
+               <input type="text" id="opiton-proc-per-line" value="1"><br>
+               <input type="checkbox" id="option-quick-and-dirty">Quick and Dirty
+               <input type="checkbox" id="option-xrf-bin">XRF Bin
+               <input type="checkbox" id="option-nnls">NNLS
+               <input type="checkbox" id="option-xanes">XANES Scan
 <!--
-            version = 0
-            total_number_detectors = 1
-            max_no_processors_files = 1
-            max_no_processors_lines = 1
             write_hdf = 0
-            quick_dirty = 0
-            xrf_bin = 0
-            nnls = 0
-            xanes_scan = 0
             detector_to_start_with = 0
-            #default beamline to use for now is 2-id-e , we will change this in the future
+            priority = 5 
 -->
                <br><br>
                <button id="Btn-Submit-Job">Submit Job</button>
              </fieldset>
-      <!--     </form> -->
          </div>
  
         <div id="tab2" class="tab">
-            <p>GSE CARS</p>
+            <p>2-ID-D</p>
             <p>Submit Job</p>
         </div>
  
