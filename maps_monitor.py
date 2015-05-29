@@ -77,7 +77,6 @@ def main(mySettings):
 
     working_dir = os.getcwd()   
     #todo: create folders if they don't exist
-    os.chdir(jobs_path)
     print 'Starting maps_monitor with'
     print 'jobs_path = ',jobs_path
     print 'processing_path = ',processing_path
@@ -88,7 +87,6 @@ def main(mySettings):
     print 'checking every ',check_interval,'seconds'
 
 
-    print 'changed into ', jobs_path
   
     #make sure the following are defined:
     keyword_a = 0
@@ -102,16 +100,20 @@ def main(mySettings):
 
     print strftime("%Y-%m-%d %H:%M:%S", gmtime())
     true = 1
+    print 'changed into ', jobs_path
       
     while true:
-        os.chdir(jobs_path)
-        
         filenames = []
-        dirList=os.listdir(jobs_path)
-        #print dirList
-        for fname in dirList:
-            if (fname[0:4] == 'job_') and (fname[-4:] == '.txt') : 
-                filenames.append(fname)
+        try:
+            os.chdir(jobs_path)
+            filenames = []
+            dirList=os.listdir(jobs_path)
+            for fname in dirList:
+                if (fname[0:4] == 'job_') and (fname[-4:] == '.txt') : 
+                    filenames.append(fname)
+        except:
+            print 'Error changing to directory, sleep(5) seconds'
+			time.sleep(5)
         no_files =len(filenames)
         
         if no_files == 0 :
