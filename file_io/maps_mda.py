@@ -34,7 +34,10 @@ SUCH DAMAGE.
 
 from __future__ import division
 from xdrlib import *
+from file_util import open_file_with_retry, call_function_with_retry
 import string
+import h5py
+import os
 
 import numpy as np
 
@@ -168,10 +171,8 @@ class mda:
         
         verbose = False
         
-        try:
-            file = open(str(filename),'rb')
-        except:
-            print 'Could not open file ', filename
+        file = open_file_with_retry(str(filename), 'rb')
+        if file == None:
             return -1
         
         if verbose:
@@ -470,14 +471,11 @@ class mda:
         if scan_info.rank >= 4: 
             print 'This file has too deep dimensions, I cannot read it and will skip'
             return -1
-        
-        try:
-            file = open(str(filename),'rb')
-        except:
-            print 'Could not open file ', filename
+ 
+        file = open_file_with_retry(str(filename), 'rb')
+        if file == None:
             return -1
-    
-
+ 
         buf = file.read(100)        # to read header for scan of up to 5 dimensions
         u = Unpacker(buf)
 
@@ -722,13 +720,10 @@ class mda:
         ndet = 85                   # 15
         ntot = ndet+4
     
-    
-        try:
-            file = open(str(filename),'rb')
-        except:
-            print 'did not find file : ', filename
+        file = open_file_with_retry(str(filename), 'rb')
+        if file == None:
             return -1
-    
+ 
         buf = file.read(100)        # to read header for scan of up to 5 dimensions
         print 'buf', buf
         u = Unpacker(buf)
@@ -1338,11 +1333,6 @@ class mda:
 #----------------------------------------------------------------------
     def read_combined_flyscan(self, path, mdafilename, this_detector):
         
-        import os
-        import h5py
-        
-        
-        
         mdapath, mdafile = os.path.split(mdafilename)
         header, extension = os.path.splitext(mdafile)  
 
@@ -1473,12 +1463,11 @@ class mda:
         h5filename = header+'_2xfm3__'+str(0)+'.h5'
         h5_file = os.path.join(path, os.path.join('flyXRF.h5', h5filename))
 
-        try:
-            f = h5py.File(h5_file, 'r') 
-        except:
+
+
+        f = call_function_with_retry(h5py.File, 5, 0.1, 1.1, (h5_file, 'r'))
+        if f == None:
             print 'Error: Could not open file: ', h5_file
-           
-           
 
         gid = f['MAPS_RAW']
         if this_detector == 0 : entryname = 'data_a'

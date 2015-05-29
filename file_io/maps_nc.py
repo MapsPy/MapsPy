@@ -37,6 +37,8 @@ import numpy as np
 import os
 import time
 
+from file_util import open_file_with_retry, call_function_with_retry
+
 try:
     import scipy.io.netcdf
     netcdf_open = scipy.io.netcdf.netcdf_file
@@ -198,7 +200,8 @@ class nc:
             ncfile = os.path.join(path,'flyXRF', header+'_2xfm3__'+str(i_lines)+'.nc' )
 
             xmapdat = read_xmap_netcdf(ncfile,True)
- 
+            if xmapdat == None:
+                return None
             for ix in range(n_cols): 
                 if ix < len(xmapdat.liveTime[:, 0]):
                     scan.mca_arr[ix, i_lines, 0:2000] = xmapdat.data[ix, this_detector, 0:2000]
@@ -271,7 +274,10 @@ def read_xmap_netcdf(fname, verbose=False):
 
     t0 = time.time()
     # read data from array_data variable of netcdf file
-    fh = netcdf_open(fname,'r')
+    fh = call_function_with_retry(netcdf_open, 5, 0.1, 1.1, (fname, 'r'))
+    #fh = netcdf_open(fname,'r')
+    if fh == None:
+        return None
     data_var = fh.variables['array_data']
     array_data = data_var.data
     t1 = time.time()

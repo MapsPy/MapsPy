@@ -38,6 +38,7 @@ import os
 import numpy as np
 import h5py 
 import time
+from file_util import open_file_with_retry, call_function_with_retry
 
 import maps_definitions
 import maps_mda
@@ -90,9 +91,11 @@ class h5:
         if overwrite : file_status = 0
         
         if file_status <= 1 : 
-            f = h5py.File(filename, 'w')
+            f = call_function_with_retry(h5py.File, 5, 0.1, 1.1, (filename, 'w'))
+            #f = h5py.File(filename, 'w')
         else : 
-            f = h5py.File(filename, 'a')
+            f = call_function_with_retry(h5py.File, 5, 0.1, 1.1, (filename, 'a'))
+            #f = h5py.File(filename, 'a')
 
         if file_status <= 3 : 
             # create a group for maps to hold the data
@@ -134,13 +137,15 @@ class h5:
         gzip = 7
 
         if update == False:
-            f = h5py.File(filename, 'w')
+            f = call_function_with_retry(h5py.File, 5, 0.1, 1.1, (filename, 'w'))
+            #f = h5py.File(filename, 'w')
             # create a group for maps to hold the data
             mapsGrp = f.create_group('MAPS')
             # now set a comment
             mapsGrp.attrs['comments'] = 'This is the group that stores all relevant information created (and read) by the the MAPS analysis software'
         else:
-            f = h5py.File(filename, 'a')
+            f = call_function_with_retry(h5py.File, 5, 0.1, 1.1, (filename, 'a'))
+            #f = h5py.File(filename, 'a')
             if 'MAPS' not in f:
                 print 'error, hdf5 file does not contain the required MAPS group. I am aborting this action'
                 return 
@@ -532,7 +537,11 @@ class h5:
     
         maps_def = maps_definitions.maps_definitions()
 
-        f = h5py.File(sfile, 'r') 
+        f = call_function_with_retry(h5py.File, 5, 0.1, 1.1, (filename, 'w'))
+        if f == None:
+            print 'Error could not open file ',filename
+            return
+        #f = h5py.File(sfile, 'r') 
                 
         if 'MAPS' not in f:
             print 'error, hdf5 file does not contain the required MAPS group. I am aborting this action'
@@ -772,7 +781,8 @@ class h5:
             XRFmaps_info, n_cols, n_rows, n_channels, valid_read = self.maps_change_xrf_read_hdf5(sFile, make_maps_conf)
         
 
-            f = h5py.File(sFile, 'a')
+            f = call_function_with_retry(h5py.File, 5, 0.1, 1.1, (sFile, 'a'))
+            #f = h5py.File(sFile, 'a')
             if 'MAPS' not in f:
                 print 'error, hdf5 file does not contain the required MAPS group. I am aborting this action'
                 return 
@@ -917,7 +927,8 @@ class h5:
         scan_data = maps_mda.scan() 
                 
         print filename
-        f = h5py.File(filename, 'r') 
+        f = call_function_with_retry(h5py.File, 5, 0.1, 1.1, (filename, 'r'))
+        #f = h5py.File(filename, 'r') 
                 
         if 'MAPS' not in f:
             print 'error, hdf5 file does not contain the required MAPS group. I am aborting this action'
