@@ -46,6 +46,7 @@ import maps_detector
 import maps_fit_parameters
 import maps_analyze
 import maps_calibration
+from file_io.file_util import open_file_with_retry
 
 
 # ------------------------------------------------------------------------------------------------
@@ -184,7 +185,9 @@ def main(wdir='', force_fit=0, no_fit = False):
     suffix = '' 
     standard_filenames = []
     try:
-        f = open(os.path.join(main['master_dir'],maps_settingsfile), 'rt')
+        #f = open(os.path.join(main['master_dir'],maps_settingsfile), 'rt')
+        filepath = os.path.join(main['master_dir'],maps_settingsfile)
+        f = open_file_with_retry(filepath, 'rt')
         for line in f:
             if ':' in line : 
                 slist = line.split(':')
@@ -288,9 +291,13 @@ def main(wdir='', force_fit=0, no_fit = False):
             print 'suff=', suffix
             maps_overridefile = os.path.join(main['master_dir'],'maps_fit_parameters_override.txt')+suffix
             try:
-                f = open(maps_overridefile, 'rt')    
-                print maps_overridefile, ' exists.'
-                f.close()
+                f = open_file_with_retry(maps_overridefile, 'rt', 2, 0.4, 0.2)
+                #f = open(maps_overridefile, 'rt')    
+                if f == None:
+                    maps_overridefile = os.path.join(main['master_dir'],'maps_fit_parameters_override.txt')  
+                else:
+                    print maps_overridefile, ' exists.'
+                    f.close()
             except :
                 # if i cannot find an override file specific per detector, assuming
                 # there is a single overall file.
@@ -445,7 +452,8 @@ def main(wdir='', force_fit=0, no_fit = False):
 
         #Save intermediate solution to a file
         filepath = os.path.join(main['output_dir'],maps_intermediate_solution_file)+suffix
-        outfile = open(filepath, 'wb')
+        outfile = open_file_with_retry(filepath, 'wb')
+        #outfile = open(filepath, 'wb')
         np.savez(outfile, sol_intermediate = sol_intermediate, fitmatrix_reduced = fitmatrix_reduced)
         outfile.close()
 
@@ -511,7 +519,8 @@ def main(wdir='', force_fit=0, no_fit = False):
         count = len(filenames)
     
         filepath = os.path.join(main['output_dir'],'mapsprocessinfo_'+'.txt')
-        text_file = open(filepath, "w")
+        text_file = open_file_with_retry(filepath, 'w')
+        #text_file = open(filepath, "w")
         text_file.write(time.strftime("%a, %d %b %Y %H:%M:%S"))
         text_file.close()
     

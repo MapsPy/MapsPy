@@ -3178,7 +3178,7 @@ class calibration:
         avgfilename = os.path.join(self.main['master_dir'],'average_resulting_maps_fit_parameters_override.txt')
         fp.write_fit_parameters(self.main, avg_fitp, avgfilename, test_string, pileup_string = pileup_string, suffix = suffix)
         
-        print 'fitp',fitp, 'avg_fitp',  avg_fitp, 'spectra', spectra
+        #print 'fitp',fitp, 'avg_fitp',  avg_fitp, 'spectra', spectra
         return fitp, avg_fitp, spectra
 
 

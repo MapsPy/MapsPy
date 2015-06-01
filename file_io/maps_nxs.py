@@ -11,6 +11,7 @@ import string
 import numpy as np
 import h5py 
 import xml.etree.ElementTree as ET
+from file_util import call_function_with_retry
 
 
 class scan:
@@ -39,7 +40,11 @@ class nxs:
         
         
         # Open HDF5 file
-        f = h5py.File(filename, 'r') 
+        f = call_function_with_retry(h5py.File, 5, 0.1, 1.1, (filename, 'r'))
+        if f == None:
+            print 'Error reading ',filename
+            return None
+        #f = h5py.File(filename, 'r') 
     
         if 'entry1' in f:
             e1Grp = f['entry1'] 
@@ -218,7 +223,11 @@ class nxs:
         
         
         # Open HDF5 file
-        f = h5py.File(nfilename, 'r') 
+        f = call_function_with_retry(h5py.File, 5, 0.1, 1.1, (nfilename, 'r'))
+        if f == None:
+            print 'Error reading ',nfilename
+            return None
+        #f = h5py.File(nfilename, 'r') 
     
         if 'entry1' in f:
             e1Grp = f['entry1'] 

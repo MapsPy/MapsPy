@@ -41,6 +41,7 @@ import numpy as np
 
 import maps_fit_parameters
 import maps_analyze
+from file_io.file_util import open_file_with_retry
 
 
 #----------------------------------------------------------------------
@@ -168,7 +169,8 @@ class detector_maps:
         dmaps_set = np.zeros((n_cols, n_rows, make_maps_conf.n_used_dmaps))
         
         try:
-            f = open(maps_overridefile, 'rt')    
+            f = open_file_with_retry(maps_overridefile, 'rt')
+            #f = open(maps_overridefile, 'rt')    
             #override file exists.
             have_override_file = True
             

@@ -35,8 +35,7 @@ SUCH DAMAGE.
 import os
 import sys
 import shutil
-from time import gmtime, strftime
-import time
+from time import gmtime, strftime, sleep
 import platform
 
 import Settings
@@ -113,12 +112,12 @@ def main(mySettings):
                     filenames.append(fname)
         except:
             print 'Error changing to directory, sleep(5) seconds'
-			time.sleep(5)
+            sleep(5.0)
         no_files =len(filenames)
         
         if no_files == 0 :
-            #time.sleep(300.0)
-            time.sleep(check_interval)
+            #sleep(300.0)
+            sleep(check_interval)
             print 'no jobs found, waiting ...'
             print strftime("%Y-%m-%d %H:%M:%S", gmtime())
             f = open(statusfile+'_idle.txt', 'w')
@@ -154,7 +153,7 @@ def main(mySettings):
             f.write('found a job waiting, in file: '+ filenames[0]+'\n')
             f.close()   
                         
-            time.sleep(5)
+            sleep(5.0)
 
             standard_filenames = []
             try:

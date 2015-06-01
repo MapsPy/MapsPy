@@ -47,6 +47,7 @@ import maps_fit_parameters
 import maps_calibration
 import make_maps
 import maps_tools
+from file_io.file_util import open_file_with_retry, call_function_with_retry
 
 
 
@@ -211,9 +212,9 @@ def load_spectrum( main, filename, spectra, append = 1):
     real_time = 0
     live_time = 0
     
-    try:
-        f = open(filename, 'rt')                       
-    except: 
+    f = open_file_with_retry(filename, 'rt')
+    #f = open(filename, 'rt')                       
+    if f == None: 
         print 'Could not open file:', filename
         return
         
@@ -234,7 +235,8 @@ def load_spectrum( main, filename, spectra, append = 1):
     value = ''.join(slist[1:])
     n_channels = int(value)
     #print 'n_channels', n_channels
-    f.close()
+    f.seek(0, 0)
+    #f.close()
     
     amp = np.zeros((8, 3))       # 8 amplifiers, each with a numerical value(0) and a unit(1), resulting in  a factor (3)
     amp[:, 0] = 1. # put in a numerical value default of 1.
@@ -261,7 +263,7 @@ def load_spectrum( main, filename, spectra, append = 1):
     roi_pixels = -1
 
     found_data = 0     
-    f = open(filename)
+    #f = open(filename)
     lines = f.readlines()
     
     for line in lines:
@@ -585,8 +587,11 @@ def save_spectrum( main, filename, sfilename):
     
     ch5 = maps_hdf5.h5()
     
-    fh5 = h5py.File(filename, 'r') 
-            
+    fh5 = call_function_with_retry(h5py.File, 5, 0.1, 1.1, (filename, 'r'))
+    #fh5 = h5py.File(filename, 'r') 
+    if fh5 == None:
+        print 'Error opeing file ',filename
+        return       
     if 'MAPS' not in fh5:
         print 'error, hdf5 file does not contain the required MAPS group. I am aborting this action'
         return 
@@ -622,7 +627,11 @@ def save_spectrum( main, filename, sfilename):
     fh5.close()    
     
     print 'saving', sfilename
-    f = open(sfilename, 'w')
+    f = open_file_with_retry(sfilename, 'w')
+    if f == None:
+        print '-------\nError opening file to write: ',sfilename
+        return
+    #f = open(sfilename, 'w')
     print>>f, 'VERSION:    3.1'
     print>>f,  'ELEMENTS:  ' + str(no_specs)
     line = 'DATE: '+ str(scan_time_stamp)
@@ -788,7 +797,9 @@ def main(wdir='', a=1,b=0,c=0,d=0,e=0):
     standard_filenames = []
     maps_settingsfile = 'maps_settings.txt'     
     try:
-        f = open(os.path.join(main['master_dir'],maps_settingsfile), 'rt')
+        sfilepath = os.path.join(main['master_dir'],maps_settingsfile)
+        f = open_file_with_retry(sfilepath, 'rt')
+        #f = open(os.path.join(main['master_dir'],maps_settingsfile), 'rt')
         for line in f:
             if ':' in line : 
                 slist = line.split(':')

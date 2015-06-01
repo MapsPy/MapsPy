@@ -54,6 +54,7 @@ import maps_analyze
 import maps_tools
 
 import h5py
+from file_io.file_util import open_file_with_retry, call_function_with_retry
 
 NO_MATRIX = 0
 
@@ -364,7 +365,8 @@ class analyze:
         # in a user editable file
         if amp.sum() == 0. :
             try:
-                f = open(maps_overridefile, 'rt')
+                f = open_file_with_retry(maps_overridefile, 'rt')
+                #f = open(maps_overridefile, 'rt')
                 US_AMP_SENS_NUM = 0
                 US_AMP_SENS_UNIT = 0
                 DS_AMP_SENS_NUM = 0
@@ -889,11 +891,14 @@ class analyze:
         
         #Read in intermediate solution
         filepath = os.path.join(self.main['output_dir'],maps_intermediate_solution_file)+suffix
-        #saveddatafile = open(filepath, 'rb')
-        saveddatafile = np.load(filepath)
-        sol_intermediate = saveddatafile['sol_intermediate']
-        fitmatrix_reduced = saveddatafile['fitmatrix_reduced']
-        saveddatafile.close()
+        #saveddatafile = np.load(filepath)
+        saveddatafile = call_function_with_retry(np.load, 5, 0.1, 1.1, (filepath,))
+        if saveddatafile == None:
+            print 'Error opening ',filepath
+        else:
+            sol_intermediate = saveddatafile['sol_intermediate']
+            fitmatrix_reduced = saveddatafile['fitmatrix_reduced']
+            saveddatafile.close()
 
         print 'elements to use as per make_maps_conf'
         maps_conf_chan_elstouse_names = []
@@ -1446,30 +1451,34 @@ class analyze:
             
             gzip = 7
 
-            f = h5py.File(filename, 'w')
-            # create a group for maps to hold the data
-            pcaGrp = f.create_group('PCA')
+            #f = h5py.File(filename, 'w')
+            f = call_function_with_retry(h5py.File, 5, 0.1, 1.1, (filename, 'w'))
+            if f == None:
+                print 'Error opening file ',filename
+            else:
+                # create a group for maps to hold the data
+                pcaGrp = f.create_group('PCA')
 
-            ds_data = pcaGrp.create_dataset('n_channels', data = n_channels)
-            ds_data = pcaGrp.create_dataset('n_cols', data = n_cols)
-            ds_data = pcaGrp.create_dataset('n_rows', data = n_rows)
-            data = long(len(scan.detector_description_arr))
-            ds_data = pcaGrp.create_dataset('n_detector_description', data = data)
-            ds_data = pcaGrp.create_dataset('eigen_vec', data = eigen_values_vec)
-            ds_data = pcaGrp.create_dataset('U', data = U, compression='gzip', compression_opts=7)
-            ds_data = pcaGrp.create_dataset('V', data = V, compression='gzip', compression_opts=7)
-            ds_data = pcaGrp.create_dataset('input_arr', data = input_arr, compression='gzip', compression_opts=7)
-            ds_data = pcaGrp.create_dataset('scan_time_stamp', data = scan.scan_time_stamp)
-            ds_data = pcaGrp.create_dataset('y_coord_arr', data = scan.y_coord_arr)
-            ds_data = pcaGrp.create_dataset('x_coord_arr', data = scan.x_coord_arr)
-            ds_data = pcaGrp.create_dataset('x_pixels', data = scan.x_pixels)
-            ds_data = pcaGrp.create_dataset('y_pixels', data = scan.y_pixels)
-            ds_data = pcaGrp.create_dataset('detector_description_arr', data = scan.detector_description_arr)
-            ds_data = pcaGrp.create_dataset('detector_arr', data = scan.detector_arr)
-            
-            
-            f.close()
-             
+                ds_data = pcaGrp.create_dataset('n_channels', data = n_channels)
+                ds_data = pcaGrp.create_dataset('n_cols', data = n_cols)
+                ds_data = pcaGrp.create_dataset('n_rows', data = n_rows)
+                data = long(len(scan.detector_description_arr))
+                ds_data = pcaGrp.create_dataset('n_detector_description', data = data)
+                ds_data = pcaGrp.create_dataset('eigen_vec', data = eigen_values_vec)
+                ds_data = pcaGrp.create_dataset('U', data = U, compression='gzip', compression_opts=7)
+                ds_data = pcaGrp.create_dataset('V', data = V, compression='gzip', compression_opts=7)
+                ds_data = pcaGrp.create_dataset('input_arr', data = input_arr, compression='gzip', compression_opts=7)
+                ds_data = pcaGrp.create_dataset('scan_time_stamp', data = scan.scan_time_stamp)
+                ds_data = pcaGrp.create_dataset('y_coord_arr', data = scan.y_coord_arr)
+                ds_data = pcaGrp.create_dataset('x_coord_arr', data = scan.x_coord_arr)
+                ds_data = pcaGrp.create_dataset('x_pixels', data = scan.x_pixels)
+                ds_data = pcaGrp.create_dataset('y_pixels', data = scan.y_pixels)
+                ds_data = pcaGrp.create_dataset('detector_description_arr', data = scan.detector_description_arr)
+                ds_data = pcaGrp.create_dataset('detector_arr', data = scan.detector_arr)
+                
+                
+                f.close()
+                 
             seconds_PCA_end = tm.time()
             print  'PCA part of the analysis took : ', str(seconds_PCA_end-seconds_PCA_start), \
                      ' seconds  corresponding to  ', str((seconds_PCA_end-seconds_PCA_start)/60.), \
@@ -1609,8 +1618,11 @@ class analyze:
           
                 XRFmaps_info, n_cols, n_rows, n_channels, valid_read = h5p.maps_change_xrf_read_hdf5(sfile, make_maps_conf)
 
-                f = h5py.File(sfile, 'r') 
-                
+                f = call_function_with_retry(h5py.File, 5, 0.1, 1.1, (sfile, 'r'))
+                #f = h5py.File(sfile, 'r') 
+                if f == None:
+                    print 'Error opening file ',sfile
+                    return 
                 if 'MAPS' not in f:
                     print 'error, hdf5 file does not contain the required MAPS group. I am aborting this action'
                     return 
@@ -1892,16 +1904,13 @@ class analyze:
                         allspectra[:,0] = xaxis
                         allspectra[:,1] = this_spec
                             
-                        writer = csv.writer(open(file_csv, "wb"))
-                        
-                        writer.writerow(spectra_names)
-                        writer.writerows(allspectra)
-                        
-        
-                        
-                
-
-                
+                        file = open_file_with_retry(file_csv, 'wb')
+                        if file == None:
+                            print 'Error opening file:',file_csv
+                        else:
+                            writer = csv.writer(open(file_csv, "wb"))
+                            writer.writerow(spectra_names)
+                            writer.writerows(allspectra)
         
         return
     

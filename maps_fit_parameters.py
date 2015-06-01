@@ -37,6 +37,7 @@ import os
 import datetime 
 import numpy as np
 import henke
+from file_io.file_util import open_file_with_retry
 
 
 kele = ['Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar', 'K', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 
@@ -517,7 +518,10 @@ class maps_fit_parameters:
         
         verbose = False
         
-        f = open(filename, 'rt')
+        f = open_file_with_retry(str(filename), 'rt')
+        if f == None:
+            return None, None, None
+        #f = open(filename, 'rt')
         for line in f:
             if ':' in line : 
                 slist = line.split(':')
@@ -981,7 +985,8 @@ class maps_fit_parameters:
        
         
         try:
-            f = open(maps_overridefile, 'rt')    
+            f = open_file_with_retry(maps_overridefile, 'rt')
+            #f = open(maps_overridefile, 'rt')    
             #override file exists.
             have_override_file = True
             
@@ -1019,7 +1024,11 @@ class maps_fit_parameters:
         except:
             pass
  
-        f = open(filename, 'w')
+        f = open_file_with_retry(filename, 'w')
+        if f == None:
+            print 'Error opening file ',filename,'to write to!'
+            return 
+        #f = open(filename, 'w')
     
         print>>f, '   This file will override default fit settings for the maps program for a 3 element detector remove: removeme_*elementdetector_to make it work. '
         print>>f, '   note, the filename MUST be maps_fit_parameters_override.txt'
@@ -1038,7 +1047,12 @@ class maps_fit_parameters:
 
         BRANCHING_FAMILY_ADJUSTMENT_L = ''
         BRANCHING_RATIO_ADJUSTMENT_L = ''
-        f2 = open(os.path.join(main['master_dir'], 'maps_fit_parameters_override.txt'), 'rt')
+        filepath = os.path.join(main['master_dir'], 'maps_fit_parameters_override.txt')
+        f2 = open_file_with_retry(filepath, 'rt')
+        if f2 == None:
+            print 'Error opening file ',filepath,'to write to!'
+            return 
+        #f2 = open(os.path.join(main['master_dir'], 'maps_fit_parameters_override.txt'), 'rt')
         for line in f2:
             if ':' in line : 
                 slist = line.split(':')
@@ -1067,7 +1081,7 @@ class maps_fit_parameters:
                     temp_string = value.split(',')
                     temp_string = [x.strip() for x in temp_string] 
                     BRANCHING_RATIO_ADJUSTMENT_L = ', '.join(temp_string)
-        f2.close()               
+        #f2.close()               
 
         
         print>>f, '   offset of energy calibration, in kev'
@@ -1167,8 +1181,8 @@ class maps_fit_parameters:
         print>>f, '    Ka1, Ka2, Kb1(+3), Kb2'
         print>>f, '    please note, the first value (Ka1) MUST BE A 1. !!!'
 
-
-        f2 = open(os.path.join(main['master_dir'], 'maps_fit_parameters_override.txt'), 'rt')
+        f2.seek(0,0)
+        #f2 = open(os.path.join(main['master_dir'], 'maps_fit_parameters_override.txt'), 'rt')
         for line in f2:
             if ':' in line : 
                 slist = line.split(':')
