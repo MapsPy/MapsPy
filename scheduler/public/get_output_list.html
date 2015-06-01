@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link href="/static/css/style.css" rel="stylesheet">
+    <link rel="stylesheet" href="static/jstree_dist/themes/default/style.min.css" />
+    <script src="/static/jquery/jquery-2.0.3.min.js"></script> 
+    <script type="text/javascript">
+    $(document).ready(function() 
+    {
+        function display_image(e)
+        {
+            var $url = '/get_spectrum_image?image_path='+$(this).attr('link');
+            window.open($url);
+        }
+       
+        function display_txt(e)
+        {
+            var $url = '/get_spectrum_txt?image_path='+$(this).attr('link');
+            window.open($url);
+        }
+        /*
+        function job_get_img_list(job_path)
+        {
+            $.ajax(
+            {
+                url: '/get_spectrum_image_list',
+                type: 'POST',
+                datatype: "json",
+                data: {'job_path': job_path},
+                success: function(data) 
+                {
+                    //alert(data);
+                    var data_dict = $.parseJSON(data);
+                    var image_links = data_dict.images;
+                    var txt_links = data_dict.txt;
+                    
+                    var $body = $("#main_body");
+                    var $ul_img = $('<ul>');
+                    $ul_img.attr('id', 'images');
+                    image_links.forEach( function(img_link) 
+                    {
+                        var $li = $('<li>');
+                        var name = img_link.split('/'); 
+                        var $href = $('<a>');
+                        $href.click('click', display_image);
+                        $href.attr('link',img_link);
+                        $href.attr('href','#');
+                        $href.text(name[name.length-1]);
+                        $li.append($href);
+                        $ul_img.append( $li );
+                    });
+                    $body.append($ul);
+
+                    var $ul_txt = $('<ul>');
+                    $ul_txt.attr('id', 'txt');
+                    txt_links.forEach( function(txt_link) 
+                    {
+                        var $li = $('<li>');
+                        var name = txt_link.split('/'); 
+                        var $href = $('<a>');
+                        $href.click('click', display_txt);
+                        $href.attr('link',txt_link);
+                        $href.attr('href','#');
+                        $href.text(name[name.length-1]);
+                        $li.append($href);
+                        $ul_txt.append( $li );
+                    });
+                    $body.append($ul);
+
+                    
+                }
+            });           
+        }
+*/
+    });
+
+    </script>
+    <title> MapsPy Scheduler </title>
+  </head>
+  <body id='main_body'>
+

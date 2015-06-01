@@ -35,6 +35,12 @@
             });
         }
 
+        function popup_get_img_list($td, job_path)
+        {
+            var $url = '/get_output_list?path='+$(this).attr('link'); 
+			window.open($url);
+        }
+/*
         function display_image(e)
         {
             var $url = '/get_spectrum_image?image_path='+$(this).attr('link');
@@ -51,9 +57,9 @@
                 data: {'job_path': job_path},
                 success: function(data) 
                 {
-                    //alert(data);
+                    alert(data);
                     var image_links = $.parseJSON(data);
-                    var str = "";
+                    
                     $ul = $('<ul>');
                     image_links.forEach( function(img_link) 
                     {
@@ -68,10 +74,11 @@
                         $ul.append( $li );
                     });
                     $td.append($ul);
+                    
                 }
             });           
         }
- 
+*/ 
         function job_parse_status($tr, $item)
         {
             if($item.Status === 0)
@@ -123,6 +130,12 @@
             }
             //$tr.append( $("<td>").text($procMaskStr));
             $tr.append( $("<td>").append($procMask));
+			/*
+            var $href = $("<a>");
+            $href.click('href', 'get_output_list?job_path='+);
+            $tr.append( $("<td>").append( $href ) );
+			*/
+            /*
             if($has_b === true)
             {
                 var $td =  $("<td>");
@@ -133,6 +146,7 @@
             {
                 $tr.append( $("<td>").text('N/A'));    
             }
+            */
         }
        
         function get_jobs(c_url, c_table)
@@ -154,6 +168,10 @@
                         $tr.append( $("<td>").text(item.DataPath));
                         job_parse_status($tr, item);
                         job_parse_proc_mask($tr, item);
+                        var $href = $("<a>");
+                        $href.attr('href', 'get_output_list?job_path='+item.DataPath);
+                        $href.text("Output Dir");
+                        $tr.append( $("<td>").append( $href ) );
                         $table.append( $tr);
                     });
                 }

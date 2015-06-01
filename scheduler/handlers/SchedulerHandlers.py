@@ -1,3 +1,36 @@
+'''
+Created on May 2015
+
+@author: Arthur Glowacki, Argonne National Laboratory
+
+Copyright (c) 2013, Stefan Vogt, Argonne National Laboratory 
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification, 
+are permitted provided that the following conditions are met:
+
+    Redistributions of source code must retain the above copyright notice, this 
+        list of conditions and the following disclaimer.
+    Redistributions in binary form must reproduce the above copyright notice, this 
+        list of conditions and the following disclaimer in the documentation and/or 
+        other materials provided with the distribution.
+    Neither the name of the Argonne National Laboratory nor the names of its 
+    contributors may be used to endorse or promote products derived from this 
+    software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY 
+EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES 
+OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT 
+SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED 
+TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; 
+OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER 
+IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
+IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
+SUCH DAMAGE.
+'''
+
+
 import string
 import json
 import cherrypy
@@ -6,6 +39,7 @@ import os
 import traceback
 import base64
 import Settings
+import unicodedata
 
 def gen_job_dir_dict(text, opened, children):
 	d_dict = dict()
@@ -36,8 +70,26 @@ class SchedulerHandler(object):
 		return file('public/scheduler_index.html')
 
 	@cherrypy.expose
-	def jstree(self):
-		return file('public/jstree_test.html')
+	def get_output_list(self, job_path=None):
+		rfile = file('public/get_output_list.html')
+		retstr = rfile.read()
+		img_path = os.path.join(job_path, 'output_old/*.png')
+		txt_path = os.path.join(job_path, 'output_old/*.txt')
+		retstr += '<ul>\n'
+		for link in glob.glob(img_path):
+			strLink = unicodedata.normalize('NFKD', link).encode('ascii','ignore')
+			subname = strLink.split('/')
+			name = subname[len(subname) -1]
+			retstr += '<li><a href=/get_spectrum_image?path='+strLink+' click=display_image link='+strLink+'>'+name+'</a></li>\n'
+		retstr += '</ul>\n<ul>\n'
+		for link in glob.glob(txt_path):
+			strLink = unicodedata.normalize('NFKD', link).encode('ascii','ignore')
+			subname = strLink.split('/')
+			print subname
+			name = subname[len(subname) -1]
+			retstr += '<li><a href=/get_spectrum_txt?path='+strLink+' click=display_image link='+strLink+'>'+name+'</a></li>\n'
+		retstr += '</ul>\n</body>\n</html>'
+		return retstr
 
 	@cherrypy.expose
 	@cherrypy.tools.json_out()
@@ -67,23 +119,40 @@ class SchedulerHandler(object):
 	@cherrypy.tools.json_out()
 	def get_spectrum_image_list(self, job_path):
 		try:
+			data_dict = dict()
 			img_path = os.path.join(job_path, 'output_old/*.png')
-			print img_path
-			img_list = glob.glob(img_path)
+			txt_path = os.path.join(job_path, 'output_old/*.txt')
+			#print img_path
+			data_dict['images'] = glob.glob(img_path)
+			data_dict['txt'] = glob.glob(txt_path)
 			jenc = json.JSONEncoder()
-			return jenc.encode(img_list)
+			return jenc.encode(data_dict)
 		except:
 			exc_str = traceback.format_exc()
 			return exc_str
 
 	@cherrypy.expose
-	def get_spectrum_image(self, image_path):
+	def get_spectrum_image(self, path):
 		try:
 			encoded_string = ''
-			with open(image_path, "rb") as image_file:
+			with open(path, "rb") as image_file:
 				encoded_string = base64.b64encode(image_file.read())
-			str = '<img alt="My Image" src="data:image/png;base64,'+ encoded_string + '" />'
-			return str
+			retstr = '<img alt="My Image" src="data:image/png;base64,'+ encoded_string + '" />'
+			return retstr
+			#return file(image_path)
+		except:
+			exc_str = traceback.format_exc()
+			return exc_str
+
+	@cherrypy.expose
+	def get_spectrum_txt(self, path):
+		try:
+			retstr = '<!DOCTYPE html><html><head></head><body><pre>'
+			with open(path, "rt") as txt_file:
+				retstr += txt_file.read()
+			#retstr = '<img alt="My Image" src="data:image/png;base64,'+ encoded_string + '" />'
+			retstr += '</pre></body></html>'
+			return retstr
 			#return file(image_path)
 		except:
 			exc_str = traceback.format_exc()
