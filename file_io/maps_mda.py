@@ -1343,7 +1343,7 @@ class mda:
         except:
             invalid_file = 1
 
-        if invalid_file == 1:      
+        if scan == None or  invalid_file == 1:      
             print 'not read a valid mda flyscan file, filename: ', mdafilename
             #maps_change_xrf_resetvars, n_ev, n_rows, n_cols, n_energy, energy, energy_spec, scan_time_stamp, dataset_orig
             return
