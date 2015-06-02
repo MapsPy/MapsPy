@@ -35,11 +35,13 @@ SUCH DAMAGE.
 import os
 import sys
 import shutil
-from time import gmtime, strftime, sleep
+from time import gmtime, strftime
+import time
 import platform
 
 import Settings
 import maps_batch
+import traceback
 
 settings_filename = 'settings.ini'
 
@@ -76,6 +78,7 @@ def main(mySettings):
 
     working_dir = os.getcwd()   
     #todo: create folders if they don't exist
+    #os.chdir(jobs_path)
     print 'Starting maps_monitor with'
     print 'jobs_path = ',jobs_path
     print 'processing_path = ',processing_path
@@ -86,6 +89,7 @@ def main(mySettings):
     print 'checking every ',check_interval,'seconds'
 
 
+    #print 'changed into ', jobs_path
   
     #make sure the following are defined:
     keyword_a = 0
@@ -96,28 +100,26 @@ def main(mySettings):
     keyword_f = 0
 
     statusfile = 'status_'+computer
+    print 'changed into ', jobs_path
 
     print strftime("%Y-%m-%d %H:%M:%S", gmtime())
     true = 1
-    print 'changed into ', jobs_path
       
     while true:
         filenames = []
         try:
             os.chdir(jobs_path)
-            filenames = []
             dirList=os.listdir(jobs_path)
             for fname in dirList:
                 if (fname[0:4] == 'job_') and (fname[-4:] == '.txt') : 
                     filenames.append(fname)
         except:
-            print 'Error changing to directory, sleep(5) seconds'
-            sleep(5.0)
+            print 'error changing dir'
+            time.sleep(5)
         no_files =len(filenames)
-        
         if no_files == 0 :
-            #sleep(300.0)
-            sleep(check_interval)
+            #time.sleep(300.0)
+            time.sleep(check_interval)
             print 'no jobs found, waiting ...'
             print strftime("%Y-%m-%d %H:%M:%S", gmtime())
             f = open(statusfile+'_idle.txt', 'w')
@@ -153,7 +155,7 @@ def main(mySettings):
             f.write('found a job waiting, in file: '+ filenames[0]+'\n')
             f.close()   
                         
-            sleep(5.0)
+            time.sleep(5)
 
             standard_filenames = []
             try:
@@ -217,8 +219,11 @@ def main(mySettings):
             f.close() 
              
             os.chdir(working_dir)
-            maps_batch.main(wdir=directory, a=keyword_a, b=keyword_b, c=keyword_c, d=keyword_d, e=keyword_e)
-
+            try:
+                maps_batch.main(wdir=directory, a=keyword_a, b=keyword_b, c=keyword_c, d=keyword_d, e=keyword_e)
+            except:
+                print 'Error processing',directory
+                traceback.print_exc(file=sys.stdout)
             os.chdir(processing_path)
             print 'move job into processing directory'
             shutil.copy(os.path.join(processing_path,filenames[0]), os.path.join(done_path,filenames[0]))     

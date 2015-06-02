@@ -2,9 +2,11 @@
 <html>
   <head>
     <link href="/static/css/style.css" rel="stylesheet">
-    <link rel="stylesheet" href="static/jstree_dist/themes/default/style.min.css" />
+    <link rel="stylesheet" href="/static/data_tables/css/jquery.dataTables.css">
+    <link rel="stylesheet" href="/static/jstree_dist/themes/default/style.min.css" />
     <script src="/static/jquery/jquery-2.0.3.min.js"></script> 
     <script src="/static/jstree_dist/jstree.min.js"></script> 
+    <script src="/static/data_tables/js/jquery.dataTables.js"></script> 
     <script src="/static/notify.min.js"></script> 
     <script type="text/javascript">
     $(document).ready(function() 
@@ -19,8 +21,9 @@
                 datatype: "json",
                 success: function(data) 
                 {
-                    var $table = $("#data_process_nodes");
+                    var $table = $("#process_node_table");
                     $table.empty();
+                    var $tbody = $table.append("<tbody>");
                     var nodes = $.parseJSON(data);
                     nodes.forEach( function(item) 
                     {
@@ -29,7 +32,7 @@
                         $tr.append( $("<td>").text(item.NumThreads));
                         $tr.append( $("<td>").text(item.Status));
                         $tr.append( $("<td>").text(item.Heartbeat));
-                        $table.append( $tr);
+                        $tbody.append( $tr);
                     });
                 }
             });
@@ -40,45 +43,7 @@
             var $url = '/get_output_list?path='+$(this).attr('link'); 
 			window.open($url);
         }
-/*
-        function display_image(e)
-        {
-            var $url = '/get_spectrum_image?image_path='+$(this).attr('link');
-            window.open($url);
-        }
-       
-        function job_get_img_list($td, job_path)
-        {
-            $.ajax(
-            {
-                url: '/get_spectrum_image_list',
-                type: 'POST',
-                datatype: "json",
-                data: {'job_path': job_path},
-                success: function(data) 
-                {
-                    alert(data);
-                    var image_links = $.parseJSON(data);
-                    
-                    $ul = $('<ul>');
-                    image_links.forEach( function(img_link) 
-                    {
-                        var $li = $('<li>');
-                        var name = img_link.split('/');
-                        var $href = $('<a>');
-                        $href.click('click', display_image);
-                        $href.attr('link',img_link);
-                        $href.attr('href','#');
-                        $href.text(name[name.length-1]);
-                        $li.append($href);
-                        $ul.append( $li );
-                    });
-                    $td.append($ul);
-                    
-                }
-            });           
-        }
-*/ 
+
         function job_parse_status($tr, $item)
         {
             if($item.Status === 0)
@@ -149,6 +114,30 @@
             */
         }
        
+       function job_proc_mask_to_str($ProcMask)
+        {
+            if( ($ProcMask & 1) === 1)
+            {
+                return 'A';
+            }
+            if( ($ProcMask & 2) === 2)
+            {
+                return 'B';
+            }
+            if( ($ProcMask & 4) === 4)
+            {
+                return 'C';
+            }
+            if( ($ProcMask & 8) === 8)
+            {
+                return 'D';
+            }
+            if( ($ProcMask & 16) === 16)
+            {
+                return 'E';
+            }
+        }
+       
         function get_jobs(c_url, c_table)
         {
             $.ajax(
@@ -178,18 +167,12 @@
             });
         }
         
-        setInterval(function()
-        {
-            get_process_nodes();
-            get_jobs("/get_all_unprocessed_jobs", "#data_unprocessed_jobs");
-            get_jobs("/get_all_processing_jobs", "#data_processing_jobs");
-            get_jobs("/get_all_finished_jobs", "#data_finished_jobs");
-        }, 3000);
+
      
-        get_process_nodes();
+        //get_process_nodes();
         get_jobs("/get_all_unprocessed_jobs", "#data_unprocessed_jobs");
         get_jobs("/get_all_processing_jobs", "#data_processing_jobs");
-        get_jobs("/get_all_finished_jobs", "#data_finished_jobs");
+        //get_jobs("/get_all_finished_jobs", "#data_finished_jobs");
      
         $('.header').click(function()
         {
@@ -296,7 +279,7 @@
             {
                 type: 'POST',
                 url:"/get_dataset_dirs_list",
-                data: {'job_root': '2ide', 'depth': 1},
+                data: {'job_root': '2ide', 'depth': 0},
                 datatype: "json",
                 success: function(data) 
                 {
@@ -307,6 +290,108 @@
                 }
             });
         });
+
+        function format_job_details ( d ) 
+        {
+            return  'Id: '+d.Id+'<br>'+
+                    'DataPath: '+d.DataPath+'<br>'+
+                    'Processing Type: '+job_proc_mask_to_str(d.ProcMask)+'<br>'+
+                    'Priority: '+d.Priority+'<br>'+
+                    'DetectorElements: '+d.DetectorElements+'<br>'+
+                    'XANES_Scan: '+d.XANES_Scan+'<br>'+
+                    'Version: '+d.Version+'<br>'+
+                    'NNLS: '+d.NNLS+'<br>'+
+                    'XANES_Scan: '+d.XANES_Scan+'<br>'+
+                    'BeamLine: '+d.BeamLine+'<br>'+
+                    '<a href=/get_output_list?job_path='+d.DataPath+'>Output Directory</a>';
+        }
+
+        var $pn_table = $("#process_node_table").DataTable(
+        {
+            //"processing": true,
+            //"serverSide": true,
+            "ajax": "/process_node",
+            "columns": [
+            {
+                "class":          "details-control",
+                "orderable":      false,
+                "data":           null,
+                "defaultContent": ""
+            },
+            { "data": "ComputerName" },
+            { "data": "Status" },
+            { "data": "NumThreads" },
+            { "data": "Heartbeat" }
+            ],
+            "order": [[1, 'asc']]
+        });
+        
+        var $finished_table = $("#table_finished_jobs").DataTable(
+        {
+            "ajax": "/get_all_finished_jobs",
+            "columns": [
+            {
+                "class":          "details-control",
+                "orderable":      false,
+                "data":           null,
+                "defaultContent": ""
+            },
+            { "data": "Id" },
+            { "data": "DataPath" },
+            { "data": "Status" },
+            { "data": "ProcMask" },
+            ],
+            "order": [[1, 'desc']]
+        });
+        
+        setInterval(function()
+        {
+            //get_process_nodes();
+            $pn_table.ajax.reload();
+            get_jobs("/get_all_unprocessed_jobs", "#data_unprocessed_jobs");
+            get_jobs("/get_all_processing_jobs", "#data_processing_jobs");
+            //get_jobs("/get_all_finished_jobs", "#data_finished_jobs");
+            $finished_table.ajax.reload();
+        }, 3000);
+	
+        var detailRows = [];
+        $('#table_finished_jobs tbody').on( 'click', 'tr td.details-control', function () 
+        {
+            var tr = $(this).closest('tr');
+            var row = $finished_table.row( tr );
+            var idx = $.inArray( tr.attr('id'), detailRows );
+
+            if ( row.child.isShown() ) 
+            {
+                tr.removeClass( 'details' );
+                row.child.hide();
+
+                // Remove from the 'open' array
+                detailRows.splice( idx, 1 );
+            }
+            else 
+            {
+                tr.addClass( 'details' );
+                row.child( format_job_details( row.data() ) ).show();
+
+                // Add to the 'open' array
+                if ( idx === -1 ) 
+                {
+                    detailRows.push( tr.attr('id') );
+                }
+            }
+        });
+ 
+        // On each draw, loop over the `detailRows` array and show any child rows
+        $finished_table.on( 'draw', function () 
+        {
+            $.each( detailRows, function ( i, id ) 
+            {
+                $('#'+id+' td.details-control').trigger( 'click' );
+            });
+        });
+        
+        //var poll = setInterval('$("#process_node_table").dataTable().fnDraw()', 3000);
     });
     </script>
     <title> MapsPy Scheduler </title>
@@ -314,14 +399,20 @@
   <body>
     <div id="process_nodes_div">
         <table id="process_node_table">
-        <tr class="header">  
-            <th> <span class="sign"> </span>  Computer Name </th>
-            <th>Max Threads</th>
+       <!-- <tr class="header">  -->
+         <thead>
+           <tr>
+            <th></th>
+            <th>Computer Name </th>
             <th>Status</th>
+            <th>Max Threads</th>
             <th>Heartbeat</th>
-        </tr>
-        <tbody id="data_process_nodes" class="expand"> </tbody>
-         </table>
+           </tr>
+         </thead>
+      <!--  </tr>  -->
+      <!--  <tbody id="data_process_nodes" class="expand"> </tbody> -->
+      
+        </table>
      </div>
       <br>
       <br>
@@ -348,15 +439,17 @@
         <tbody id="data_processing_jobs"> </tbody>
     </table>
     <br>
-    <table id="table_finished_jobs">
+    <table id="table_finished_jobs" class="display">
+        <thead>
         <tr>  
-            <th class="header expand"> <span class="sign"> </span> Finished Jobs</th>
+            <th></th>
+            <th>Finished Jobs</th>
             <th>Path</th>
             <th>Status</th>
             <th>Analysis</th>
-            <th>Output</th>
         </tr>
-        <tbody id="data_finished_jobs"> <tbody>
+        </thead>
+    <!--    <tbody id="data_finished_jobs"> <tbody> -->
     </table>
      </div>
 

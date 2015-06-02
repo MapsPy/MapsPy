@@ -1,3 +1,11 @@
+td.details-control {
+    background: url('../resources/details_open.png') no-repeat center center;
+    cursor: pointer;
+}
+tr.details td.details-control {
+    background: url('../resources/details_close.png') no-repeat center center;
+}
+
 body {
   background-color: snow;
 }
@@ -19,12 +27,14 @@ tr.header
     cursor:pointer;
 }
 
-.header .sign:before{
+.header .sign:before
+{
   content:"+";
   display:inline-block;      
 }
 
-.header.expand .sign:before{
+.header.expand .sign:before
+{
   content:"-";
 }
 

@@ -171,10 +171,15 @@ class SchedulerHandler(object):
 		return jenc.encode(result)
 
 	@cherrypy.expose
-	def get_all_finished_jobs(self):
-		result = self.db.get_all_finished_jobs()
+	def get_all_finished_jobs(self, *args, **kwargs):
+		data_dict = dict()
+		data_dict['draw'] = 1
+		data_dict['data'] = self.db.get_all_finished_jobs()
+		data_dict['recordsTotal'] = len(data_dict['data'])
+		data_dict['recordsFiltered'] = len(data_dict['data'])
+		#result = self.db.get_all_finished_jobs()
 		jenc = json.JSONEncoder()
-		return jenc.encode(result)
+		return jenc.encode(data_dict)
 
 class SchedulerJobsWebService(object):
 	'''
@@ -186,12 +191,17 @@ class SchedulerJobsWebService(object):
 		self.db = db
 
 	@cherrypy.tools.accept(media='text/plain')
-	@cherrypy.tools.json_out()
+	#@cherrypy.tools.json_out()
 	#return list of jobs in queue
-	def GET(self):
-		result = self.db.get_all_jobs()
+	def GET(self, *args, **kwargs):
+		data_dict = dict()
+		data_dict['draw'] = 1
+		data_dict['data'] = self.db.get_all_jobs()
+		data_dict['recordsTotal'] = len(data_dict['data'])
+		data_dict['recordsFiltered'] = len(data_dict['data'])
+		#result = self.db.get_all_jobs()
 		jenc = json.JSONEncoder()
-		return jenc.encode(result)
+		return jenc.encode(data_dict)
 
 	#submit job to queue
 	def POST(self):
@@ -227,16 +237,19 @@ class SchedulerProcessNodeWebService(object):
 		self.db = db
 
 	@cherrypy.tools.accept(media='text/plain')
-	@cherrypy.tools.json_out()
+	#@cherrypy.tools.json_out()
 	#get list of computer nodes
-	def GET(self, computer_name=None):
-		result = None
-		if computer_name == None:
-			result = self.db.get_all_process_nodes()
-		else:
-			result = self.db.get_process_node(computer_name)
+	def GET(self, *args, **kwargs):
+		data_dict = dict()
+		data_dict['draw'] = 1
+		#if computer_name == None:
+		data_dict['data'] = self.db.get_all_process_nodes()
+		#else:
+		#data_dict['data'] = self.db.get_process_node(computer_name)
+		data_dict['recordsTotal'] = len(data_dict['data'])
+		data_dict['recordsFiltered'] = len(data_dict['data'])
 		jenc = json.JSONEncoder()
-		return jenc.encode(result)
+		return jenc.encode(data_dict)
 
 	#add process node
 	def POST(self):
