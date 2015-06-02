@@ -131,15 +131,32 @@ class SchedulerHandler(object):
 			exc_str = traceback.format_exc()
 			return exc_str
 
+	def check_path(self, path):
+		try:
+			found = False
+			job_roots_dict = self.settings.getSetting(Settings.SECTION_JOB_DIR_ROOTS)
+			for job_path in job_roots_dict.values():
+				print job_path, path
+				if path.startswith(job_path):
+					found = True
+					break
+			return found
+		except:
+			return False
+
 	@cherrypy.expose
 	def get_spectrum_image(self, path):
 		try:
 			encoded_string = ''
-			with open(path, "rb") as image_file:
-				encoded_string = base64.b64encode(image_file.read())
-			retstr = '<img alt="My Image" src="data:image/png;base64,'+ encoded_string + '" />'
-			return retstr
-			#return file(image_path)
+			path = path.replace('..','')
+			if self.check_path(path) == True:
+				with open(path, "rb") as image_file:
+					encoded_string = base64.b64encode(image_file.read())
+				retstr = '<img alt="My Image" src="data:image/png;base64,'+ encoded_string + '" />'
+				return retstr
+				#return file(image_path)
+			else:
+				return "Error: file not file "+path
 		except:
 			exc_str = traceback.format_exc()
 			return exc_str
@@ -147,28 +164,42 @@ class SchedulerHandler(object):
 	@cherrypy.expose
 	def get_spectrum_txt(self, path):
 		try:
-			retstr = '<!DOCTYPE html><html><head></head><body><pre>'
-			with open(path, "rt") as txt_file:
-				retstr += txt_file.read()
-			#retstr = '<img alt="My Image" src="data:image/png;base64,'+ encoded_string + '" />'
-			retstr += '</pre></body></html>'
-			return retstr
-			#return file(image_path)
+			path = path.replace('..','')
+			if self.check_path(path) == True:
+				retstr = '<!DOCTYPE html><html><head></head><body><pre>'
+				with open(path, "rt") as txt_file:
+					retstr += txt_file.read()
+				#retstr = '<img alt="My Image" src="data:image/png;base64,'+ encoded_string + '" />'
+				retstr += '</pre></body></html>'
+				return retstr
+				#return file(image_path)
+			else:
+				return "Error: file not file "+path
 		except:
 			exc_str = traceback.format_exc()
 			return exc_str
 
 	@cherrypy.expose
-	def get_all_unprocessed_jobs(self):
-		result = self.db.get_all_unprocessed_jobs()
+	def get_all_unprocessed_jobs(self, *args, **kwargs):
+		data_dict = dict()
+		data_dict['draw'] = 1
+		data_dict['data'] = self.db.get_all_unprocessed_jobs()
+		data_dict['recordsTotal'] = len(data_dict['data'])
+		data_dict['recordsFiltered'] = len(data_dict['data'])
+		#result = self.db.get_all_unprocessed_jobs()
 		jenc = json.JSONEncoder()
-		return jenc.encode(result)
+		return jenc.encode(data_dict)
 
 	@cherrypy.expose
-	def get_all_processing_jobs(self):
-		result = self.db.get_all_processing_jobs()
+	def get_all_processing_jobs(self, *args, **kwargs):
+		data_dict = dict()
+		data_dict['draw'] = 1
+		data_dict['data'] = self.db.get_all_processing_jobs()
+		data_dict['recordsTotal'] = len(data_dict['data'])
+		data_dict['recordsFiltered'] = len(data_dict['data'])
+		#result = self.db.get_all_processing_jobs()
 		jenc = json.JSONEncoder()
-		return jenc.encode(result)
+		return jenc.encode(data_dict)
 
 	@cherrypy.expose
 	def get_all_finished_jobs(self, *args, **kwargs):

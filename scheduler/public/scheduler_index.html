@@ -170,8 +170,8 @@
 
      
         //get_process_nodes();
-        get_jobs("/get_all_unprocessed_jobs", "#data_unprocessed_jobs");
-        get_jobs("/get_all_processing_jobs", "#data_processing_jobs");
+        //get_jobs("/get_all_unprocessed_jobs", "#data_unprocessed_jobs");
+        //get_jobs("/get_all_processing_jobs", "#data_processing_jobs");
         //get_jobs("/get_all_finished_jobs", "#data_finished_jobs");
      
         $('.header').click(function()
@@ -326,6 +326,42 @@
             "order": [[1, 'asc']]
         });
         
+        var $queued_table = $("#table_unprocessed_jobs").DataTable(
+        {
+            "ajax": "/get_all_unprocessed_jobs",
+            "columns": [
+            {
+                "class":          "details-control",
+                "orderable":      false,
+                "data":           null,
+                "defaultContent": ""
+            },
+            { "data": "Id" },
+            { "data": "DataPath" },
+            { "data": "Status" },
+            { "data": "ProcMask" },
+            ],
+            "order": [[1, 'desc']]
+        });
+        
+        var $processing_table = $("#table_processing_jobs").DataTable(
+        {
+            "ajax": "/get_all_processing_jobs",
+            "columns": [
+            {
+                "class":          "details-control",
+                "orderable":      false,
+                "data":           null,
+                "defaultContent": ""
+            },
+            { "data": "Id" },
+            { "data": "DataPath" },
+            { "data": "Status" },
+            { "data": "ProcMask" },
+            ],
+            "order": [[1, 'desc']]
+        });
+        
         var $finished_table = $("#table_finished_jobs").DataTable(
         {
             "ajax": "/get_all_finished_jobs",
@@ -347,10 +383,12 @@
         setInterval(function()
         {
             //get_process_nodes();
-            $pn_table.ajax.reload();
-            get_jobs("/get_all_unprocessed_jobs", "#data_unprocessed_jobs");
-            get_jobs("/get_all_processing_jobs", "#data_processing_jobs");
+            //get_jobs("/get_all_unprocessed_jobs", "#data_unprocessed_jobs");
+            //get_jobs("/get_all_processing_jobs", "#data_processing_jobs");
             //get_jobs("/get_all_finished_jobs", "#data_finished_jobs");
+            $pn_table.ajax.reload();
+            $queued_table.ajax.reload();
+            $processing_table.ajax.reload();
             $finished_table.ajax.reload();
         }, 3000);
 	
@@ -409,34 +447,33 @@
             <th>Heartbeat</th>
            </tr>
          </thead>
-      <!--  </tr>  -->
-      <!--  <tbody id="data_process_nodes" class="expand"> </tbody> -->
-      
         </table>
      </div>
       <br>
       <br>
      <div id="jobs_div">
-    <table id="table_unprocessed_jobs">
-        <tr>  
-            <th class="header"> <span class="sign"> </span> Queued Jobs </th>
+    <table id="table_unprocessed_jobs" class="display">
+        <thead>
+        <tr>
+            <th></th>
+            <th>Queued Jobs</th>
             <th>Path</th>
             <th>Status</th>
             <th>Analysis</th>
-            <th>Output</th>
         </tr>
-        <tbody id="data_unprocessed_jobs"> </tbody>
+        </thead>
     </table>
     <br>
-    <table id="table_processing_jobs">
-        <tr>  
-            <th class="header expand"> <span class="sign"> </span> Processing Jobs </th>
+    <table id="table_processing_jobs" class="display">
+        <thead>
+        <tr>
+            <th></th>
+            <th>Processing Jobs</th>
             <th>Path</th>
             <th>Status</th>
             <th>Analysis</th>
-            <th>Output</th>
         </tr>
-        <tbody id="data_processing_jobs"> </tbody>
+        </thead>
     </table>
     <br>
     <table id="table_finished_jobs" class="display">
