@@ -11,174 +11,7 @@
     <script type="text/javascript">
     $(document).ready(function() 
     {
-        function get_process_nodes()
-        {
-            //get all process nodes
-            $.ajax(
-            {
-                url:"/process_node",
-                type: "GET",
-                datatype: "json",
-                success: function(data) 
-                {
-                    var $table = $("#process_node_table");
-                    $table.empty();
-                    var $tbody = $table.append("<tbody>");
-                    var nodes = $.parseJSON(data);
-                    nodes.forEach( function(item) 
-                    {
-                        var $tr = $("<tr id='data_entry'>");
-                        $tr.append( $("<td>").text(item.ComputerName));
-                        $tr.append( $("<td>").text(item.NumThreads));
-                        $tr.append( $("<td>").text(item.Status));
-                        $tr.append( $("<td>").text(item.Heartbeat));
-                        $tbody.append( $tr);
-                    });
-                }
-            });
-        }
-
-        function popup_get_img_list($td, job_path)
-        {
-            var $url = '/get_output_list?path='+$(this).attr('link'); 
-			window.open($url);
-        }
-
-        function job_parse_status($tr, $item)
-        {
-            if($item.Status === 0)
-            {
-              $tr.append( $("<td>").text("Waiting"));
-            }
-            if($item.Status === 1)
-            {
-              $tr.append( $("<td>").text("Processing"));
-            }
-            if($item.Status === 2)
-            {
-              $tr.append( $("<td>").text("Completed"));
-            }
-            if($item.Status > 2)
-            {
-              $tr.append( $("<td>").text("Error Occured"));
-            }
-        }
-        
-        function job_parse_proc_mask($tr, $item)
-        {
-            var $procMask = $('<ul>');
-            var $has_b = false;
-            if( ($item.ProcMask & 1) === 1)
-            {
-                $procMask.append( $('<li>').text('A') );
-            }
-            if( ($item.ProcMask & 2) === 2)
-            {
-                $procMask.append( $('<li>').text('B') );
-                //$procMaskStr += "B\n";
-                $has_b = true;
-            }
-            if( ($item.ProcMask & 4) === 4)
-            {
-                $procMask.append( $('<li>').text('C') );
-                //$procMaskStr += "C\n";
-            }
-            if( ($item.ProcMask & 8) === 8)
-            {
-                $procMask.append( $('<li>').text('D') );
-                //$procMaskStr += "D\n";
-            }
-            if( ($item.ProcMask & 16) === 16)
-            {
-                $procMask.append( $('<li>').text('E') );
-                //$procMaskStr += "E";
-            }
-            //$tr.append( $("<td>").text($procMaskStr));
-            $tr.append( $("<td>").append($procMask));
-			/*
-            var $href = $("<a>");
-            $href.click('href', 'get_output_list?job_path='+);
-            $tr.append( $("<td>").append( $href ) );
-			*/
-            /*
-            if($has_b === true)
-            {
-                var $td =  $("<td>");
-                $tr.append( $td );
-                job_get_img_list($td, $item.DataPath);
-            }
-            else
-            {
-                $tr.append( $("<td>").text('N/A'));    
-            }
-            */
-        }
-       
-       function job_proc_mask_to_str($ProcMask)
-        {
-            if( ($ProcMask & 1) === 1)
-            {
-                return 'A';
-            }
-            if( ($ProcMask & 2) === 2)
-            {
-                return 'B';
-            }
-            if( ($ProcMask & 4) === 4)
-            {
-                return 'C';
-            }
-            if( ($ProcMask & 8) === 8)
-            {
-                return 'D';
-            }
-            if( ($ProcMask & 16) === 16)
-            {
-                return 'E';
-            }
-        }
-       
-        function get_jobs(c_url, c_table)
-        {
-            $.ajax(
-            {
-                url:c_url,
-                type: 'GET',
-                datatype: "json",
-                success: function(data) 
-                {
-                    var $table = $(c_table);
-                    $table.empty();
-                    var jobs = $.parseJSON(data);
-                    jobs.forEach( function(item) 
-                    {
-                        var $tr = $("<tr id='data_entry'>");
-                        $tr.append( $("<td>").text(item.Id));
-                        $tr.append( $("<td>").text(item.DataPath));
-                        job_parse_status($tr, item);
-                        job_parse_proc_mask($tr, item);
-                        var $href = $("<a>");
-                        $href.attr('href', 'get_output_list?job_path='+item.DataPath);
-                        $href.text("Output Dir");
-                        $tr.append( $("<td>").append( $href ) );
-                        $table.append( $tr);
-                    });
-                }
-            });
-        }
-        
-
-     
-        //get_process_nodes();
-        //get_jobs("/get_all_unprocessed_jobs", "#data_unprocessed_jobs");
-        //get_jobs("/get_all_processing_jobs", "#data_processing_jobs");
-        //get_jobs("/get_all_finished_jobs", "#data_finished_jobs");
-     
-        $('.header').click(function()
-        {
-            $(this).parent().parent().next('tbody').slideToggle(100);
-        });
-
+ 
         jQuery('.tabs .tab-links a').on('click', function(e)  
         {
             var currentAttrValue = jQuery(this).attr('href');
@@ -294,11 +127,57 @@
             });
         });
 
+        function convert_status_number_to_string(aData, nRow)
+        {
+            if(aData.Status === 0)
+            {
+              $('td', nRow).eq(3).html('Waiting');
+            }
+            if(aData.Status === 1)
+            {
+              $('td', nRow).eq(3).html('Processing');
+            }
+            if(aData.Status === 2)
+            {
+              $('td', nRow).eq(3).html('Completed');
+            }
+            if(aData.Status > 2)
+            {
+              $('td', nRow).eq(3).html('Error Occured');
+            }
+        }
+        
+        function convert_procmask_number_to_string(aData)
+        {
+            var $str = "";
+            if( (aData.ProcMask & 1) === 1)
+            {
+              $str += 'A ';
+            }
+            if( (aData.ProcMask & 2) === 2)
+            {
+              $str += 'B ';
+            }
+            if( (aData.ProcMask & 4) === 4)
+            {
+              $str += 'C ';
+            }
+            if( (aData.ProcMask & 8) === 8)
+            {
+              $str += 'D ';
+            }
+            if( (aData.ProcMask & 16) === 16)
+            {
+              $str += 'E ';
+            }
+            return $str;
+        }
+        
         function format_job_details ( d ) 
         {
             return  'Id: '+d.Id+'<br>'+
                     'DataPath: '+d.DataPath+'<br>'+
-                    'Processing Type: '+job_proc_mask_to_str(d.ProcMask)+'<br>'+
+                    'Processing Type: '+convert_procmask_number_to_string(d.ProcMask)+'<br>'+
                     'Priority: '+d.Priority+'<br>'+
                     'DetectorElements: '+d.DetectorElements+'<br>'+
                     'XANES_Scan: '+d.XANES_Scan+'<br>'+
@@ -307,6 +186,34 @@
                     'XANES_Scan: '+d.XANES_Scan+'<br>'+
                     'BeamLine: '+d.BeamLine+'<br>'+
                     '<a href=/get_output_list?job_path='+d.DataPath+'>Output Directory</a>';
+        }
+
+        function create_job_data_table($id, $url)
+        {
+            var $table = $($id).DataTable(
+            {
+                "ajax": $url,
+                "fnRowCallback": function( nRow, aData, iDisplayIndex, iDisplayIndexFull )
+                {
+                    convert_status_number_to_string(aData, nRow);
+                    var $str = convert_procmask_number_to_string(aData);
+                     $('td', nRow).eq(4).html($str);
+                },
+                "columns": [
+                {
+                    "class":          "details-control",
+                    "orderable":      false,
+                    "data":           null,
+                    "defaultContent": ""
+                },
+                { "data": "Id" },
+                { "data": "DataPath" },
+                { "data": "Status" },
+                { "data": "ProcMask" }
+                ],
+                "order": [[1, 'desc']]
+            });
+            return $table;
         }
 
         var $pn_table = $("#process_node_table").DataTable(
@@ -328,67 +235,13 @@
             ],
             "order": [[1, 'asc']]
         });
-        
-        var $queued_table = $("#table_unprocessed_jobs").DataTable(
-        {
-            "ajax": "/get_all_unprocessed_jobs",
-            "columns": [
-            {
-                "class":          "details-control",
-                "orderable":      false,
-                "data":           null,
-                "defaultContent": ""
-            },
-            { "data": "Id" },
-            { "data": "DataPath" },
-            { "data": "Status" },
-            { "data": "ProcMask" },
-            ],
-            "order": [[1, 'desc']]
-        });
-        
-        var $processing_table = $("#table_processing_jobs").DataTable(
-        {
-            "ajax": "/get_all_processing_jobs",
-            "columns": [
-            {
-                "class":          "details-control",
-                "orderable":      false,
-                "data":           null,
-                "defaultContent": ""
-            },
-            { "data": "Id" },
-            { "data": "DataPath" },
-            { "data": "Status" },
-            { "data": "ProcMask" },
-            ],
-            "order": [[1, 'desc']]
-        });
-        
-        var $finished_table = $("#table_finished_jobs").DataTable(
-        {
-            "ajax": "/get_all_finished_jobs",
-            "columns": [
-            {
-                "class":          "details-control",
-                "orderable":      false,
-                "data":           null,
-                "defaultContent": ""
-            },
-            { "data": "Id" },
-            { "data": "DataPath" },
-            { "data": "Status" },
-            { "data": "ProcMask" },
-            ],
-            "order": [[1, 'desc']]
-        });
+       
+        var $queued_table = create_job_data_table("#table_unprocessed_jobs", "/get_all_unprocessed_jobs");
+        var $processing_table = create_job_data_table("#table_processing_jobs", "/get_all_processing_jobs");
+        var $finished_table = create_job_data_table("#table_finished_jobs", "/get_all_finished_jobs");
         
         setInterval(function()
         {
-            //get_process_nodes();
-            //get_jobs("/get_all_unprocessed_jobs", "#data_unprocessed_jobs");
-            //get_jobs("/get_all_processing_jobs", "#data_processing_jobs");
-            //get_jobs("/get_all_finished_jobs", "#data_finished_jobs");
             $pn_table.ajax.reload();
             $queued_table.ajax.reload();
             $processing_table.ajax.reload();
@@ -432,7 +285,6 @@
             });
         });
         
-        //var poll = setInterval('$("#process_node_table").dataTable().fnDraw()', 3000);
     });
     </script>
     <title> MapsPy Scheduler </title>
