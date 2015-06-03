@@ -977,55 +977,54 @@ def main(wdir='', a=1,b=0,c=0,d=0,e=0):
             #print 'do_fits',type(this_w_uname), type(fitp), type(dofit_spec), type(spectra), type(suffix) , type(info_elements), type(calib), type(calib.do_fits)
             #fitp, avg_fitp, spectra = calib.do_fits(this_w_uname, fitp, dofit_spec, spectra, 1, 1, 500, suffix, info_elements) 
             fitp, avg_fitp, spectra = calib.do_fits(this_w_uname, fitp, dofit_spec, spectra, maxiter = 500, per_pix = 1, generate_img = 1, suffix = suffix, info_elements = info_elements) 
-
-    
-            #move AND rename the old AND new override files:
-            try:
-                os.remove(os.path.join(current_directory, 'old_maps_fit_parameters_override.txt'))
-            except:
-                pass
-            try:
-                os.remove(os.path.join(current_directory, 'maps_fit_parameters_override.txt'+suffix))
-            except:
-                pass            
-            if total_number_detectors <= 1 :
+            if fitp != None:
+                #move AND rename the old AND new override files:
                 try:
-                    os.rename(os.path.join(current_directory,'maps_fit_parameters_override.txt'), 
-                              os.path.join(current_directory,'old_maps_fit_parameters_override.txt')) 
+                    os.remove(os.path.join(current_directory, 'old_maps_fit_parameters_override.txt'))
                 except:
-                    print 'could not rename file', os.path.join(current_directory,'maps_fit_parameters_override.txt')
-            try:
-                os.remove(os.path.join(current_directory, 'maps_fit_parameters_override.txt'+suffix))
-            except:
-                pass
-            try:
-               os.rename(os.path.join(current_directory,'average_resulting_maps_fit_parameters_override.txt'),
-                   os.path.join(current_directory,'maps_fit_parameters_override.txt'+suffix))
-            except:
-                print 'error renaming average_resulting_maps_fit_parameters_override to maps_fit_parameters_override'
-                pass
+                    pass
+                try:
+                    os.remove(os.path.join(current_directory, 'maps_fit_parameters_override.txt'+suffix))
+                except:
+                    pass            
+                if total_number_detectors <= 1 :
+                    try:
+                        os.rename(os.path.join(current_directory,'maps_fit_parameters_override.txt'), 
+                                  os.path.join(current_directory,'old_maps_fit_parameters_override.txt')) 
+                    except:
+                        print 'could not rename file', os.path.join(current_directory,'maps_fit_parameters_override.txt')
+                try:
+                    os.remove(os.path.join(current_directory, 'maps_fit_parameters_override.txt'+suffix))
+                except:
+                    pass
+                try:
+                   os.rename(os.path.join(current_directory,'average_resulting_maps_fit_parameters_override.txt'),
+                       os.path.join(current_directory,'maps_fit_parameters_override.txt'+suffix))
+                except:
+                    print 'error renaming average_resulting_maps_fit_parameters_override to maps_fit_parameters_override'
+                    pass
+                
+                
+            dirlist = os.listdir(current_directory)
+            if 'output_old' in dirlist: 
+                #print ' delete files in output_old directory'
+                filelist = os.listdir(os.path.join(current_directory,'output_old'))
+                for fl in filelist:
+                    thisfile = os.path.join(os.path.join(current_directory,'output_old'), fl)
+                    os.remove(thisfile)
+            else:
+                os.makedirs(os.path.join(current_directory,'output_old'))
+            #todo: create directory if it does not exist 
+            #Copy files to output_fits
+            src_files = os.listdir(os.path.join(current_directory,'output'))
+            print src_files
+            for fn in src_files:
+                full_file_name = os.path.join(os.path.join(current_directory,'output'), fn)
+                if (os.path.isfile(full_file_name)):
+                    shutil.copy(full_file_name, os.path.join(current_directory,'output_old'))     
+                    os.remove(full_file_name)      
             
-            
-        dirlist = os.listdir(current_directory)
-        if 'output_old' in dirlist: 
-            #print ' delete files in output_old directory'
-            filelist = os.listdir(os.path.join(current_directory,'output_old'))
-            for fl in filelist:
-                thisfile = os.path.join(os.path.join(current_directory,'output_old'), fl)
-                os.remove(thisfile)
-        else:
-            os.makedirs(os.path.join(current_directory,'output_old'))
-        #todo: create directory if it does not exist 
-        #Copy files to output_fits
-        src_files = os.listdir(os.path.join(current_directory,'output'))
-        print src_files
-        for fn in src_files:
-            full_file_name = os.path.join(os.path.join(current_directory,'output'), fn)
-            if (os.path.isfile(full_file_name)):
-                shutil.copy(full_file_name, os.path.join(current_directory,'output_old'))     
-                os.remove(full_file_name)      
-        
-
+    
  
     #Section c converts mda to h5 files and does ROI/ROI+/FITS
     if (c > 0): 

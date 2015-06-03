@@ -725,7 +725,6 @@ class mda:
             return -1
  
         buf = file.read(100)        # to read header for scan of up to 5 dimensions
-        print 'buf', buf
         u = Unpacker(buf)
 
         # read file header
