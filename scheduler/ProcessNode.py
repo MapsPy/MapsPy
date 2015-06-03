@@ -127,6 +127,7 @@ class ProcessNode(object):
 					self.process_next_job()
 				else:
 					self.send_status_update()
+					self.process_next_job()
 		except:
 			self.stop()
 

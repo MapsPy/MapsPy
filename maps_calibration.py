@@ -240,6 +240,10 @@ class calibration:
                     u, fitted_spec, background, xmin, xmax, perror = fit.fit_spectrum(fitp, this_spectrum, used_chan, calib, 
                                  first = first, matrix = True, maxiter = maxiter)
 
+                    if u == None or perror == 1:
+                        print 'Error calling fit_spectrum!. returning'
+                        return None, None, None
+
 
                 fitp.g.no_iters = 4
 
@@ -247,11 +251,14 @@ class calibration:
                     this_w_uname = "DO_FIT_ALL_W_TAILS" 
                     fitp, avg_fitp, spectra = self.do_fits(this_w_uname, fitp, dofit_spec, spectra, per_pix = 1, generate_img = 1, maxiter = maxiter, suffix = suffix, info_elements = info_elements)            
                     #maps_DO_fits, Event, this_w_uname, fitp, per_pix = 1, generate_img = 1, maxiter = maxiter, suffix = suffix
+                    if fitp == None:
+                        return
                 else:
                     this_w_uname = "DO_MATRIX_FIT"   
                     fitp, avg_fitp, spectra = self.do_fits(this_w_uname, fitp, dofit_spec, spectra, per_pix = 1, generate_img = 1, maxiter = maxiter, suffix = suffix, info_elements = info_elements)                              
                     #maps_DO_fits, Event, this_w_uname, fitp, per_pix = 1, generate_img = 1, maxiter = maxiter, suffix = suffix
-                    
+                    if fitp == None:
+                        return
 
                 std.calibration.offset[0] = fitp.s.val[0]
                 std.calibration.slope[0] = fitp.s.val[1]
@@ -1372,6 +1379,10 @@ class calibration:
                         u, fitted_spec, background, xmin, xmax, perror = fit.fit_spectrum(fitp, this_spectrum, used_chan, calib, 
                                      first = first, matrix = True, maxiter = maxiter)
 
+                        if u == None or perror == 1:
+                            print 'Error calling fit_spectrum!. returning'
+                            return
+
 
                     fitp.g.no_iters = 4
 
@@ -1379,10 +1390,14 @@ class calibration:
                         this_w_uname = "DO_FIT_ALL_W_TAILS" 
                         fitp, avg_fitp, spectra = self.do_fits(this_w_uname, fitp, dofit_spec, spectra, per_pix = 1, generate_img = 1, maxiter = maxiter, suffix = suffix, info_elements = info_elements)            
                         #maps_DO_fits, Event, this_w_uname, fitp, per_pix = 1, generate_img = 1, maxiter = maxiter, suffix = suffix
+                        if fitp == None:
+                            return
                     else:
                         this_w_uname = "DO_MATRIX_FIT"   
                         fitp, avg_fitp, spectra = self.do_fits(this_w_uname, fitp, dofit_spec, spectra, per_pix = 1, generate_img = 1, maxiter = maxiter, suffix = suffix, info_elements = info_elements)                              
                         #maps_DO_fits, Event, this_w_uname, fitp, per_pix = 1, generate_img = 1, maxiter = maxiter, suffix = suffix
+                        if fitp == None:
+                            return
                         
 
                     if thisnbs == 33 : 
@@ -3079,6 +3094,9 @@ class calibration:
             fit = maps_analyze.analyze()
             u, fitted_spec, background, xmin, xmax, perror = fit.fit_spectrum(fitp, spectra[wo[i]].data, spectra[wo[i]].used_chan, spectra[wo[i]].calib, 
                             first = first, matrix = matrix, maxiter = maxiter)
+            if u == None or perror == 1:
+                print 'Error calling fit_spectrum!. returning'
+                return None, None, None
 
             counts_background, counts_ka, counts_kb, counts_l, counts_m, \
             counts_elastic, counts_compton, counts_step, counts_tail, \
@@ -3090,6 +3108,10 @@ class calibration:
                 for j in range(keywords.kele_pos[0]): fitp.s.use[j] = fitp.s.batch[j, 3]
                 u, fitted_spec, background, xmin, xmax, perror = fit.fit_spectrum(fitp, spectra[wo[i]].data, spectra[wo[i]].used_chan, spectra[wo[i]].calib, 
                                                                                   first = first, matrix = matrix, maxiter = maxiter)                
+                if u == None or perror == 1:
+                    print 'Error calling fit_spectrum!. returning'
+                    return None, None, None
+
 
                 counts_background, counts_ka, counts_kb, counts_l, counts_m, \
                 counts_elastic, counts_compton, counts_step, counts_tail, \

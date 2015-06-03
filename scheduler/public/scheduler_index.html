@@ -260,6 +260,9 @@
             { 
                 //alert("added job");
                 $.notify("Queued Job: "+$("#DataPath").val(), "success");
+            }).fail(function() 
+            {
+                $.notify("Error Submitting Job: "+$("#DataPath").val(), "error");
             });
         });
         
@@ -279,7 +282,7 @@
             {
                 type: 'POST',
                 url:"/get_dataset_dirs_list",
-                data: {'job_root': '2ide', 'depth': 0},
+                data: {'job_root': '2ide', 'depth': 1},
                 datatype: "json",
                 success: function(data) 
                 {
@@ -494,7 +497,7 @@
     <div class="tabs">
     <ul class="tab-links">
         <li class="active"><a href="#tab1">2-ID-E</a></li>
-        <li><a href="#tab2">2-ID-D</a></li>
+ <!--       <li><a href="#tab2">2-ID-D</a></li>  -->
     </ul>
  
     <div class="tab-content">
@@ -543,12 +546,12 @@
                <button id="Btn-Submit-Job">Submit Job</button>
              </fieldset>
          </div>
- 
+ <!--
         <div id="tab2" class="tab">
             <p>2-ID-D</p>
             <p>Submit Job</p>
         </div>
- 
+ -->
     </div>
     </div>
 

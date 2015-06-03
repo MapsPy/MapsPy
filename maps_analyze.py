@@ -666,7 +666,7 @@ class analyze:
                             'which is below the lower limit of ', str(parinfo_limits[i,0]), \
                             'please correct in the file maps_fit_parameters_override.txt', 'for now, I am aborting this action'
                     error_status = 1
-                    return 
+                    return None, None, None, None, None, error_status
        
             if parinfo_limited[i,1] == 1 : 
                 if parinfo_value[i] > parinfo_limits[i,1] : 
@@ -674,7 +674,7 @@ class analyze:
                             'which is higher than the top limit of ', str(parinfo_limits[i,1]), \
                             'please correct in the file maps_fit_parameters_override.txt', 'for now, I am aborting this action'
                     error_status = 1
-                    return
+                    return None, None, None, None, None, error_status
             
        
         no_iters_vec = [0, 5, 10, 20, 50, 100, 500, 2000, 10000, 50000]
