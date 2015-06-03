@@ -40,6 +40,7 @@ from plugins.DatabasePlugin import DatabasePlugin
 from plugins.SQLiteDB import SQLiteDB
 import json
 import cherrypy
+import traceback
 
 db = DatabasePlugin(cherrypy.engine, SQLiteDB)
 
@@ -75,28 +76,49 @@ class Scheduler(object):
 		}
 	
 	def callback_new_job(self, job):
+		#todo: lock list 
 		print 'callback got new job', job
-		node_list = db.get_all_process_nodes()
-		for node in node_list:
-			if node['Status'] == 'Idle':
-				url = 'http://' + str(node['Hostname']) + ':' + str(node['Port']) + '/job_queue'
-				print 'sending job to ',node['ComputerName'], 'url',url
-				s = requests.Session()
-				r = s.post(url, data=json.dumps(job))
-				print 'result', r.status_code,':',r.text
-				break
+		p_node = None
+		if job['Process_Node_Id'] > -1:
+			p_node = db.get_process_node_by_id()
+		else:
+			node_list = db.get_all_process_nodes()
+			print 'searching for idle node'
+			for node in node_list:
+				if node['Status'] == 'Idle':
+					p_node = node
+					break
+		if p_node != None:
+			job['Process_Node_Id'] = p_node['Id']
+			url = 'http://' + str(p_node['Hostname']) + ':' + str(p_node['Port']) + '/job_queue'
+			print 'sending job to ',p_node['ComputerName'], 'url',url
+			s = requests.Session()
+			r = s.post(url, data=json.dumps(job))
+			print 'result', r.status_code,':',r.text
 
 	def callback_process_node_update(self, node):
-		print node
-		if node['Status'] == 'Idle':
-			job_list = db.get_all_unprocessed_jobs()
-			if len(job_list) > 0:
-				job = job_list[0]
-				url = 'http://' + str(node['Hostname']) + ':' + str(node['Port']) + '/job_queue'
-				print 'sending job to ',node['ComputerName'], 'url',url
-				s = requests.Session()
-				r = s.post(url, data=json.dumps(job))
-				print 'result', r.status_code,':',r.text
+		#todo: lock list 
+		print 'callback',node['ComputerName']
+		try:
+			if node.has_key('Id') == False:
+				print 'getting node'
+				node = db.get_process_node_by_name(node['ComputerName'])
+				print 'new node', node
+			if node['Status'] == 'Idle':
+				job_list = db.get_all_unprocessed_jobs()
+				for job in job_list:
+					print 'checking job', job
+					if job['Process_Node_Id'] < 0 or  job['Process_Node_Id'] == node['Id']:
+						job['Process_Node_Id'] = node['Id']
+						url = 'http://' + str(node['Hostname']) + ':' + str(node['Port']) + '/job_queue'
+						print '_sending job to ',node['ComputerName'], 'url',url
+						s = requests.Session()
+						r = s.post(url, data=json.dumps(job))
+						print 'result', r.status_code,':',r.text
+						break
+		except:
+			exc_str = traceback.format_exc()
+			return exc_str
 
 	def run(self):
 		db.subscribe()

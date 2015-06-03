@@ -56,6 +56,8 @@ STR_PORT = 'Port'
 STR_STATUS = 'Status'
 STR_HEARTBEAT = 'Heartbeat'
 
+STR_JOB_LOG_DIR_NAME = 'job_logs'
+
 class ProcessNode(object):
 	def __init__(self, settings):
 		self.settings = settings
@@ -99,7 +101,12 @@ class ProcessNode(object):
 		self.db_name = pnSettings[Settings.PROCESS_NODE_DATABASE_NAME]
 		self.db = DatabasePlugin(cherrypy.engine, SQLiteDB, self.db_name)
 		cherrypy.engine.subscribe("new_job", self.callback_new_job)
+		self.create_directories()
 		self.running = True
+
+	def create_directories(self):
+		if not os.path.exists(STR_JOB_LOG_DIR_NAME):
+			os.makedirs(STR_JOB_LOG_DIR_NAME)
 
 	def callback_new_job(self, val):
 		self.new_job_event.set()
@@ -134,6 +141,7 @@ class ProcessNode(object):
 	def process_next_job(self):
 		print 'checking for jobs to process'
 		job_list = self.db.get_all_unprocessed_jobs()
+		saveout = sys.stdout
 		for job_dict in job_list:
 			try:
 				print 'processing job', job_dict['DataPath']
@@ -177,11 +185,19 @@ class ProcessNode(object):
 				if proc_mask & 16 == 16:
 					key_e = 1
 				#os.chdir(job_dict['DataPath'])
+				log_name = 'Job_'+str(job_dict['Id'])+'_'+datetime.strftime(datetime.now(),"%y_%m_%d_%H_%M_%S")+'.log'
+				job_dict['Log_Path'] = log_name
+				log_path = os.path.join(STR_JOB_LOG_DIR_NAME, log_name)
+				logfile = open(log_path,'wt')
+				sys.stdout = logfile
 				maps_batch.main(wdir=job_dict['DataPath'], a=key_a, b=key_b, c=key_c, d=key_d, e=key_e)
+				sys.stdout = saveout
+				logfile.close()
 				job_dict['Status'] = 2 #3 = completed
 			except:
 				print 'Error processing',job_dict['DataPath']
 				traceback.print_exc(file=sys.stdout)
+				sys.stdout = saveout
 				job_dict['Status'] = 10 #2 = error
 			self.db.update_job(job_dict)
 			self.send_job_update(job_dict)
@@ -213,7 +229,7 @@ class ProcessNode(object):
 
 	def send_job_update(self, job_dict):
 		try:
-			self.session.put(self.scheduler_job_url, data=json.dumps(job_dict))
+			self.session.put(self.scheduler_job_url, params=self.pn_info, data=json.dumps(job_dict))
 			print 'sent status'
 		except:
 			print 'Error sending job update'

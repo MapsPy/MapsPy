@@ -87,7 +87,9 @@
                     'Status': 0,
                     'Priority': 5,
                     'StartProcTime': 0,
-                    'FinishProcTime': 0}),
+                    'FinishProcTime': 0,
+                    'Log_Path': '',
+                    'Process_Node_Id': -1}),
                 datatype: "json"
             }).done(function(d)
             { 
@@ -127,24 +129,26 @@
             });
         });
 
-        function convert_status_number_to_string(aData, nRow)
+        function convert_status_number_to_string(aData)
         {
+            var $str = "";
             if(aData.Status === 0)
             {
-              $('td', nRow).eq(3).html('Waiting');
+              $str = 'Waiting';
             }
             if(aData.Status === 1)
             {
-              $('td', nRow).eq(3).html('Processing');
+              $str = 'Processing';
             }
             if(aData.Status === 2)
             {
-              $('td', nRow).eq(3).html('Completed');
+              $str = 'Completed';
             }
             if(aData.Status > 2)
             {
-              $('td', nRow).eq(3).html('Error Occured');
+              $str = 'Error Occured';
             }
+            return $str;
         }
         
         function convert_procmask_number_to_string(aData)
@@ -173,19 +177,46 @@
             return $str;
         }
         
-        function format_job_details ( d ) 
+        function format_pn_details ( d ) 
         {
             return  'Id: '+d.Id+'<br>'+
+                    'Computer Name: '+d.ComputerName+'<br>'+
+                    'Status: '+d.Status+'<br>'+
+                    'NumThreads: '+d.NumThreads+'<br>'+
+                    'Hostname: '+d.Hostname+'<br>'+
+                    'Port: '+d.Port+'<br>'+
+                    'Heartbeat: '+d.Heartbeat;
+        }
+        
+        function find_process_node_by_id( Process_Node_Id )
+        {
+            $host = "";
+            $node_list = $pn_table.data();
+            $node_list.each( function (node)
+            {
+                if (node.Id === Process_Node_Id)
+                {
+                    $host = node.Hostname+":"+node.Port;
+                }
+            });
+            return $host;
+        }
+        
+        function format_job_details ( d ) 
+        {
+            $host = find_process_node_by_id(d.Process_Node_Id);
+            return  'Id: '+d.Id+'<br>'+
                     'DataPath: '+d.DataPath+'<br>'+
-                    'Processing Type: '+convert_procmask_number_to_string(d.ProcMask)+'<br>'+
+                    'Processing Type: '+convert_procmask_number_to_string(d)+'<br>'+
                     'Priority: '+d.Priority+'<br>'+
                     'DetectorElements: '+d.DetectorElements+'<br>'+
-                    'XANES_Scan: '+d.XANES_Scan+'<br>'+
                     'Version: '+d.Version+'<br>'+
+                    'Quick and Dirty: '+d.QuickAndDirty+'<br>'+
                     'NNLS: '+d.NNLS+'<br>'+
                     'XANES_Scan: '+d.XANES_Scan+'<br>'+
                     'BeamLine: '+d.BeamLine+'<br>'+
-                    '<a href=/get_output_list?job_path='+d.DataPath+'>Output Directory</a>';
+                    '<a href=/get_output_list?job_path='+d.DataPath+'>Output Directory</a><br>'+
+                    '<a href=http://'+$host+'/get_job_log?log_path='+d.Log_Path+'>Job Log</a>';
         }
 
         function create_job_data_table($id, $url)
@@ -195,9 +226,10 @@
                 "ajax": $url,
                 "fnRowCallback": function( nRow, aData, iDisplayIndex, iDisplayIndexFull )
                 {
-                    convert_status_number_to_string(aData, nRow);
-                    var $str = convert_procmask_number_to_string(aData);
-                     $('td', nRow).eq(4).html($str);
+                    var $status = convert_status_number_to_string(aData);
+                    $('td', nRow).eq(3).html($status);
+                    var $procmask = convert_procmask_number_to_string(aData);
+                    $('td', nRow).eq(4).html($procmask);
                 },
                 "columns": [
                 {
@@ -248,12 +280,12 @@
             $finished_table.ajax.reload();
         }, 3000);
 	
-        var detailRows = [];
-        $('#table_finished_jobs tbody').on( 'click', 'tr td.details-control', function () 
+        var detailJobRows = [];
+        $('#table_finished_jobs').on( 'click', 'tr td.details-control', function () 
         {
             var tr = $(this).closest('tr');
             var row = $finished_table.row( tr );
-            var idx = $.inArray( tr.attr('id'), detailRows );
+            var idx = $.inArray( tr.attr('id'), detailJobRows );
 
             if ( row.child.isShown() ) 
             {
@@ -261,7 +293,7 @@
                 row.child.hide();
 
                 // Remove from the 'open' array
-                detailRows.splice( idx, 1 );
+                detailJobRows.splice( idx, 1 );
             }
             else 
             {
@@ -271,15 +303,50 @@
                 // Add to the 'open' array
                 if ( idx === -1 ) 
                 {
-                    detailRows.push( tr.attr('id') );
+                    detailJobRows.push( tr.attr('id') );
                 }
             }
         });
  
-        // On each draw, loop over the `detailRows` array and show any child rows
-        $finished_table.on( 'draw', function () 
+         $finished_table.on( 'draw', function () 
         {
-            $.each( detailRows, function ( i, id ) 
+            $.each( detailJobRows, function ( i, id ) 
+            {
+                $('#'+id+' td.details-control').trigger( 'click' );
+            });
+        });
+        
+        var detailPnRows = [];
+        $('#process_node_table').on( 'click', 'tr td.details-control', function () 
+        {
+            var tr = $(this).closest('tr');
+            var row = $finished_table.row( tr );
+            var idx = $.inArray( tr.attr('ComputerName'), detailPnRows );
+
+            if ( row.child.isShown() ) 
+            {
+                tr.removeClass( 'details' );
+                row.child.hide();
+
+                // Remove from the 'open' array
+                detailPnRows.splice( idx, 1 );
+            }
+            else 
+            {
+                tr.addClass( 'details' );
+                row.child( format_pn_details( row.data() ) ).show();
+
+                // Add to the 'open' array
+                if ( idx === -1 ) 
+                {
+                    detailPnRows.push( tr.attr('ComputerName') );
+                }
+            }
+        });
+         
+        $pn_table.on( 'draw', function () 
+        {
+            $.each( detailPnRows, function ( i, id ) 
             {
                 $('#'+id+' td.details-control').trigger( 'click' );
             });
@@ -291,8 +358,7 @@
   </head>
   <body>
     <div id="process_nodes_div">
-        <table id="process_node_table">
-       <!-- <tr class="header">  -->
+        <table id="process_node_table" class="display">
          <thead>
            <tr>
             <th></th>
@@ -341,7 +407,6 @@
             <th>Analysis</th>
         </tr>
         </thead>
-    <!--    <tbody id="data_finished_jobs"> <tbody> -->
     </table>
      </div>
 

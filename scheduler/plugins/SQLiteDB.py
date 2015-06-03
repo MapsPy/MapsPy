@@ -34,7 +34,7 @@ SUCH DAMAGE.
 import sqlite3 as sql
 
 CREATE_PROCESS_NODES_TABLE_STR = 'CREATE TABLE IF NOT EXISTS ProcessNodes(Id INTEGER PRIMARY KEY, ComputerName TEXT, NumThreads INTEGER, Hostname TEXT, Port INTEGER, Status TEXT, Heartbeat TIMESTAMP);'
-CREATE_JOBS_TABLE_STR = 'CREATE TABLE IF NOT EXISTS Jobs(Id INTEGER PRIMARY KEY, DataPath TEXT, ProcMask INTEGER, Version TEXT, DetectorElements INTEGER, MaxFilesToProc INTEGER, MaxLinesToProc INTEGER, QuickAndDirty INTEGER, XRF_Bin INTEGER, NNLS INTEGER, XANES_Scan INTEGER, DetectorToStartWith INTEGER, BeamLine TEXT, Standards TEXT, Priority INTEGER, Status INTEGER, StartProcTime TIMESTAMP, FinishProcTime TIMESTAMP);'
+CREATE_JOBS_TABLE_STR = 'CREATE TABLE IF NOT EXISTS Jobs(Id INTEGER PRIMARY KEY, DataPath TEXT, ProcMask INTEGER, Version TEXT, DetectorElements INTEGER, MaxFilesToProc INTEGER, MaxLinesToProc INTEGER, QuickAndDirty INTEGER, XRF_Bin INTEGER, NNLS INTEGER, XANES_Scan INTEGER, DetectorToStartWith INTEGER, BeamLine TEXT, Standards TEXT, Priority INTEGER, Status INTEGER, StartProcTime TIMESTAMP, FinishProcTime TIMESTAMP, Log_Path TEXT, Process_Node_Id INTEGER);'
 CREATE_JOB_QUEUE_TABLE_STR = 'CREATE TABLE IF NOT EXISTS JobQueue(Id INTEGER PRIMARY KEY, JobId INTEGER, PnId INTEGER, Status INTEGER, StartTime TIMESTAMP, StopStime TIMESTAMP, FOREIGN KEY(JobId) REFERENCES Jobs(Id), FOREIGN KEY(PnId) REFERENCES ProcessNodes(Id));'
 
 DROP_PROCESS_NODES_STR = 'DROP TABLE IF EXISTS ProcessNodes;'
@@ -42,17 +42,18 @@ DROP_JOBS_STR = 'DROP TABLE IF EXISTS Jobs;'
 DROP_JOB_QUEUE_STR = 'DROP TABLE IF EXISTS JobQueue;'
 
 INSERT_PROCESS_NODE = 'INSERT INTO ProcessNodes (ComputerName, NumThreads, Hostname, Port, Status, Heartbeat) VALUES(:ComputerName, :NumThreads, :Hostname, :Port, :Status, :Heartbeat)'
-INSERT_JOB = 'INSERT INTO Jobs (DataPath, ProcMask, Version, DetectorElements, MaxFilesToProc, MaxLinesToProc, QuickAndDirty, XRF_Bin, NNLS, XANES_Scan, DetectorToStartWith, BeamLine, Standards, Priority, Status, StartProcTime, FinishProcTime) VALUES(:DataPath, :ProcMask, :Version, :DetectorElements, :MaxFilesToProc, :MaxLinesToProc, :QuickAndDirty, :XRF_Bin, :NNLS, :XANES_Scan, :DetectorToStartWith, :BeamLine, :Standards, :Priority, :Status, NULL, NULL)'
-INSERT_JOB_WITH_ID = 'INSERT INTO Jobs (Id, DataPath, ProcMask, Version, DetectorElements, MaxFilesToProc, MaxLinesToProc, QuickAndDirty, XRF_Bin, NNLS, XANES_Scan, DetectorToStartWith, BeamLine, Standards, Priority, Status, StartProcTime, FinishProcTime) VALUES(:Id, :DataPath, :ProcMask, :Version, :DetectorElements, :MaxFilesToProc, :MaxLinesToProc, :QuickAndDirty, :XRF_Bin, :NNLS, :XANES_Scan, :DetectorToStartWith, :BeamLine, :Standards, :Priority, :Status, NULL, NULL)'
+INSERT_JOB = 'INSERT INTO Jobs (DataPath, ProcMask, Version, DetectorElements, MaxFilesToProc, MaxLinesToProc, QuickAndDirty, XRF_Bin, NNLS, XANES_Scan, DetectorToStartWith, BeamLine, Standards, Priority, Status, StartProcTime, FinishProcTime, Log_Path, Process_Node_Id) VALUES(:DataPath, :ProcMask, :Version, :DetectorElements, :MaxFilesToProc, :MaxLinesToProc, :QuickAndDirty, :XRF_Bin, :NNLS, :XANES_Scan, :DetectorToStartWith, :BeamLine, :Standards, :Priority, :Status, NULL, NULL, :Log_Path, :Process_Node_Id)'
+INSERT_JOB_WITH_ID = 'INSERT INTO Jobs (Id, DataPath, ProcMask, Version, DetectorElements, MaxFilesToProc, MaxLinesToProc, QuickAndDirty, XRF_Bin, NNLS, XANES_Scan, DetectorToStartWith, BeamLine, Standards, Priority, Status, StartProcTime, FinishProcTime, Log_Path, Process_Node_Id) VALUES(:Id, :DataPath, :ProcMask, :Version, :DetectorElements, :MaxFilesToProc, :MaxLinesToProc, :QuickAndDirty, :XRF_Bin, :NNLS, :XANES_Scan, :DetectorToStartWith, :BeamLine, :Standards, :Priority, :Status, NULL, NULL, :Log_Path, :Process_Node_Id)'
 
 
 UPDATE_PROCESS_NODE_BY_ID = 'UPDATE ProcessNodes SET ComputerName=:ComputerName NumThreads=:NumThreads Hostname=:Hostname, Port=:Port Status=:Status Heartbeat=:Heartbeat WHERE Id=:Id'
 UPDATE_PROCESS_NODE_BY_NAME = 'UPDATE ProcessNodes SET NumThreads=:NumThreads, Hostname=:Hostname, Port=:Port, Status=:Status, Heartbeat=:Heartbeat WHERE ComputerName=:ComputerName'
-UPDATE_JOB_BY_ID = 'UPDATE Jobs SET DataPath=:DataPath, ProcMask=:ProcMask, Version=:Version, DetectorElements=:DetectorElements, MaxFilesToProc=:MaxFilesToProc, MaxLinesToProc=:MaxLinesToProc, QuickAndDirty=:QuickAndDirty, XRF_Bin=:XRF_Bin, NNLS=:NNLS, XANES_Scan=:XANES_Scan, DetectorToStartWith=:DetectorToStartWith, BeamLine=:BeamLine, Standards=:Standards, Priority=:Priority, Status=:Status, StartProcTime=:StartProcTime, FinishProcTime=:FinishProcTime WHERE Id=:Id'
+UPDATE_JOB_BY_ID = 'UPDATE Jobs SET DataPath=:DataPath, ProcMask=:ProcMask, Version=:Version, DetectorElements=:DetectorElements, MaxFilesToProc=:MaxFilesToProc, MaxLinesToProc=:MaxLinesToProc, QuickAndDirty=:QuickAndDirty, XRF_Bin=:XRF_Bin, NNLS=:NNLS, XANES_Scan=:XANES_Scan, DetectorToStartWith=:DetectorToStartWith, BeamLine=:BeamLine, Standards=:Standards, Priority=:Priority, Status=:Status, StartProcTime=:StartProcTime, FinishProcTime=:FinishProcTime, Log_Path=:Log_Path, Process_Node_Id=:Process_Node_Id WHERE Id=:Id'
 
 SELECT_ALL_PROCESS_NODES = 'SELECT Id, ComputerName, NumThreads, Hostname, Port, Status, Heartbeat FROM ProcessNodes'
-SELECT_PROCESS_NODE_BY_NAME = 'SELECT Id, ComputerName, NumThreads, Status, Heartbeat FROM ProcessNodes WHERE ComputerName=:ComputerName'
-SELECT_ALL_JOBS = 'SELECT Id, DataPath, ProcMask, Version, DetectorElements, MaxFilesToProc, MaxLinesToProc, QuickAndDirty, XRF_Bin, NNLS, XANES_Scan, DetectorToStartWith, BeamLine, Standards, Priority, Status, StartProcTime, FinishProcTime FROM Jobs'
+SELECT_PROCESS_NODE_BY_NAME = 'SELECT Id, ComputerName, NumThreads, Hostname, Port, Status, Heartbeat FROM ProcessNodes WHERE ComputerName=:ComputerName'
+SELECT_PROCESS_NODE_BY_ID = 'SELECT Id, ComputerName, NumThreads, Hostname, Port, Status, Heartbeat FROM ProcessNodes WHERE Id=:Id'
+SELECT_ALL_JOBS = 'SELECT Id, DataPath, ProcMask, Version, DetectorElements, MaxFilesToProc, MaxLinesToProc, QuickAndDirty, XRF_Bin, NNLS, XANES_Scan, DetectorToStartWith, BeamLine, Standards, Priority, Status, StartProcTime, FinishProcTime, Log_Path, Process_Node_Id FROM Jobs'
 SELECT_ALL_UNPROCESSED_JOBS = SELECT_ALL_JOBS + ' WHERE Status=0'
 SELECT_ALL_PROCESSING_JOBS = SELECT_ALL_JOBS + ' WHERE Status=1'
 SELECT_ALL_FINISHED_JOBS = SELECT_ALL_JOBS + ' WHERE Status>=2'
@@ -106,12 +107,23 @@ class SQLiteDB:
 		cur.execute(INSERT_JOB_WITH_ID, job_dict)
 		con.commit()
 
-	def get_process_node(self, proc_node_name):
+	def get_process_node_by_name(self, proc_node_name):
 		con = sql.connect(self.uri)
 		cur = con.cursor()
 		cur.execute(SELECT_PROCESS_NODE_BY_NAME, {'ComputerName':proc_node_name})
 		con.commit()
-		return cur.fetchone()
+		p_list = cur.fetchone()
+		node = {'Id': p_list[0], 'ComputerName':p_list[1], 'NumThreads':p_list[2], 'Hostname':p_list[3], 'Port':p_list[4], 'Status': p_list[5], 'Heartbeat': p_list[6] }
+		return node
+
+	def get_process_node_by_id(self, proc_node_id):
+		con = sql.connect(self.uri)
+		cur = con.cursor()
+		cur.execute(SELECT_PROCESS_NODE_BY_ID, {'Id':proc_node_id})
+		con.commit()
+		p_list = cur.fetchone()
+		node = {'Id': p_list[0], 'ComputerName':p_list[1], 'NumThreads':p_list[2], 'Hostname':p_list[3], 'Port':p_list[4], 'Status': p_list[5], 'Heartbeat': p_list[6] }
+		return node
 
 	def get_all_process_nodes(self):
 		con = sql.connect(self.uri)
@@ -135,7 +147,7 @@ class SQLiteDB:
 		ret_list = []
 		#SELECT_ALL_JOBS = 'SELECT Id, DataPath, ProcMask, Version, DetectorElements, MaxFilesToProc, MaxLinesToProc, QuickAndDirty, XRF_Bin, NNLS, XANES_Scan, DetectorToStartWith, BeamLine, Standards, Status, StartProcTime, FinishProcTime FROM Jobs'
 		for node in all_nodes:
-			ret_list += [ {'DT_RowId':node[0],  'Id':node[0], 'DataPath':node[1], 'ProcMask': node[2], 'Version': node[3], 'DetectorElements':node[4], 'MaxFilesToProc':node[5], 'MaxLinesToProc':node[6], 'QuickAndDirty':node[7], 'XRF_Bin':node[8], 'NNLS':node[9], 'XANES_Scan':node[10], 'DetectorToStartWith':node[11], 'BeamLine':node[12], 'Standards':node[13], 'Priority':node[14], 'Status':node[15], 'StartProcTime':node[16], 'FinishProcTime':node[17]  } ]
+			ret_list += [ {'DT_RowId':node[0],  'Id':node[0], 'DataPath':node[1], 'ProcMask': node[2], 'Version': node[3], 'DetectorElements':node[4], 'MaxFilesToProc':node[5], 'MaxLinesToProc':node[6], 'QuickAndDirty':node[7], 'XRF_Bin':node[8], 'NNLS':node[9], 'XANES_Scan':node[10], 'DetectorToStartWith':node[11], 'BeamLine':node[12], 'Standards':node[13], 'Priority':node[14], 'Status':node[15], 'StartProcTime':node[16], 'FinishProcTime':node[17], 'Log_Path':node[18], 'Process_Node_Id':node[19]  } ]
 		return ret_list
 
 	def get_all_jobs(self):

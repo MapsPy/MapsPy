@@ -244,7 +244,7 @@ class SchedulerJobsWebService(object):
 		return 'inserted job Id:'+str(job['Id'])
 
 	#change job properties (priority, ect...)
-	def PUT(self):
+	def PUT(self, *args, **kwargs):
 		cl = cherrypy.request.headers['Content-Length']
 		rawbody = cherrypy.request.body.read(int(cl))
 		job = json.loads(rawbody)

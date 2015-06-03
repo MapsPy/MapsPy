@@ -33,12 +33,31 @@ SUCH DAMAGE.
 import string
 import json
 import cherrypy
+import traceback
+import os
+
+#todo: this is redefined in ProcessNode.py 
+STR_JOB_LOG_DIR_NAME = 'job_logs'
 
 class ProcessNodeHandler(object):
 	
 	@cherrypy.expose
 	def index(self):
 		return file('public/process_node_index.html')
+
+	@cherrypy.expose
+	def get_job_log(self, log_path):
+		try:
+			full_log_path = os.path.join(STR_JOB_LOG_DIR_NAME, log_path)
+			full_log_path = full_log_path.replace('..', '')
+			retstr = '<!DOCTYPE html><html><head></head><body><pre>'
+			with open(full_log_path, "rt") as txt_file:
+				retstr += txt_file.read()
+			retstr += '</pre></body></html>'
+			return retstr
+		except:
+			exc_str = traceback.format_exc()
+			return exc_str
 
 class ProcessNodeJobsWebService(object):
 	'''

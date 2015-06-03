@@ -240,7 +240,7 @@ class calibration:
                     u, fitted_spec, background, xmin, xmax, perror = fit.fit_spectrum(fitp, this_spectrum, used_chan, calib, 
                                  first = first, matrix = True, maxiter = maxiter)
 
-                    if u == None or perror == 1:
+                    if u == None:
                         print 'Error calling fit_spectrum!. returning'
                         return None, None, None
 
@@ -1379,7 +1379,7 @@ class calibration:
                         u, fitted_spec, background, xmin, xmax, perror = fit.fit_spectrum(fitp, this_spectrum, used_chan, calib, 
                                      first = first, matrix = True, maxiter = maxiter)
 
-                        if u == None or perror == 1:
+                        if u == None:
                             print 'Error calling fit_spectrum!. returning'
                             return
 
@@ -3094,7 +3094,7 @@ class calibration:
             fit = maps_analyze.analyze()
             u, fitted_spec, background, xmin, xmax, perror = fit.fit_spectrum(fitp, spectra[wo[i]].data, spectra[wo[i]].used_chan, spectra[wo[i]].calib, 
                             first = first, matrix = matrix, maxiter = maxiter)
-            if u == None or perror == 1:
+            if u == None:
                 print 'Error calling fit_spectrum!. returning'
                 return None, None, None
 
@@ -3108,7 +3108,7 @@ class calibration:
                 for j in range(keywords.kele_pos[0]): fitp.s.use[j] = fitp.s.batch[j, 3]
                 u, fitted_spec, background, xmin, xmax, perror = fit.fit_spectrum(fitp, spectra[wo[i]].data, spectra[wo[i]].used_chan, spectra[wo[i]].calib, 
                                                                                   first = first, matrix = matrix, maxiter = maxiter)                
-                if u == None or perror == 1:
+                if u == None:
                     print 'Error calling fit_spectrum!. returning'
                     return None, None, None
 
