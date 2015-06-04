@@ -334,6 +334,9 @@ def main(wdir='', force_fit=0, no_fit = False):
         det = kk
         try:
             fitp, test_string, pileup_string = fp.read_fitp(maps_overridefile, info_elements, det)
+            if fitp == None:
+                print 'ERROR - could not read override file: ' + maps_overridefile
+                return
         except:
             print 'ERROR - could not read override file: ' + maps_overridefile
             return
