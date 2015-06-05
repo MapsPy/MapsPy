@@ -977,34 +977,44 @@ def main(wdir='', a=1,b=0,c=0,d=0,e=0):
             #print 'do_fits',type(this_w_uname), type(fitp), type(dofit_spec), type(spectra), type(suffix) , type(info_elements), type(calib), type(calib.do_fits)
             #fitp, avg_fitp, spectra = calib.do_fits(this_w_uname, fitp, dofit_spec, spectra, 1, 1, 500, suffix, info_elements) 
             fitp, avg_fitp, spectra = calib.do_fits(this_w_uname, fitp, dofit_spec, spectra, maxiter = 500, per_pix = 1, generate_img = 1, suffix = suffix, info_elements = info_elements) 
+
             if fitp != None:
+                avg_res_override_name = os.path.join(current_directory, 'average_resulting_maps_fit_parameters_override.txt')
+                old_override_name = os.path.join(current_directory, 'old_maps_fit_parameters_override.txt')
+                old_override_date_name = os.path.join(current_directory, 'old_'+strftime("%Y-%m-%d %H:%M:%S", gmtime())+'_maps_fit_parameters_override.txt')
+                old_override_suffix_date_name = os.path.join(current_directory, 'old_'+strftime("%Y-%m-%d %H:%M:%S", gmtime())+'_maps_fit_parameters_override.txt'+suffix)
+                maps_override_suffix_name = os.path.join(current_directory, 'maps_fit_parameters_override.txt'+suffix)
+                maps_override_name = os.path.join(current_directory,'maps_fit_parameters_override.txt')
+                #if os.path.isfile(avg_res_override_name):
                 #move AND rename the old AND new override files:
                 try:
-                    os.remove(os.path.join(current_directory, 'old_maps_fit_parameters_override.txt'))
+                    if os.path.isfile(old_override_name):
+                        print 'removing',old_override_name
+                        os.remove(old_override_name)
+                    if os.path.isfile(maps_override_suffix_name):
+                        print 'renaming',maps_override_suffix_name, old_override_suffix_date_name
+                        os.rename(maps_override_suffix_name, old_override_suffix_date_name)
                 except:
                     pass
-                try:
-                    os.remove(os.path.join(current_directory, 'maps_fit_parameters_override.txt'+suffix))
-                except:
-                    pass            
+                print 'total_num detectors = ',total_number_detectors
                 if total_number_detectors <= 1 :
                     try:
-                        os.rename(os.path.join(current_directory,'maps_fit_parameters_override.txt'), 
-                                  os.path.join(current_directory,'old_maps_fit_parameters_override.txt')) 
+                        if os.path.isfile(maps_override_name):
+                            print 'renaming',maps_override_name,'to', old_override_date_name
+                            os.rename(maps_override_name, old_override_date_name)
                     except:
-                        print 'could not rename file', os.path.join(current_directory,'maps_fit_parameters_override.txt')
+                        print 'could not rename file', maps_override_name, 'to',old_override_date_name
                 try:
-                    os.remove(os.path.join(current_directory, 'maps_fit_parameters_override.txt'+suffix))
-                except:
-                    pass
-                try:
-                   os.rename(os.path.join(current_directory,'average_resulting_maps_fit_parameters_override.txt'),
-                       os.path.join(current_directory,'maps_fit_parameters_override.txt'+suffix))
+                    if os.path.isfile(maps_override_name):
+                        print 'removing',maps_override_suffix_name
+                        os.remove(maps_override_suffix_name)
+                    if os.path.isfile(avg_res_override_name):
+                        print 'renaming', avg_res_override_name,'to', maps_override_suffix_name
+                        os.rename(avg_res_override_name, maps_override_suffix_name)
                 except:
                     print 'error renaming average_resulting_maps_fit_parameters_override to maps_fit_parameters_override'
                     pass
-                
-                
+
             dirlist = os.listdir(current_directory)
             if 'output_old' in dirlist: 
                 #print ' delete files in output_old directory'

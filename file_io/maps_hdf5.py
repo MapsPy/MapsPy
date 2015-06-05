@@ -537,7 +537,7 @@ class h5:
     
         maps_def = maps_definitions.maps_definitions()
 
-        f = call_function_with_retry(h5py.File, 5, 0.1, 1.1, (filename, 'w'))
+        f = call_function_with_retry(h5py.File, 5, 0.1, 1.1, (sfile, 'r'))
         if f == None:
             print 'Error could not open file ',filename
             return
