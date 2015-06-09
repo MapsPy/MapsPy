@@ -824,7 +824,7 @@ def fit_spectrum(fitp, this_spectrum, used_chan, calib, counts_dict,
 		#print '\n\n\n----------------------------------------- If true  ----------------------------------------------\n\n\n'
 		#print '\n',x,'\n'
 		#print '\n',u,'\n'
-		dummy = model_spectrum(fitp, x, u, counts_dict, allpars = True)
+		dummy = model_spectrum(fitp, x, u, counts_dict, parameters, allpars = True)
 		
 #			import matplotlib.pyplot as plt 
 #			plt.plot(x,dummy)
@@ -891,7 +891,7 @@ def fit_spectrum(fitp, this_spectrum, used_chan, calib, counts_dict,
 		perror = np.zeros((len(parameters)))
 		perror[fipsuse_nonzero] = perror1
 		#print '\n\n\n---------------------------------------- else true -----------------------------------------------\n\n\n'
-		fitted_spec = model_spectrum(fitp, x, p1, counts_dict)
+		fitted_spec = model_spectrum(fitp, x, p1, counts_dict, parameters )
 		u = parameters
 		
 		
