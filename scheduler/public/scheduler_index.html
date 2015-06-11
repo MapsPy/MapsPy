@@ -71,15 +71,15 @@
                 type: 'POST',
                 url:"/job",
                 contentType: 'application/json; charset=utf-8',
-                data: JSON.stringify({'MaxFilesToProc': 1,
+                data: JSON.stringify({'MaxFilesToProc': parseInt($("#option-proc-per-file").val(), 10),
                     'ProcMask': $procMask,
                     'BeamLine': '2-ID-E',
                     'DataPath': $("#DataPath").val(),
-                    'Version': '1.00',
+                    'Version': '9.00',
                     'Standards': '',
                     'DetectorToStartWith': 0,
                     'XRF_Bin': $xrfbin,
-                    'MaxLinesToProc': 11,
+                    'MaxLinesToProc': parseInt($("#opiton-proc-per-line").val(), 10),
                     'DetectorElements': parseInt($("#option-detector-elements").val(), 10),
                     'XANES_Scan': $xanes,
                     'NNLS': $nnls,
@@ -156,23 +156,27 @@
             var $str = "";
             if( (aData.ProcMask & 1) === 1)
             {
-              $str += 'A ';
+              $str += '(A) Analyze datasets using ROI and ROI+ :: ';
             }
             if( (aData.ProcMask & 2) === 2)
             {
-              $str += 'B ';
+              $str += '(B) Extract integrated spectra from analyzed files and fit the spectra to optimize fit parameters :: ';
             }
             if( (aData.ProcMask & 4) === 4)
             {
-              $str += 'C ';
+              $str += '(C) Analyze datasets using ROI, ROI+ and per pixel fitting :: ';
             }
             if( (aData.ProcMask & 8) === 8)
             {
-              $str += 'D ';
+              $str += '(D)  :: ';
             }
             if( (aData.ProcMask & 16) === 16)
             {
-              $str += 'E ';
+              $str += '(E) Add exchange information to analyzed files :: ';
+            }
+            if( (aData.ProcMask & 32) === 32)
+            {
+              $str += '(F) Create hdf5 file from single line netcdf files for flyscan :: ';
             }
             return $str;
         }
@@ -215,6 +219,12 @@
                     'NNLS: '+d.NNLS+'<br>'+
                     'XANES_Scan: '+d.XANES_Scan+'<br>'+
                     'BeamLine: '+d.BeamLine+'<br>'+
+                    'Priority: '+d.Priority+'<br>'+
+                    'Lines processed in parrallel: '+d.MaxLinesToProc+'<br>'+
+                    'Files processed in parrallel: '+d.MaxFilesToProc+'<br>'+
+                    //'StartProcTime: '+d.StartProcTime+'<br>'+
+                    //'FinishProcTime: '+d.FinishProcTime+'<br>'+
+                    //'Process Node: '+d.Process_Node_Id+'<br>'+ //todo parse name from it
                     '<a href=/get_output_list?job_path='+d.DataPath+'>Output Directory</a><br>'+
                     '<a href=http://'+$host+'/get_job_log?log_path='+d.Log_Path+'>Job Log</a>';
         }
@@ -439,11 +449,12 @@
                     </div>
                 </div>
                <br>
-               <input type="checkbox" id="analysis-type-a" value="A">A<br>
-               <input type="checkbox" id="analysis-type-b" value="B">B<br>
-               <input type="checkbox" id="analysis-type-c" value="C">C<br>
-               <input type="checkbox" id="analysis-type-d" value="D">D<br>
-               <input type="checkbox" id="analysis-type-e" value="E">E<br>
+               <input type="checkbox" id="analysis-type-a" value="A">A: Analyze datasets using ROI and ROI+<br>
+               <input type="checkbox" id="analysis-type-b" value="B">B: Extract integrated spectra from analyzed files and fit the spectra to optimize fit parameters<br>
+               <input type="checkbox" id="analysis-type-c" value="C">C: Analyze datasets using ROI, ROI+ and per pixel fitting<br>
+               <input type="checkbox" id="analysis-type-d" value="D">D: N/A<br>
+               <input type="checkbox" id="analysis-type-e" value="E">E: Add exchange information to analyzed files<br>
+               <input type="checkbox" id="analysis-type-f" value="F">F: Create hdf5 file from single line netcdf files for flyscan<br>
                Total Number of Detectors:
                <input type="text" id="option-detector-elements" value="4"><br>
                Number Processors Per File:
