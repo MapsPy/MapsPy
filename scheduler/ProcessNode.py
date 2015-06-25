@@ -74,6 +74,8 @@ class ProcessNode(object):
 		cherrypy.config.update({
 			'server.socket_host': serverSettings[Settings.SERVER_HOSTNAME],
 			'server.socket_port': int(serverSettings[Settings.SERVER_PORT]),
+			'log.access_file': "logs/"+str(pnSettings[Settings.PROCESS_NODE_NAME])+"_access.log",
+			'log.error_file': "logs/"+str(pnSettings[Settings.PROCESS_NODE_NAME])+"_error.log"
 		})
 
 		self.conf = {
@@ -111,13 +113,24 @@ class ProcessNode(object):
 	def callback_new_job(self, val):
 		self.new_job_event.set()
 
+	def _setup_logging_(self, log, logtype, logname):
+		maxBytes = getattr(log, "rot_maxBytes", 10000000)
+		backupCount = getattr(log, "rot_backupCount", 1000)
+		fname = getattr(log, logtype, logname)
+		h = logging.handlers.RotatingFileHandler(fname, 'a', maxBytes, backupCount)
+		h.setLevel(logging.DEBUG)
+		h.setFormatter(cherrypy._cplogging.logfmt)
+		log.error_log.addHandler(h)
+
 	def run(self):
 		webapp = ProcessNodeHandler()
 		self.db.subscribe()
 		self.db.create_tables()
 		webapp.job_queue = ProcessNodeJobsWebService(self.db)
 		#cherrypy.quickstart(webapp, '/', self.conf)
-		cherrypy.tree.mount(webapp, '/', self.conf)
+		app = cherrypy.tree.mount(webapp, '/', self.conf)
+		self._setup_logging_(app.log, "rot_error_file", "logs/"+self.pn_info[STR_COMPUTER_NAME]+"_error.log")
+		self._setup_logging_(app.log, "rot_access_file", "logs/"+self.pn_info[STR_COMPUTER_NAME]+"_access.log")
 		cherrypy.engine.start()
 		try:
 			print 'posting to scheduler',self.scheduler_pn_url

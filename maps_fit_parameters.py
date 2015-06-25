@@ -378,7 +378,7 @@ class maps_fit_parameters:
 						fitp.add_pars[ii, t].type = 3
 				else: 
 					fitp.s.val[fitp.keywords.lele_pos[i]] = 0.
-					fitp.s.use[fitp.keywords.lele_pos[i]] = 1			  
+					fitp.s.use[fitp.keywords.lele_pos[i]] = 1
 
 	
 		
@@ -474,15 +474,15 @@ class maps_fit_parameters:
 					wo = np.where(energies_all < energy)
 					# the last value that is smaller than energy must be the closest value
 					if wo[0].size > 0: 
-						lo_e_ind = wo[0][-1]  
+						lo_e_ind = wo[0][-1]
 					else : 
-						lo_e_ind = len(energies_all)-1		  
+						lo_e_ind = len(energies_all)-1
 					ln_lower_energy = np.log(energies_all[lo_e_ind])
 					ln_higher_energy = np.log(energies_all[hi_e_ind])
-					fraction = (np.log(energy)-ln_lower_energy)/(ln_higher_energy-ln_lower_energy)			   
+					fraction = (np.log(energy)-ln_lower_energy)/(ln_higher_energy-ln_lower_energy)
 					ln_f2_lower = np.log(np.abs(f2_all[lo_e_ind]))
 					ln_f2_higher = np.log(np.abs(f2_all[hi_e_ind]))
-					f2 = np.exp(ln_f2_lower + fraction * (ln_f2_higher - ln_f2_lower))					 
+					f2 = np.exp(ln_f2_lower + fraction * (ln_f2_higher - ln_f2_lower))
 					beta = constant * f2
 					if k == 0 : 
 						fitp.add_pars[i, j].Ge_mu = (energy *4.*np.math.pi*beta)/(5.323* 1.239852)*10000.
@@ -544,12 +544,12 @@ class maps_fit_parameters:
 					
 				elif tag == 'ELEMENTS_WITH_PILEUP' :  
 					pileup_string = value.split(',')
-					pileup_string = [x.strip() for x in pileup_string]			  
+					pileup_string = [x.strip() for x in pileup_string]
 		 
-				elif tag == 'CAL_OFFSET_[E_OFFSET]':  
+				elif tag == 'CAL_OFFSET_[E_OFFSET]':
 					temp = map(float,value.split(','))
 					if verbose: print tag, temp
-					fitp.s.val[keywords.energy_pos[0]] = temp[det]			  
+					fitp.s.val[keywords.energy_pos[0]] = temp[det]
  
 				elif tag == 'CAL_OFFSET_[E_OFFSET]_MAX':  
 					temp = map(float,value.split(','))
@@ -780,9 +780,9 @@ class maps_fit_parameters:
 					if verbose: print tag, temp
 					fitp.g.xmin = temp
 			
-				elif tag == 'BRANCHING_FAMILY_ADJUSTMENT_L' : 
+				elif tag == 'BRANCHING_FAMILY_ADJUSTMENT_L':
 					temp_string = value.split(',')
-					temp_string = [x.strip() for x in temp_string]			  
+					temp_string = [x.strip() for x in temp_string]
 					wo = np.where(fitp.s.name == temp_string[0])
 
 					if verbose: print 'found BRANCHING_FAMILY_ADJUSTMENT_L', temp_string
@@ -801,7 +801,7 @@ class maps_fit_parameters:
 
 						# below, adjust branching ratio of L family, i.e, L1 vs L 2, vs
 						# L3 based lines
-						if j > 0 :					  
+						if j > 0:
 							add_pars[ii, 0].ratio = 1.
 							add_pars[ii, 1].ratio = info_elements[j].xrf_abs_yield['la2']/info_elements[j].xrf_abs_yield['la1']
 							add_pars[ii, 2].ratio = info_elements[j].xrf_abs_yield['lb1']/info_elements[j].xrf_abs_yield['la1']
@@ -827,17 +827,17 @@ class maps_fit_parameters:
 							add_pars[ii, 8].ratio = add_pars[ii, 8].ratio * factor_l1
 							add_pars[ii, 9].ratio = add_pars[ii, 9].ratio * factor_l1
 
-				elif tag == 'BRANCHING_RATIO_ADJUSTMENT_L':					   
+				elif tag == 'BRANCHING_RATIO_ADJUSTMENT_L':
 					temp_string = value.split(',')
-					temp_string = [x.strip() for x in temp_string]			  
+					temp_string = [x.strip() for x in temp_string]
 					wo = np.where(fitp.s.name == temp_string[0])
-					if verbose: print tag, temp_string					  
+					if verbose: print tag, temp_string
 
 					if (wo[0].size > 0) and ( len(temp_string) == 13) : 
 						ii = wo[0][0] - np.amin(keywords.kele_pos)
 						name = temp_string[0].strip()
 						el_names = [x.name for x in  info_elements]
-						
+
 						# adjust branching ratios within families, but all relative to La1
 						if (len(temp_string) >= 13) : 
 							if verbose: print 'found BRANCHING_RATIO_ADJUSTMENT_L', temp_string
@@ -846,15 +846,15 @@ class maps_fit_parameters:
 								add_pars[ii, jj].ratio = add_pars[ii, jj].ratio*float(temp_string[(jj+1)])
 								if verbose: print 'old_value: ', old_value, ' new value: ', add_pars[ii, jj].ratio
 
-		 
-		 
-				elif tag == 'BRANCHING_RATIO_ADJUSTMENT_K' :  
+
+
+				elif tag == 'BRANCHING_RATIO_ADJUSTMENT_K':
 					temp_string = value.split(',')
-					temp_string = [x.strip() for x in temp_string]			  
+					temp_string = [x.strip() for x in temp_string]
 					wo = np.where(fitp.s.name == temp_string[0])
-					if verbose: print tag, temp_string	  
-					
-					if (wo[0].size > 0) and ( len(temp_string) == 5) : 
+					if verbose: print tag, temp_string
+
+					if (wo[0].size > 0) and ( len(temp_string) == 5):
 						ii = wo[0][0] - np.amin(keywords.kele_pos)
 						name = temp_string[0].strip()
 						el_names = [x.name for x in  info_elements]
@@ -875,8 +875,7 @@ class maps_fit_parameters:
 								old_value = add_pars[ii, jj].ratio	 
 								add_pars[ii, jj].ratio = add_pars[ii, jj].ratio*float(temp_string[(jj+1)])
 								if verbose: print 'old_value: ', old_value, ' new value: ', add_pars[ii, jj].ratio
-	
-	
+
 				elif tag == 'TAIL_FRACTION_ADJUST_SI' : 
 					temp = float(value)
 					if verbose: print tag, temp
@@ -1045,8 +1044,8 @@ class maps_fit_parameters:
 		print>>f, '   name, for L lines add _L, e.g., Au_L, for M lines add _M'
 
 
-		BRANCHING_FAMILY_ADJUSTMENT_L = ''
-		BRANCHING_RATIO_ADJUSTMENT_L = ''
+		BRANCHING_FAMILY_ADJUSTMENT_L = []
+		BRANCHING_RATIO_ADJUSTMENT_L = []
 		filepath = os.path.join(main['master_dir'], 'maps_fit_parameters_override.txt')
 		f2 = open_file_with_retry(filepath, 'rt')
 		if f2 == None:
@@ -1072,15 +1071,15 @@ class maps_fit_parameters:
 					pileup_string = [x.strip() for x in pileup_string]	  
 					print>>f, 'ELEMENTS_WITH_PILEUP: '+', '.join(pileup_string)
 		
-				elif tag == 'BRANCHING_FAMILY_ADJUSTMENT_L' : 
+				elif tag == 'BRANCHING_FAMILY_ADJUSTMENT_L':
 					temp_string = value.split(',')
 					temp_string = [x.strip() for x in temp_string]	
-					BRANCHING_FAMILY_ADJUSTMENT_L = ', '.join(temp_string)
+					BRANCHING_FAMILY_ADJUSTMENT_L += [', '.join(temp_string)]
 					
-				elif tag == 'BRANCHING_RATIO_ADJUSTMENT_L':					   
+				elif tag == 'BRANCHING_RATIO_ADJUSTMENT_L':
 					temp_string = value.split(',')
 					temp_string = [x.strip() for x in temp_string] 
-					BRANCHING_RATIO_ADJUSTMENT_L = ', '.join(temp_string)
+					BRANCHING_RATIO_ADJUSTMENT_L += [', '.join(temp_string)]
 		#f2.close()				  
 
 		
@@ -1163,8 +1162,8 @@ class maps_fit_parameters:
 		print>>f, '    note, the numbers that are put in should be RELATIVE modifications, i.e., a 1 will correspond to exactly the literature value,'
 		print>>f, '    0.8 will correspond to to 80% of that, etc.'
 	
-		if BRANCHING_FAMILY_ADJUSTMENT_L != '': 
-			print>>f, 'BRANCHING_FAMILY_ADJUSTMENT_L: '+BRANCHING_FAMILY_ADJUSTMENT_L
+		for val in BRANCHING_FAMILY_ADJUSTMENT_L:
+			print>>f, 'BRANCHING_FAMILY_ADJUSTMENT_L: '+val
    
 		print>>f, '    this allows manual adjustment of the branhcing ratios between the different L lines, such as La 1, la2, etc.'
 		print>>f, '    Please note, these are all RELATIVE RELATIVE modifications, i.e., a 1 will correspond to exactly the literature value, etc.'
@@ -1172,8 +1171,8 @@ class maps_fit_parameters:
 		print>>f, '    La1, La2, Lb1, Lb2, Lb3, Lb4, Lg1, Lg2, Lg3, Lg4, Ll, Ln'
 		print>>f, '    please note, the first value (la1) MUST BE A 1. !!!'
 	
-		if BRANCHING_RATIO_ADJUSTMENT_L != '':
-			print>>f, 'BRANCHING_RATIO_ADJUSTMENT_L: '+ BRANCHING_RATIO_ADJUSTMENT_L
+		for val in BRANCHING_RATIO_ADJUSTMENT_L:
+			print>>f, 'BRANCHING_RATIO_ADJUSTMENT_L: '+ val
  
 		print>>f, '    this allows manual adjustment of the branhcing ratios between the different K lines, such as Ka1, Ka2, Kb1, Kb2'
 		print>>f, '    Please note, these are all RELATIVE RELATIVE modifications, i.e., a 1 will correspond to exactly the literature value, etc.'

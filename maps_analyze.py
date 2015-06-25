@@ -202,8 +202,8 @@ class analyze:
 #					 value = float(faktor * f_tail[i, j])
 #					 value = value * self.model_gauss_tail(gain, sigma[i, j], delta_energy, gamma[i, j])
 #					 counts_tail = counts_tail + value									 
-  
-		
+
+
 		#scattering: elastic peak
 		value[:] = 0.
 		value, rayleigh_sigma = self.elastic_peak(self.fitp, value, ev, pall, gain)
@@ -332,9 +332,9 @@ class analyze:
 				wo = np.where(ev > escape_E+ev[0])
 
 				escape_factor = np.abs(p[len(p)-3] + p[len(p)-1] * ev)
-				if len(wo[0]) > 0: 
+				if len(wo[0]) > 0:
 					for ii in range(len(wo[0])):
-						counts_escape[ii] = counts[wo[ii]]*np.amax(np.append(escape_factor[wo[ii]],0.0))
+						counts_escape[ii] = counts[wo[0][ii]]*np.amax(np.append(escape_factor[wo[0][ii]],0.0))
 
 				counts = counts + counts_escape
 	
@@ -1118,7 +1118,7 @@ class analyze:
 		verbose = 0
 		if verbose:
 			print 'Entering calc_covar...'
-		if np.rank(rr) != 2:
+		if np.ndim(rr) != 2:
 			print 'ERROR: r must be a two-dimensional matrix'
 			return -1
 		s = rr.shape

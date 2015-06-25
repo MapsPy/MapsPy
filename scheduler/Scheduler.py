@@ -41,8 +41,17 @@ from plugins.SQLiteDB import SQLiteDB
 import json
 import cherrypy
 import traceback
+import logging
+import logging.handlers
+import signal
 
 db = DatabasePlugin(cherrypy.engine, SQLiteDB)
+
+def handle_sigint():
+	logger.log("SIGINT catched")
+	cherrypy.engine.stop()
+
+signal.signal(signal.SIGINT, handle_sigint)
 
 class Scheduler(object):
 	def __init__(self, settings):
@@ -51,9 +60,12 @@ class Scheduler(object):
 		cherrypy.config.update({
 			'server.socket_host': self.settings[Settings.SERVER_HOSTNAME],
 			'server.socket_port': int(self.settings[Settings.SERVER_PORT]),
+			'log.access_file': "logs/scheduler_access.log",
+			'log.error_file': "logs/scheduler_error.log"
 		})
 		cherrypy.engine.subscribe("new_job", self.callback_new_job)
 		cherrypy.engine.subscribe("process_node_update", self.callback_process_node_update)
+		#cherrypy.engine.signal_handler.handlers["SIGINT"] = handle_sigint
 		self.conf = {
 			'/': {
 				'tools.sessions.on': True,
@@ -120,11 +132,24 @@ class Scheduler(object):
 			exc_str = traceback.format_exc()
 			return exc_str
 
+	def _setup_logging_(self, log, logtype, logname):
+		maxBytes = getattr(log, "rot_maxBytes", 10000000)
+		backupCount = getattr(log, "rot_backupCount", 1000)
+		fname = getattr(log, logtype, logname)
+		h = logging.handlers.RotatingFileHandler(fname, 'a', maxBytes, backupCount)
+		h.setLevel(logging.DEBUG)
+		h.setFormatter(cherrypy._cplogging.logfmt)
+		log.error_log.addHandler(h)
+
 	def run(self):
 		db.subscribe()
 		db.create_tables()
 		webapp = SchedulerHandler(db, self.all_settings)
 		webapp.process_node = SchedulerProcessNodeWebService(db)
 		webapp.job = SchedulerJobsWebService(db)
-		cherrypy.quickstart(webapp, '/', self.conf)
+		#cherrypy.quickstart(webapp, '/', self.conf)
+		app = cherrypy.tree.mount(webapp, '/', self.conf)
+		self._setup_logging_(app.log, "rot_error_file", "logs/scheduler_error.log")
+		self._setup_logging_(app.log, "rot_access_file", "logs/scheduler_access.log")
+		cherrypy.engine.start()
 

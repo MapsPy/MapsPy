@@ -181,6 +181,7 @@ def main(wdir='', force_fit=0, no_fit = False):
   
 	maps_overridefile = 'maps_fit_parameters_override.txt'
 	maps_intermediate_solution_file = 'maps_intermediate_solution.tmp'
+	print 'make_maps'
 	maps_settingsfile = 'maps_settings.txt'		
 	suffix = '' 
 	standard_filenames = []
@@ -338,6 +339,8 @@ def main(wdir='', force_fit=0, no_fit = False):
 				print 'ERROR - could not read override file: ' + maps_overridefile
 				return
 		except:
+			import traceback,sys
+			traceback.print_exc(file=sys.stdout)
 			print 'ERROR - could not read override file: ' + maps_overridefile
 			return
 		
@@ -471,7 +474,7 @@ def main(wdir='', force_fit=0, no_fit = False):
 		#Read NBS calibration 
 		print 'Started reading in standards from:', standard_filenames
 		calibration = maps_calibration.calibration(main, maps_conf)
-
+		'''
 		if len(standard_filenames) > 0:
 			NBS_calibration = calibration.read_nbs_calibration(standard_filenames[:],
 															   this_detector = this_detector, 
@@ -496,9 +499,16 @@ def main(wdir='', force_fit=0, no_fit = False):
 			#try generic standards file
 			if (maps_conf.calibration.slope[0] == 0.01) and (maps_conf.calibration.offset[0] == 0.0):
 				no_nbs = 1
-			calibration.read_generic_calibration(maps_conf, this_detector = this_detector, total_number_detectors = total_number_detectors, no_nbs = no_nbs, fitmatrix_reduced = fitmatrix_reduced)
 			print 'No standards specified in maps_settings.txt'
-	
+		'''
+		#perform calibration
+		no_nbs = 1
+		calibration.read_generic_calibration(this_detector = this_detector,
+											 total_number_detectors = total_number_detectors,
+											 no_nbs = no_nbs,
+											 fitmatrix_reduced = fitmatrix_reduced,
+											 fitp=fitp,
+											 info_elements=info_elements)
 
 		no_files =len(filenames)
 		

@@ -520,7 +520,7 @@ def congrid(a, newdims, method='linear', centre=False, minusone=False):
 		nslices = [ slice(0,j) for j in list(newdims) ]
 		newcoords = np.mgrid[nslices]
 
-		newcoords_dims = range(np.rank(newcoords))
+		newcoords_dims = range(np.ndim(newcoords))
 		#make first index last
 		newcoords_dims.append(newcoords_dims.pop(0))
 		newcoords_tr = newcoords.transpose(newcoords_dims)

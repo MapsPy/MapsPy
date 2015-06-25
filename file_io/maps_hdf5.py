@@ -47,8 +47,7 @@ import maps_mda
 class h5:
 	def __init__(self):  
 		pass
-	
-	
+
 #-----------------------------------------------------------------------------	 
 	def write_mca_hdf5(self, filename, mca_arr, overwrite = True):
 		
@@ -412,7 +411,7 @@ class h5:
 		data = thisdata.make_maps_conf.calibration.quad
 		ds_data = mmcGrp.create_dataset(entryname, data = data)
 		ds_data.attrs['comments'] = comment 
-		
+		'''
 		if 'nbs1832' not in mmcGrp:
 			nbs1832Grp = mmcGrp.create_group('nbs1832')
 		else:
@@ -482,18 +481,18 @@ class h5:
 		entryname = 'ds_amp'
 		data = substructure.ds_amp
 		ds_data = nbs1833Grp.create_dataset(entryname, data = data)
-  
+		'''
 
 
 		entryname = 'e_cal'
 		data = np.transpose(thisdata.make_maps_conf.e_cal)
 		ds_data = mmcGrp.create_dataset(entryname, data = data)  
-		
+		'''
 		if thisdata.version >= 9 :
 			entryname = 'axo_e_cal'
 			data = np.transpose(thisdata.make_maps_conf.axo_e_cal)
 			ds_data = mmcGrp.create_dataset(entryname, data = data)  
-
+		'''
 		entryname = 'fit_t_be'
 		data = thisdata.make_maps_conf.fit_t_be
 		ds_data = mmcGrp.create_dataset(entryname, data = data)
@@ -714,30 +713,23 @@ class h5:
 		
 			
 #-----------------------------------------------------------------------------	 
-	def read_hdf5_core(self, gid, entryname):
-
-		verbose = 0
-
+	def read_hdf5_core(self, gid, entryname, verbose=False):
 		valid_read = 0
 		this_data = 0
-  
+
 		if entryname not in gid:
 			if verbose:
 				print 'read error: '
 				print 'did not find the entry: ', entryname, 'in:'
 				print gid
-			return	this_data, valid_read
-   
+			return this_data, valid_read
+
 		dataset_id = gid[entryname]
 		this_data = dataset_id[...]
-
-
 		valid_read = 1
 
 		return this_data, valid_read
-	
-	
-  
+
 #-----------------------------------------------------------------------------	 
 	def read_hdf5(self, filename):
 		

@@ -91,11 +91,12 @@ class maps_conf:
 		self.version = 0
 		self.use_det = []  
 		self.calibration = calibration()	   
-		self.nbs32 = standard()
-		self.nbs33 = standard()
-		self.axo = standard()
+		#self.nbs32 = standard()
+		#self.nbs33 = standard()
+		#self.axo = standard()
+		self.element_standard = standard()
 		self.e_cal = []  
-		self.axo_e_cal = []  
+		#self.axo_e_cal = []  
 		self.fit_t_be = 8000.	   
 		self.fit_t_GE = 100.		 
 		self.n_chan = 0
@@ -237,6 +238,7 @@ class maps_definitions:
 			mcfg.calibration.slope = np.zeros(n_max, dtype = np.float)
 			mcfg.calibration.quad = np.zeros(n_max, dtype = np.float)
 			
+			'''
 			mcfg.nbs32.name = 'nbs1832_'
 			mcfg.nbs32.date = ''
 			mcfg.nbs32.live_time = np.zeros(n_max, dtype = np.float)
@@ -258,9 +260,19 @@ class maps_definitions:
 			mcfg.axo.calibration.offset = np.zeros(n_max, dtype = np.float)
 			mcfg.axo.calibration.slope = np.zeros(n_max, dtype = np.float)
 			mcfg.axo.calibration.quad = np.zeros(n_max, dtype = np.float) 
+			'''
+			mcfg.element_standard.name = ''
+			mcfg.element_standard.date = ''
+			mcfg.element_standard.live_time = np.zeros(n_max, dtype = np.float)
+			mcfg.element_standard.real_time = np.zeros(n_max, dtype = np.float)
+			mcfg.element_standard.calibration.offset = np.zeros(n_max, dtype = np.float)
+			mcfg.element_standard.calibration.slope = np.zeros(n_max, dtype = np.float)
+			mcfg.element_standard.calibration.quad = np.zeros(n_max, dtype = np.float) 
 					   
+
+				   
 			mcfg.e_cal = np.zeros((len(list),3,7), dtype = np.float)
-			mcfg.axo_e_cal = np.zeros((len(list),3,7), dtype = np.float)
+			#mcfg.axo_e_cal = np.zeros((len(list),3,7), dtype = np.float)
 			mcfg.n_chan = len(list)
 			mcfg.use_det[0] = 1
 			
@@ -358,12 +370,11 @@ class maps_definitions:
 					  'userStringCalc10.CC', \
 					  'userStringCalc10.DD', \
 					  'userStringCalc10.EE']
-				
-	
+
 		for item in extra_pv: 
 			#print item, extra_pv[item]
 			for si in range(len(stringlist)):
-				if stringlist[si] in item: 
+				if stringlist[si] in item:
 					ind =  si
 					if ind == 0 : self.xrf_info.add_str['a'] = extra_pv[item][2]
 					if ind == 1 : self.xrf_info.add_str['b'] = extra_pv[item][2]
@@ -373,23 +384,25 @@ class maps_definitions:
 					if ind == 5 : self.xrf_info.add_str['f'] = extra_pv[item][2]
 					if ind == 6 : self.xrf_info.add_str['g'] = extra_pv[item][2]
 					if ind == 7 : self.xrf_info.add_str['h'] = extra_pv[item][2]		
-				   
+
 
 		if extra_pv_order:
 			count = 0
-			for item in extra_pv_order: 
-					stemp = item + '; ' + str(extra_pv[item][2])
-					self.xrf_info.extra_str_arr.append(stemp)
-					count += 1
-					if count == 100: break			  
+			for item in extra_pv_order:
+				stemp = item + '; ' + str(extra_pv[item][2])
+				self.xrf_info.extra_str_arr.append(stemp)
+				count += 1
+				if count == 100:
+					break
 		else:
 			count = 0
 			for item in extra_pv: 
-					stemp = item + '; ' + str(extra_pv[item][2])
-					self.xrf_info.extra_str_arr.append(stemp)
-					count += 1
-					if count == 100: break
-							
+				stemp = item + '; ' + str(extra_pv[item][2])
+				self.xrf_info.extra_str_arr.append(stemp)
+				count += 1
+				if count == 100:
+					break
+
 #-----------------------------------------------------------------------------
 	def define_spectra(self, max_spec_channels, max_spectra, max_ICs, mode = 'spec_tool'):
 		
@@ -397,7 +410,6 @@ class maps_definitions:
 		
 		return spectra
 
-  
 #-----------------------------------------------------------------------------
 	def push_spectrum(self, filename, spectra, 
 					 append = '', 
