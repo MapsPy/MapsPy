@@ -214,4 +214,3 @@ if __name__ == '__main__':
 	db.update_job(job3)
 	print db.get_jobs_by_status(0)
 	#print db.get_all_jobs()
-	

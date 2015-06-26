@@ -31,15 +31,14 @@ SUCH DAMAGE.
 '''
 
 # include parent directory for imports
-import os,sys,inspect
+import os, sys, inspect
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
-sys.path.insert(0,parentdir)
+sys.path.insert(0, parentdir)
 
 import Settings
 import requests
 import cherrypy
-import time
 import json
 import threading
 import traceback
@@ -59,6 +58,7 @@ STR_HEARTBEAT = 'Heartbeat'
 STR_JOB_LOG_DIR_NAME = 'job_logs'
 
 class ProcessNode(object):
+
 	def __init__(self, settings):
 		self.settings = settings
 		serverSettings = settings.getSetting(Settings.SECTION_SERVER)
@@ -66,16 +66,16 @@ class ProcessNode(object):
 		print serverSettings
 		print pnSettings
 		self.pn_info = {STR_COMPUTER_NAME: pnSettings[Settings.PROCESS_NODE_NAME],
-					 STR_NUM_THREADS: pnSettings[Settings.PROCESS_NODE_THREADS],
-					 STR_HOSTNAME: serverSettings[Settings.SERVER_HOSTNAME],
-					 STR_PORT: serverSettings[Settings.SERVER_PORT],
-					 STR_STATUS: 'Bootup',
-					 STR_HEARTBEAT: str(datetime.now()) }
+					STR_NUM_THREADS: pnSettings[Settings.PROCESS_NODE_THREADS],
+					STR_HOSTNAME: serverSettings[Settings.SERVER_HOSTNAME],
+					STR_PORT: serverSettings[Settings.SERVER_PORT],
+					STR_STATUS: 'Bootup',
+					STR_HEARTBEAT: str(datetime.now()) }
 		cherrypy.config.update({
 			'server.socket_host': serverSettings[Settings.SERVER_HOSTNAME],
 			'server.socket_port': int(serverSettings[Settings.SERVER_PORT]),
-			'log.access_file': "logs/"+str(pnSettings[Settings.PROCESS_NODE_NAME])+"_access.log",
-			'log.error_file': "logs/"+str(pnSettings[Settings.PROCESS_NODE_NAME])+"_error.log"
+			'log.access_file': "logs/" + str(pnSettings[Settings.PROCESS_NODE_NAME]) + "_access.log",
+			'log.error_file': "logs/" + str(pnSettings[Settings.PROCESS_NODE_NAME]) + "_error.log"
 		})
 
 		self.conf = {
@@ -98,8 +98,8 @@ class ProcessNode(object):
 		self.scheduler_host = serverSettings[Settings.SERVER_SCHEDULER_HOSTNAME]
 		self.scheduler_port = serverSettings[Settings.SERVER_SCHEDULER_PORT]
 		self.session = requests.Session()
-		self.scheduler_pn_url = 'http://'+self.scheduler_host+':'+self.scheduler_port+'/process_node'
-		self.scheduler_job_url = 'http://'+self.scheduler_host+':'+self.scheduler_port+'/job'
+		self.scheduler_pn_url = 'http://' + self.scheduler_host + ':' + self.scheduler_port + '/process_node'
+		self.scheduler_job_url = 'http://' + self.scheduler_host + ':' + self.scheduler_port + '/job'
 		self.db_name = pnSettings[Settings.PROCESS_NODE_DATABASE_NAME]
 		self.db = DatabasePlugin(cherrypy.engine, SQLiteDB, self.db_name)
 		cherrypy.engine.subscribe("new_job", self.callback_new_job)
@@ -129,8 +129,8 @@ class ProcessNode(object):
 		webapp.job_queue = ProcessNodeJobsWebService(self.db)
 		#cherrypy.quickstart(webapp, '/', self.conf)
 		app = cherrypy.tree.mount(webapp, '/', self.conf)
-		self._setup_logging_(app.log, "rot_error_file", "logs/"+self.pn_info[STR_COMPUTER_NAME]+"_error.log")
-		self._setup_logging_(app.log, "rot_access_file", "logs/"+self.pn_info[STR_COMPUTER_NAME]+"_access.log")
+		self._setup_logging_(app.log, "rot_error_file", "logs/" + self.pn_info[STR_COMPUTER_NAME] + "_error.log")
+		self._setup_logging_(app.log, "rot_access_file", "logs/" + self.pn_info[STR_COMPUTER_NAME] + "_access.log")
 		cherrypy.engine.start()
 		try:
 			print 'posting to scheduler',self.scheduler_pn_url
@@ -198,7 +198,7 @@ class ProcessNode(object):
 				if proc_mask & 16 == 16:
 					key_e = 1
 				#os.chdir(job_dict['DataPath'])
-				log_name = 'Job_'+str(job_dict['Id'])+'_'+datetime.strftime(datetime.now(),"%y_%m_%d_%H_%M_%S")+'.log'
+				log_name = 'Job_' + str(job_dict['Id']) + '_' + datetime.strftime(datetime.now(),"%y_%m_%d_%H_%M_%S") + '.log'
 				job_dict['Log_Path'] = log_name
 				log_path = os.path.join(STR_JOB_LOG_DIR_NAME, log_name)
 				logfile = open(log_path,'wt')

@@ -69,7 +69,7 @@ class ProcessNodeJobsWebService(object):
 
 	@cherrypy.tools.accept(media='text/plain')
 	@cherrypy.tools.json_out()
-	#get list of jobs on this nodes queue
+	# get list of jobs on this nodes queue
 	def GET(self, job_id=None):
 		result = None
 		if computer_name == None:
@@ -79,7 +79,7 @@ class ProcessNodeJobsWebService(object):
 		jenc = json.JSONEncoder()
 		return jenc.encode(result)
 
-	#submit a job
+	# submit a job
 	def POST(self):
 		cl = cherrypy.request.headers['Content-Length']
 		rawbody = cherrypy.request.body.read(int(cl))
@@ -92,11 +92,11 @@ class ProcessNodeJobsWebService(object):
 			print 'Error: could not parse json job'
 			return 'Error: could not parse json job'
 
-	#update job
+	# update job
 	def PUT(self):
 		return 'updated process node'
 
-	#remove a job from the queue
+	# remove a job from the queue
 	def DELETE(self):
 		#cherrypy.session.pop('mystring', None)
 		pass

@@ -103,14 +103,14 @@ class Scheduler(object):
 		if p_node != None:
 			job['Process_Node_Id'] = p_node['Id']
 			url = 'http://' + str(p_node['Hostname']) + ':' + str(p_node['Port']) + '/job_queue'
-			print 'sending job to ',p_node['ComputerName'], 'url',url
+			print 'sending job to ', p_node['ComputerName'], 'url', url
 			s = requests.Session()
 			r = s.post(url, data=json.dumps(job))
-			print 'result', r.status_code,':',r.text
+			print 'result', r.status_code, ':', r.text
 
 	def callback_process_node_update(self, node):
 		#todo: lock list 
-		print 'callback',node['ComputerName']
+		print 'callback', node['ComputerName']
 		try:
 			if node.has_key('Id') == False:
 				print 'getting node'
@@ -123,10 +123,10 @@ class Scheduler(object):
 					if job['Process_Node_Id'] < 0 or  job['Process_Node_Id'] == node['Id']:
 						job['Process_Node_Id'] = node['Id']
 						url = 'http://' + str(node['Hostname']) + ':' + str(node['Port']) + '/job_queue'
-						print '_sending job to ',node['ComputerName'], 'url',url
+						print '_sending job to ', node['ComputerName'], 'url', url
 						s = requests.Session()
 						r = s.post(url, data=json.dumps(job))
-						print 'result', r.status_code,':',r.text
+						print 'result', r.status_code, ':', r.text
 						break
 		except:
 			exc_str = traceback.format_exc()

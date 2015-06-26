@@ -116,9 +116,7 @@ def mp_make_maps(info_elements, main, maps_conf, header, mdafilename, this_detec
 	return
 	
 """ ------------------------------------------------------------------------------------------------"""
-def main(wdir='', force_fit=0, no_fit = False):
-	
-
+def main(wdir='', force_fit=0, no_fit=False):
 	verbose = True
 	
 	#remove quotations marks if any in wdir
@@ -134,11 +132,9 @@ def main(wdir='', force_fit=0, no_fit = False):
 		return
 	
 	current_directory = wdir
-	
 
-	
-	#define main
-	main = {'mapspy_version':'1.1', 
+	#define main_dict
+	main_dict = {'mapspy_version':'1.1',
 			'maps_date':'01. March, 2013', 
 			'beamline':'2-ID-E', 
 			'S_font':'', 
@@ -161,10 +157,9 @@ def main(wdir='', force_fit=0, no_fit = False):
 			'max_spectra':4096L, 
 			'max_ICs':6L}
 	
-	if verbose: print 'main structure: ', main
-	  
+	if verbose:
+		print 'main structure: ', main_dict
 
- 
 	# Get info from maps_settings.txt
 	total_number_detectors = 1
 	max_no_processors_files = 1
@@ -178,7 +173,7 @@ def main(wdir='', force_fit=0, no_fit = False):
 	nnls = 0
 	xanes_scan = 0
 	detector_to_start_with = 0
-  
+
 	maps_overridefile = 'maps_fit_parameters_override.txt'
 	maps_intermediate_solution_file = 'maps_intermediate_solution.tmp'
 	print 'make_maps'
@@ -186,11 +181,10 @@ def main(wdir='', force_fit=0, no_fit = False):
 	suffix = '' 
 	standard_filenames = []
 	try:
-		#f = open(os.path.join(main['master_dir'],maps_settingsfile), 'rt')
-		filepath = os.path.join(main['master_dir'],maps_settingsfile)
+		filepath = os.path.join(main_dict['master_dir'],maps_settingsfile)
 		f = open_file_with_retry(filepath, 'rt')
 		for line in f:
-			if ':' in line : 
+			if ':' in line:
 				slist = line.split(':')
 				tag = slist[0]
 				value = ''.join(slist[1:])
@@ -206,62 +200,62 @@ def main(wdir='', force_fit=0, no_fit = False):
 				elif tag == 'NNLS'	:  nnls  = int(value)
 				elif tag == 'XANES_SCAN'  :  xanes_scan  = int(value)
 				elif tag == 'DETECTOR_TO_START_WITH'  :  detector_to_start_with  = int(value)
-				elif tag == 'BEAMLINE'	:  main['beamline']  = str(value).strip()
+				elif tag == 'BEAMLINE'	:  main_dict['beamline']  = str(value).strip()
 				elif tag == 'STANDARD'	:  standard_filenames.append(str(value).strip())
-				
 
 		f.close()
-				  
+
 	except: 
 		print 'Error: Could not open maps_settings.txt.'
 		return
 
+	if force_fit == 1:
+		use_fit = 1
 	
-	if force_fit == 1 : use_fit = 1
-	
-	if no_fit == True: use_fit = 0
+	if no_fit == True:
+		use_fit = 0
 	
 	me = maps_elements.maps_elements()
 	info_elements = me.get_element_info()
 	
 	maps_def = maps_definitions.maps_definitions()
-	maps_conf = maps_def.set_maps_definitions(main['beamline'], info_elements, version = version)
+	maps_conf = maps_def.set_maps_definitions(main_dict['beamline'], info_elements, version=version)
 	
 	if max_no_processors_lines == -1:
 		max_no_processors_lines = multiprocessing.cpu_count() - 1
 		print 'cpu_count() = %d\n' % multiprocessing.cpu_count()
 		print 'max_no_processors_lines to fit lines ', max_no_processors_lines
 
-					
-	  
-	#make sure the output directory exists, if not, create it. 
-	test = check_output_dirs(main)
+	# make sure the output directory exists, if not, create it.
+	test = check_output_dirs(main_dict)
 	# if output directory does NOT exists, and the creation failed, return
-	if test == 0 : return
-	
-		
-	if total_number_detectors < 2 : quick_dirty = 0
-	if quick_dirty != 0: total_number_detectors = 1
-	
-	
-	if verbose: print 'total_number_detectors',  total_number_detectors
+	if test == 0:
+		return
+
+	if total_number_detectors < 2:
+		quick_dirty = 0
+	if quick_dirty != 0:
+		total_number_detectors = 1
+
+	if verbose:
+		print 'total_number_detectors', total_number_detectors
 	temp = multiprocessing.cpu_count()
 	no_processors_to_use_files = min(max_no_processors_files, temp)
-	if verbose: print 'no_processors_to_use for files', no_processors_to_use_files
-	
-	
+	if verbose:
+		print 'no_processors_to_use for files', no_processors_to_use_files
+
 	filenames = []
-	dirList=os.listdir(main['mda_dir'])
+	dirList=os.listdir(main_dict['mda_dir'])
 	for fname in dirList:
-		if fname[-4:] == '.mda' : 
+		if fname[-4:] == '.mda':
 			filenames.append(fname)
 	no_files =len(filenames)
-	 
-	#If no .mda files were found look for .h5
-	dirList=os.listdir(main['img_dat_dir'])
+
+	# If no .mda files were found look for .h5
+	dirList = os.listdir(main_dict['img_dat_dir'])
 	if no_files == 0: 
 		for fname in dirList:
-			if fname[-3:] == '.h5' : 
+			if fname[-3:] == '.h5':
 				filenames.append(fname)  
 	no_files = len(filenames)
 	if no_files == 0:			   
@@ -269,42 +263,39 @@ def main(wdir='', force_fit=0, no_fit = False):
 		return	  
 	filenames_orig = filenames[:]
 	basename, scan_ext= os.path.splitext(filenames[0])
-	
-	
-#	 ; determine the number of files, try
-#	 ; to determine the scan size for each
-#	 ; file, and then sort the files such
-#	 ; that in the analysis the biggest
-#	 ; files are analysed first.
-#	 scan_sizes = np.zeros((no_files))
-  
-  
+
+	#	 ; determine the number of files, try
+	#	 ; to determine the scan size for each
+	#	 ; file, and then sort the files such
+	#	 ; that in the analysis the biggest
+	#	 ; files are analysed first.
+	#	 scan_sizes = np.zeros((no_files))
+
 	#Calculate intermediate result
 
 	detector_number_arr = np.zeros((no_files), dtype=int)
 	detector_number_arr_orig = np.zeros((no_files), dtype=int)
 
 	for this_detector in range(detector_to_start_with, total_number_detectors): 
-		#Look for override files in main.master_dir
+		# Look for override files in main.master_dir
 		if (total_number_detectors > 1) : 
 			overide_files_found = 0 
 			suffix = str(this_detector) 
 			print 'suff=', suffix
-			maps_overridefile = os.path.join(main['master_dir'],'maps_fit_parameters_override.txt')+suffix
+			maps_overridefile = os.path.join(main_dict['master_dir'], 'maps_fit_parameters_override.txt')+suffix
 			try:
 				f = open_file_with_retry(maps_overridefile, 'rt', 2, 0.4, 0.2)
-				#f = open(maps_overridefile, 'rt')	  
-				if f == None:
-					maps_overridefile = os.path.join(main['master_dir'],'maps_fit_parameters_override.txt')  
+				if f is None:
+					maps_overridefile = os.path.join(main_dict['master_dir'], 'maps_fit_parameters_override.txt')
 				else:
 					print maps_overridefile, ' exists.'
 					f.close()
 			except :
 				# if i cannot find an override file specific per detector, assuming
 				# there is a single overall file.
-				maps_overridefile = os.path.join(main['master_dir'],'maps_fit_parameters_override.txt')  
+				maps_overridefile = os.path.join(main_dict['master_dir'], 'maps_fit_parameters_override.txt')
 		else:
-			maps_overridefile = os.path.join(main['master_dir'],'maps_fit_parameters_override.txt')  
+			maps_overridefile = os.path.join(main_dict['master_dir'], 'maps_fit_parameters_override.txt')
 
 		# below is the routine for using matrix math to calculate elemental
 		# content with overlap removal
@@ -316,12 +307,13 @@ def main(wdir='', force_fit=0, no_fit = False):
 		for item in maps_conf.chan: temp_elementsuse.append(item.use)
 		elements_to_use = np.where(np.array(temp_elementsuse) == 1)
 		elements_to_use = elements_to_use[0]
-		if elements_to_use.size == 0: return
+		if elements_to_use.size == 0:
+			return
 		
-		spectra = maps_def.define_spectra(main['max_spec_channels'], main['max_spectra'], main['max_ICs'], mode = 'plot_spec')
+		spectra = maps_def.define_spectra(main_dict['max_spec_channels'], main_dict['max_spectra'], main_dict['max_ICs'], mode='plot_spec')
 
 		fp = maps_fit_parameters.maps_fit_parameters()
-		fitp = fp.define_fitp(main['beamline'], info_elements)	  
+		fitp = fp.define_fitp(main_dict['beamline'], info_elements)
 
 		element_pos = np.concatenate((fitp.keywords.kele_pos, fitp.keywords.lele_pos, fitp.keywords.mele_pos))
 
@@ -375,7 +367,7 @@ def main(wdir='', force_fit=0, no_fit = False):
 		print fitp.s.name[which_parameters_to_fit]
 
 	
-		x = np.arange(float(main['max_spec_channels']))		
+		x = np.arange(float(main_dict['max_spec_channels']))
 		add_matrixfit_pars = np.zeros((6))
 		add_matrixfit_pars[0] = fitp.s.val[fitp.keywords.energy_pos[0]]
 		add_matrixfit_pars[1] = fitp.s.val[fitp.keywords.energy_pos[1]]
@@ -454,10 +446,10 @@ def main(wdir='', force_fit=0, no_fit = False):
 		else:
 			# make sure that sol_intermediate is defined, even if we do not
 			# use it.
-			sol_intermediate = np.zeros((no_use_pars, main['max_spec_channels']))
+			sol_intermediate = np.zeros((no_use_pars, main_dict['max_spec_channels']))
 
 		#Save intermediate solution to a file
-		filepath = os.path.join(main['output_dir'],maps_intermediate_solution_file)+suffix
+		filepath = os.path.join(main_dict['output_dir'],maps_intermediate_solution_file)+suffix
 		outfile = open_file_with_retry(filepath, 'wb')
 		#outfile = open(filepath, 'wb')
 		np.savez(outfile, sol_intermediate = sol_intermediate, fitmatrix_reduced = fitmatrix_reduced)
@@ -473,7 +465,7 @@ def main(wdir='', force_fit=0, no_fit = False):
 	
 		#Read NBS calibration 
 		print 'Started reading in standards from:', standard_filenames
-		calibration = maps_calibration.calibration(main, maps_conf)
+		calibration = maps_calibration.calibration(main_dict, maps_conf)
 		'''
 		if len(standard_filenames) > 0:
 			NBS_calibration = calibration.read_nbs_calibration(standard_filenames[:],
@@ -503,35 +495,31 @@ def main(wdir='', force_fit=0, no_fit = False):
 		'''
 		#perform calibration
 		no_nbs = 1
-		calibration.read_generic_calibration(this_detector = this_detector,
-											 total_number_detectors = total_number_detectors,
-											 no_nbs = no_nbs,
-											 fitmatrix_reduced = fitmatrix_reduced,
-											 fitp=fitp,
-											 info_elements=info_elements)
+		calibration.read_generic_calibration(this_detector=this_detector,
+											total_number_detectors=total_number_detectors,
+											no_nbs=no_nbs,
+											fitp=fitp,
+											info_elements=info_elements)
 
 		no_files =len(filenames)
-		
 
 		detector_number_arr = map(str, detector_number_arr)
 		count = len(filenames)
 	
-		filepath = os.path.join(main['output_dir'],'mapsprocessinfo_'+'.txt')
+		filepath = os.path.join(main_dict['output_dir'],'mapsprocessinfo_'+'.txt')
 		text_file = open_file_with_retry(filepath, 'w')
 		#text_file = open(filepath, "w")
 		text_file.write(time.strftime("%a, %d %b %Y %H:%M:%S"))
 		text_file.close()
-	
-	  
+
 		seconds_start = time.time()
-	
-	
+
 		#make sure the output directory exists, if not, create it. 
-		test = check_output_dirs(main)
+		test = check_output_dirs(main_dict)
 		# if output directory does NOT exists, and the creation failed, return
-		if test == 0 : return
-		
-	
+		if test == 0:
+			return
+
 		if (no_processors_to_use_files >= 2):
 			#Need to modify stout to flush prints
 			print 'use multiple processors for multiple files'
@@ -539,10 +527,10 @@ def main(wdir='', force_fit=0, no_fit = False):
 	
 			for pp in range(no_files): 
 				header, scan_ext= os.path.splitext(filenames[pp])
-				mdafilename = os.path.join(main['mda_dir'], filenames[pp])
+				mdafilename = os.path.join(main_dict['mda_dir'], filenames[pp])
 				print 'Multiple processor file version: doing filen #: ',  mdafilename, ' this detector:', this_detector, ' pp:', pp
 	
-				p = multiprocessing.Process(target=mp_make_maps, args=(info_elements, main, maps_conf, header, mdafilename, 
+				p = multiprocessing.Process(target=mp_make_maps, args=(info_elements, main_dict, maps_conf, header, mdafilename,
 																	   this_detector, use_fit, total_number_detectors, 
 																	   quick_dirty, nnls, xrf_bin, max_no_processors_lines))
 				jobs.append(p)
@@ -554,10 +542,10 @@ def main(wdir='', force_fit=0, no_fit = False):
 		   
 		else:
 			#  a single processor machine,	just use the single processor
-			makemaps = maps_generate_img_dat.analyze(info_elements, main, maps_conf, beamline = main['beamline'], use_fit = use_fit)
+			makemaps = maps_generate_img_dat.analyze(info_elements, main_dict, maps_conf, beamline = main_dict['beamline'], use_fit = use_fit)
 			for pp in range(no_files): 
 				header, scan_ext= os.path.splitext(filenames[pp])
-				mdafilename = os.path.join(main['mda_dir'],header+scan_ext)
+				mdafilename = os.path.join(main_dict['mda_dir'],header+scan_ext)
 				print 'Single processor file version: doing filen #: ',  mdafilename, ' this detector', this_detector
 				
 				#Routine with multiprocessing

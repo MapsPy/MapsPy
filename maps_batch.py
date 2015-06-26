@@ -675,7 +675,261 @@ def save_spectrum(main_dict, filename, sfilename):
 
 	return
 
-#------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------
+def _option_a_(main_dict, maps_conf, wdir):
+	print '\n Section A \n'
+	check_output_dirs(main_dict)
+	#maps_test_xrffly
+	maps_conf.use_fit = 0
+
+	filenames = []
+	dirList=os.listdir(main_dict['mda_dir'])
+	for fname in dirList:
+		if fname[-4:] == '.mda' :
+			filenames.append(fname)
+	no_files =len(filenames)
+
+	#If no .mda files were found look for .h5
+	if no_files == 0:
+		for fname in dirList:
+			if fname[-3:] == '.h5' :
+				filenames.append(fname)
+	no_files = len(filenames)
+
+	if no_files == 0:
+		print 'Did not find any .mda files in /mda directory.'
+		return
+
+	make_maps.main(wdir=wdir, no_fit = True)
+
+	#		 for this_detector in range(0, total_number_detectors):
+	#			 header, scan_ext= os.path.splitext(filenames[0])
+	#			 print header
+	#			 mdafilename = os.path.join(main_dict['mda_dir'],header+scan_ext)
+	#			 print 'doing filen #: ',  mdafilename
+	#			 makemaps = maps_generate_img_dat.analyze(info_elements, main_dict, maps_conf, use_fit = maps_conf.use_fit)
+	#			 makemaps.generate_img_dat_threaded(header, mdafilename, this_detector, total_number_detectors, quick_dirty, nnls,
+	#												max_no_processors_lines, xrf_bin)
+
+# ------------------------------------------------------------------------------------------------
+def _option_b_(main_dict, maps_conf, maps_def, total_number_detectors, info_elements, current_directory):
+	print '\n Section B \n'
+	for this_detector_element in range(total_number_detectors):
+		print 'this_detector_element', this_detector_element, 'total_number_detectors', total_number_detectors
+		if (total_number_detectors > 1):
+			suffix = str(this_detector_element)
+		else:
+			suffix = ''
+
+
+		# if b then lets load the 4
+		# largest img.at files, extract the spectra, and do the fits, then
+		# rename the average override file
+
+
+		main_dict['XRFmaps_dir'] = main_dict['img_dat_dir']
+		files = os.listdir(main_dict['XRFmaps_dir'])
+		imgdat_filenames = []
+		extension = '.h5'+suffix
+		for f in files:
+			if extension in f.lower():
+				imgdat_filenames.append(f)
+		imgdat_filenames.sort()
+
+		if len(imgdat_filenames) > 8 :
+			imgdat_filesizes = np.zeros((len(imgdat_filenames)))
+			for ii in range(len(imgdat_filenames)):
+				fsize = os.path.getsize(os.path.join(main_dict['img_dat_dir'],imgdat_filenames[ii]))
+				imgdat_filesizes[ii] = fsize
+				#print imgdat_filenames[ii], imgdat_filesizes[ii]
+			sorted_index = np.argsort(np.array(imgdat_filesizes))
+			imgdat_filenames = [imgdat_filenames for (imgdat_filesizes,imgdat_filenames) in sorted(zip(imgdat_filesizes,imgdat_filenames))]
+			imgdat_filenames.reverse()
+
+			imgdat_filenames = imgdat_filenames[0:8]
+
+		print '8 largest h5 files:', imgdat_filenames
+
+		main_dict['XRFmaps_names'] = imgdat_filenames
+
+		main_dict['XRFmaps_id'] = 0
+
+
+		spectra_filenames = []
+		#Get integrated spectra from .h5 files and save them as text files
+		for ii in range(len(imgdat_filenames)):
+			sfile = os.path.join(main_dict['XRFmaps_dir'], imgdat_filenames[ii])
+			this_filename = 'intspec'+imgdat_filenames[ii]+'.txt'
+			savefile = os.path.join(main_dict['output_dir'], this_filename)
+			if check_output_dirs(main_dict) == False:
+				return None
+			save_spectrum(main_dict, sfile, savefile)
+			spectra_filenames.append(savefile)
+
+
+		#Load spectra into spectra structure
+		spectra = maps_def.define_spectra(main_dict['max_spec_channels'], main_dict['max_spectra'], main_dict['max_ICs'], mode = 'plot_spec')
+
+		if len(spectra_filenames) == 1:
+				load_spectrum(spectra_filenames[0], spectra, append=0)
+
+		if len(spectra_filenames) > 1:
+			for iii in range(len(spectra_filenames)):
+				load_spectrum(spectra_filenames[iii], spectra)
+
+		calib = maps_calibration.calibration(main_dict, maps_conf)
+		''' #TODO: look into loading standards multiple ways (from tags and from maps_standards.txt
+		for st in range(len(standard_filenames)):
+			print 'Started reading in standards from:', standard_filenames[st]
+
+			nbs = calib.read_nbsstds(os.path.join(main_dict['master_dir'],standard_filenames[st]))
+			if ("1832" in standard_filenames[st]) :
+				maps_conf.nbs32 = nbs
+			if ("1833" in standard_filenames[st]) :
+				maps_conf.nbs33 = nbs
+		'''
+		# now start the fitting of the integrated spectra we just loaded
+		fp = maps_fit_parameters.maps_fit_parameters()
+		fitp = fp.define_fitp(main_dict['beamline'], info_elements)
+		fitp.g.no_iters = 4
+		#this_w_uname = "DO_FIT_ALL_W_TAILS"
+		this_w_uname = "DO_MATRIX_FIT"
+		dofit_spec = 1
+		avg_fitp = fp.define_fitp(main_dict['beamline'], info_elements)
+		#			  if (first_run == 1) and (this_detector_element == 0) :
+		#				  fitp, avg_fitp, spectra = calib.do_fits(this_w_uname, fitp, dofit_spec, spectra, maxiter = 10, per_pix = 1, generate_img = 1,  suffix = suffix, info_elements = info_elements)  # do the first fit twice, because the very first spectrum is nevere fitted right (not sure why), need to fix it later
+		#				  first_run = 0
+		#print 'do_fits',type(this_w_uname), type(fitp), type(dofit_spec), type(spectra), type(suffix) , type(info_elements), type(calib), type(calib.do_fits)
+		#fitp, avg_fitp, spectra = calib.do_fits(this_w_uname, fitp, dofit_spec, spectra, 1, 1, 500, suffix, info_elements)
+		fitp, avg_fitp, spectra = calib.do_fits(this_w_uname, fitp, spectra, maxiter = 500, per_pix = 1, generate_img = 1, suffix = suffix, info_elements = info_elements)
+
+		if fitp != None:
+			avg_res_override_name = os.path.join(current_directory, 'average_resulting_maps_fit_parameters_override.txt')
+			old_override_name = os.path.join(current_directory, 'old_maps_fit_parameters_override.txt')
+			old_override_date_name = os.path.join(current_directory, 'old_'+strftime("%Y-%m-%d %H:%M:%S", gmtime())+'_maps_fit_parameters_override.txt')
+			old_override_suffix_date_name = os.path.join(current_directory, 'old_'+strftime("%Y-%m-%d %H:%M:%S", gmtime())+'_maps_fit_parameters_override.txt'+suffix)
+			maps_override_suffix_name = os.path.join(current_directory, 'maps_fit_parameters_override.txt'+suffix)
+			maps_override_name = os.path.join(current_directory,'maps_fit_parameters_override.txt')
+			#if os.path.isfile(avg_res_override_name):
+			#move AND rename the old AND new override files:
+			try:
+				if os.path.isfile(old_override_name):
+					print 'removing',old_override_name
+					os.remove(old_override_name)
+				if os.path.isfile(maps_override_suffix_name):
+					print 'renaming',maps_override_suffix_name, old_override_suffix_date_name
+					os.rename(maps_override_suffix_name, old_override_suffix_date_name)
+			except:
+				pass
+			print 'total_num detectors = ',total_number_detectors
+			if total_number_detectors <= 1 :
+				try:
+					if os.path.isfile(maps_override_name):
+						print 'renaming',maps_override_name,'to', old_override_date_name
+						os.rename(maps_override_name, old_override_date_name)
+				except:
+					print 'could not rename file', maps_override_name, 'to',old_override_date_name
+			try:
+				if os.path.isfile(maps_override_name):
+					print 'removing',maps_override_suffix_name
+					os.remove(maps_override_suffix_name)
+				if os.path.isfile(avg_res_override_name):
+					print 'renaming', avg_res_override_name,'to', maps_override_suffix_name
+					os.rename(avg_res_override_name, maps_override_suffix_name)
+			except:
+				print 'error renaming average_resulting_maps_fit_parameters_override to maps_fit_parameters_override'
+				pass
+
+		dirlist = os.listdir(current_directory)
+		if 'output_old' in dirlist:
+			#print ' delete files in output_old directory'
+			filelist = os.listdir(os.path.join(current_directory,'output_old'))
+			for fl in filelist:
+				thisfile = os.path.join(os.path.join(current_directory,'output_old'), fl)
+				os.remove(thisfile)
+		else:
+			os.makedirs(os.path.join(current_directory,'output_old'))
+		#todo: create directory if it does not exist
+		#Copy files to output_fits
+		src_files = os.listdir(os.path.join(current_directory,'output'))
+		print src_files
+		for fn in src_files:
+			full_file_name = os.path.join(os.path.join(current_directory,'output'), fn)
+			if (os.path.isfile(full_file_name)):
+				shutil.copy(full_file_name, os.path.join(current_directory,'output_old'))
+				os.remove(full_file_name)
+
+	return spectra
+
+# ------------------------------------------------------------------------------------------------
+def _option_c_(current_directory):
+	print '\n Section C \n'
+	#Call make_maps and force fitting. Overrides USE_FIT in maps_setting.txt
+	make_maps.main(wdir=current_directory, force_fit=1)
+
+	dirlist = os.listdir(current_directory)
+	if 'output.fits' in dirlist:
+		#print ' delete files in output.fits directory'
+		filelist = os.listdir(os.path.join(current_directory, 'output.fits'))
+		for fl in filelist:
+			thisfile = os.path.join(os.path.join(current_directory, 'output.fits'), fl)
+			os.remove(thisfile)
+	else:
+		os.makedirs(os.path.join(current_directory, 'output.fits'))
+
+	#Copy files to output_fits
+	src_files = os.listdir(os.path.join(current_directory, 'output'))
+	for file_name in src_files:
+		full_file_name = os.path.join(os.path.join(current_directory, 'output'), file_name)
+		if (os.path.isfile(full_file_name)):
+			shutil.copy(full_file_name, os.path.join(current_directory, 'output.fits'))
+			os.remove(full_file_name)
+
+# ------------------------------------------------------------------------------------------------
+def _option_d_():
+	print 'Image extraction not implemented.'
+	#		  main_dict['XRFmaps_dir'] = main_dict['img_dat_dir']
+	#		  files = os.listdir(main_dict['XRFmaps_dir'])
+	#		  imgdat_filenames = []
+	#		  extension = '.h5'
+	#		  for f in files:
+	#			  if extension in f.lower():
+	#				  imgdat_filenames.append(f)
+	#
+	#		  no_files = len(imgdat_filenames)
+	#		  current_directory = main_dict['master_dir']
+	#		  main_dict['XRFmaps_names'] = imgdat_filenames
+	#
+	#
+	#		  main_dict['XRFmaps_id'] = 0
+	#
+	#		  temp_string = []
+	#		  try:
+	#			  f = open('maps_fit_parameters_override.txt', 'rt')
+	#			  for line in f:
+	#				  if ':' in line :
+	#					  slist = line.split(':')
+	#					  tag = slist[0]
+	#					  value = ''.join(slist[1:])
+	#
+	#
+	#					  if tag == 'ELEMENTS_TO_FIT' :
+	#						  temp_string = value.split(',')
+	#						  temp_string = [x.strip() for x in temp_string]
+	#
+	#
+	#			  f.close()
+	#		  except:
+	#			  print 'Could not read maps_fit_parameters_override.txt'
+	#
+	#		  test_string = ['abs_ic', 'H_dpc_cfg', 'V_dpc_cfg', 'phase']
+	#		  for istring in temp_string:
+	#			  test_string.append(istring)
+	#		  test_string.append('s_a')
+	#
+	#		  maps_tools.extract_all(main_dict, test_string)
+
+# ------------------------------------------------------------------------------------------------
 def maps_batch(wdir='', a=1,b=0,c=0,d=0,e=0):
 
 	verbose = True
@@ -700,7 +954,7 @@ def maps_batch(wdir='', a=1,b=0,c=0,d=0,e=0):
 	current_directory = wdir
 
 	#define main_dict
-	main_dict = {'mapspy_version':'1.1',
+	main_dict = {'mapspy_version':'1.2',
 			'maps_date':'01. March, 2013', 
 			'beamline':'2-ID-E', 
 			'S_font':'', 
@@ -722,8 +976,7 @@ def maps_batch(wdir='', a=1,b=0,c=0,d=0,e=0):
 			'max_spec_channels':2048L, 
 			'max_spectra':4096L, 
 			'max_ICs':6L}
-	
-	
+
 	# Get info from maps_settings.txt
 	total_number_detectors = 1
 	max_no_processors = 1
@@ -738,35 +991,46 @@ def maps_batch(wdir='', a=1,b=0,c=0,d=0,e=0):
 	print 'maps_batch'
 	maps_settingsfile = 'maps_settings.txt'		
 	try:
-		sfilepath = os.path.join(main_dict['master_dir'],maps_settingsfile)
+		sfilepath = os.path.join(main_dict['master_dir'], maps_settingsfile)
 		f = open_file_with_retry(sfilepath, 'rt')
-		#f = open(os.path.join(main_dict['master_dir'],maps_settingsfile), 'rt')
 		for line in f:
 			if ':' in line : 
 				slist = line.split(':')
 				tag = slist[0]
 				value = ''.join(slist[1:])
 				
-				if	 tag == 'VERSION': version = float(value)
-				elif tag == 'DETECTOR_ELEMENTS' : total_number_detectors  =  int(value)
-				elif tag == 'MAX_NUMBER_OF_FILES_TO_PROCESS' : max_no_processors_files = int(value)
-				elif tag == 'MAX_NUMBER_OF_LINES_TO_PROCESS' : max_no_processors_lines = int(value)
-				elif tag == 'WRITE_HDF5' : write_hdf = int(value)
-				elif tag == 'USE_FIT' : use_fit = int(value)
-				elif tag == 'QUICK_DIRTY'  :  quick_dirty  = int(value)
-				elif tag == 'XRF_BIN'  :  xrf_bin  = int(value)
-				elif tag == 'NNLS'	:  nnls  = int(value)
-				elif tag == 'XANES_SCAN'  :  xanes_scan  = int(value)
-				elif tag == 'DETECTOR_TO_START_WITH'  :  detector_to_start_with  = int(value)
-				elif tag == 'BEAMLINE'	:  main_dict['beamline']  = str(value).strip()
-				elif tag == 'STANDARD'	:  standard_filenames.append(str(value).strip())
-				
+				if tag == 'VERSION':
+					version = float(value)
+				elif tag == 'DETECTOR_ELEMENTS':
+					total_number_detectors = int(value)
+				elif tag == 'MAX_NUMBER_OF_FILES_TO_PROCESS':
+					max_no_processors_files = int(value)
+				elif tag == 'MAX_NUMBER_OF_LINES_TO_PROCESS':
+					max_no_processors_lines = int(value)
+				elif tag == 'WRITE_HDF5':
+					write_hdf = int(value)
+				elif tag == 'USE_FIT':
+					use_fit = int(value)
+				elif tag == 'QUICK_DIRTY':
+					quick_dirty = int(value)
+				elif tag == 'XRF_BIN':
+					xrf_bin = int(value)
+				elif tag == 'NNLS':
+					nnls = int(value)
+				elif tag == 'XANES_SCAN':
+					xanes_scan = int(value)
+				elif tag == 'DETECTOR_TO_START_WITH':
+					detector_to_start_with = int(value)
+				elif tag == 'BEAMLINE':
+					main_dict['beamline'] = str(value).strip()
+				elif tag == 'STANDARD':
+					standard_filenames.append(str(value).strip())
 
 		f.close()
-				  
-	except: print 'Could not open maps_settings.txt.'	 
 
-	
+	except:
+		print 'maps_batch: Could not open maps_settings.txt.'
+
 	me = maps_elements.maps_elements()
 	info_elements = me.get_element_info()
 	
@@ -774,274 +1038,29 @@ def maps_batch(wdir='', a=1,b=0,c=0,d=0,e=0):
 	maps_conf = maps_def.set_maps_definitions(main_dict['beamline'], info_elements)
 
 	print 'main_dict beamline: ', main_dict['beamline'], '  maps_config version: ', str(version)
-		
+
 	select_beamline(main_dict, maps_conf, main_dict['beamline'])
 
 	print 'total number of detectors:', total_number_detectors
 
 	#Section a converts mda to h5 and does ROI and ROI+ fits
 	if (a > 0) :
-		print '\n Section A \n'
-		check_output_dirs(main_dict)
-		#maps_test_xrffly
-		maps_conf.use_fit = 0		 
-
-		filenames = []
-		dirList=os.listdir(main_dict['mda_dir'])
-		for fname in dirList:
-			if fname[-4:] == '.mda' :
-				filenames.append(fname)
-		no_files =len(filenames)
-
-		#If no .mda files were found look for .h5
-		if no_files == 0: 
-			for fname in dirList:
-				if fname[-3:] == '.h5' : 
-					filenames.append(fname)  
-		no_files = len(filenames)
-		
-		if no_files == 0:			   
-			print 'Did not find any .mda files in /mda directory.'
-			return	  
-		
-		make_maps.main(wdir=wdir, no_fit = True)
-		
-#		 for this_detector in range(0, total_number_detectors): 
-#			 header, scan_ext= os.path.splitext(filenames[0])
-#			 print header
-#			 mdafilename = os.path.join(main_dict['mda_dir'],header+scan_ext)
-#			 print 'doing filen #: ',  mdafilename
-#			 makemaps = maps_generate_img_dat.analyze(info_elements, main_dict, maps_conf, use_fit = maps_conf.use_fit)
-#			 makemaps.generate_img_dat_threaded(header, mdafilename, this_detector, total_number_detectors, quick_dirty, nnls, 
-#												max_no_processors_lines, xrf_bin)
-
-			
-			
-
+		_option_a_(main_dict, maps_conf, wdir)
 
 	#Section b loads 8 largest h5 files, fits them and saves fit parameters 
 	if (b > 0):
-		print '\n Section B \n'
-		for this_detector_element in range(total_number_detectors):
-			print 'this_detector_element', this_detector_element, 'total_number_detectors', total_number_detectors
-			if (total_number_detectors > 1):
-				suffix = str(this_detector_element)
-			else:
-				suffix = ''
-
-
-			# if b then lets load the 4
-			# largest img.at files, extract the spectra, and do the fits, then
-			# rename the average override file
-
-
-			main_dict['XRFmaps_dir'] = main_dict['img_dat_dir']
-			files = os.listdir(main_dict['XRFmaps_dir'])
-			imgdat_filenames = []
-			extension = '.h5'+suffix
-			for f in files:
-				if extension in f.lower():
-					imgdat_filenames.append(f)
-			imgdat_filenames.sort()
-
-			if len(imgdat_filenames) > 8 : 
-				imgdat_filesizes = np.zeros((len(imgdat_filenames)))
-				for ii in range(len(imgdat_filenames)): 
-					fsize = os.path.getsize(os.path.join(main_dict['img_dat_dir'],imgdat_filenames[ii]))
-					imgdat_filesizes[ii] = fsize			   
-					#print imgdat_filenames[ii], imgdat_filesizes[ii]
-				sorted_index = np.argsort(np.array(imgdat_filesizes))
-				imgdat_filenames = [imgdat_filenames for (imgdat_filesizes,imgdat_filenames) in sorted(zip(imgdat_filesizes,imgdat_filenames))]
-				imgdat_filenames.reverse()
-
-				imgdat_filenames = imgdat_filenames[0:8]
-
-			print '8 largest h5 files:', imgdat_filenames
-
-			main_dict['XRFmaps_names'] = imgdat_filenames
-
-			main_dict['XRFmaps_id'] = 0
-
-
-			spectra_filenames = []
-			#Get integrated spectra from .h5 files and save them as text files
-			for ii in range(len(imgdat_filenames)):
-				sfile = os.path.join(main_dict['XRFmaps_dir'], imgdat_filenames[ii])
-				this_filename = 'intspec'+imgdat_filenames[ii]+'.txt'
-				savefile = os.path.join(main_dict['output_dir'], this_filename)
-				if check_output_dirs(main_dict) == False:
-					return
-				save_spectrum(main_dict, sfile, savefile)
-				spectra_filenames.append(savefile)
-
-
-			#Load spectra into spectra structure 
-			spectra = maps_def.define_spectra(main_dict['max_spec_channels'], main_dict['max_spectra'], main_dict['max_ICs'], mode = 'plot_spec')
-
-			if len(spectra_filenames) == 1:
-					load_spectrum(spectra_filenames[0], spectra, append=0)
-				
-			if len(spectra_filenames) > 1:
-				for iii in range(len(spectra_filenames)):
-					load_spectrum(spectra_filenames[iii], spectra)
-
-			calib = maps_calibration.calibration(main_dict, maps_conf)
-			''' #TODO: look into loading standards multiple ways (from tags and from maps_standards.txt
-			for st in range(len(standard_filenames)):
-				print 'Started reading in standards from:', standard_filenames[st]
-
-				nbs = calib.read_nbsstds(os.path.join(main_dict['master_dir'],standard_filenames[st]))
-				if ("1832" in standard_filenames[st]) :
-					maps_conf.nbs32 = nbs
-				if ("1833" in standard_filenames[st]) :
-					maps_conf.nbs33 = nbs
-			'''
-			# now start the fitting of the integrated spectra we just loaded
-			fp = maps_fit_parameters.maps_fit_parameters()
-			fitp = fp.define_fitp(main_dict['beamline'], info_elements)
-			fitp.g.no_iters = 4				
-			#this_w_uname = "DO_FIT_ALL_W_TAILS"
-			this_w_uname = "DO_MATRIX_FIT"
-			dofit_spec = 1
-			avg_fitp = fp.define_fitp(main_dict['beamline'], info_elements)
-#			  if (first_run == 1) and (this_detector_element == 0) : 
-#				  fitp, avg_fitp, spectra = calib.do_fits(this_w_uname, fitp, dofit_spec, spectra, maxiter = 10, per_pix = 1, generate_img = 1,  suffix = suffix, info_elements = info_elements)  # do the first fit twice, because the very first spectrum is nevere fitted right (not sure why), need to fix it later
-#				  first_run = 0
-			#print 'do_fits',type(this_w_uname), type(fitp), type(dofit_spec), type(spectra), type(suffix) , type(info_elements), type(calib), type(calib.do_fits)
-			#fitp, avg_fitp, spectra = calib.do_fits(this_w_uname, fitp, dofit_spec, spectra, 1, 1, 500, suffix, info_elements) 
-			fitp, avg_fitp, spectra = calib.do_fits(this_w_uname, fitp, dofit_spec, spectra, maxiter = 500, per_pix = 1, generate_img = 1, suffix = suffix, info_elements = info_elements) 
-
-			if fitp != None:
-				avg_res_override_name = os.path.join(current_directory, 'average_resulting_maps_fit_parameters_override.txt')
-				old_override_name = os.path.join(current_directory, 'old_maps_fit_parameters_override.txt')
-				old_override_date_name = os.path.join(current_directory, 'old_'+strftime("%Y-%m-%d %H:%M:%S", gmtime())+'_maps_fit_parameters_override.txt')
-				old_override_suffix_date_name = os.path.join(current_directory, 'old_'+strftime("%Y-%m-%d %H:%M:%S", gmtime())+'_maps_fit_parameters_override.txt'+suffix)
-				maps_override_suffix_name = os.path.join(current_directory, 'maps_fit_parameters_override.txt'+suffix)
-				maps_override_name = os.path.join(current_directory,'maps_fit_parameters_override.txt')
-				#if os.path.isfile(avg_res_override_name):
-				#move AND rename the old AND new override files:
-				try:
-					if os.path.isfile(old_override_name):
-						print 'removing',old_override_name
-						os.remove(old_override_name)
-					if os.path.isfile(maps_override_suffix_name):
-						print 'renaming',maps_override_suffix_name, old_override_suffix_date_name
-						os.rename(maps_override_suffix_name, old_override_suffix_date_name)
-				except:
-					pass
-				print 'total_num detectors = ',total_number_detectors
-				if total_number_detectors <= 1 :
-					try:
-						if os.path.isfile(maps_override_name):
-							print 'renaming',maps_override_name,'to', old_override_date_name
-							os.rename(maps_override_name, old_override_date_name)
-					except:
-						print 'could not rename file', maps_override_name, 'to',old_override_date_name
-				try:
-					if os.path.isfile(maps_override_name):
-						print 'removing',maps_override_suffix_name
-						os.remove(maps_override_suffix_name)
-					if os.path.isfile(avg_res_override_name):
-						print 'renaming', avg_res_override_name,'to', maps_override_suffix_name
-						os.rename(avg_res_override_name, maps_override_suffix_name)
-				except:
-					print 'error renaming average_resulting_maps_fit_parameters_override to maps_fit_parameters_override'
-					pass
-
-			dirlist = os.listdir(current_directory)
-			if 'output_old' in dirlist: 
-				#print ' delete files in output_old directory'
-				filelist = os.listdir(os.path.join(current_directory,'output_old'))
-				for fl in filelist:
-					thisfile = os.path.join(os.path.join(current_directory,'output_old'), fl)
-					os.remove(thisfile)
-			else:
-				os.makedirs(os.path.join(current_directory,'output_old'))
-			#todo: create directory if it does not exist 
-			#Copy files to output_fits
-			src_files = os.listdir(os.path.join(current_directory,'output'))
-			print src_files
-			for fn in src_files:
-				full_file_name = os.path.join(os.path.join(current_directory,'output'), fn)
-				if (os.path.isfile(full_file_name)):
-					shutil.copy(full_file_name, os.path.join(current_directory,'output_old'))
-					os.remove(full_file_name)
-
-
+		spectra = _option_b_(main_dict, maps_conf, maps_def, total_number_detectors, info_elements, current_directory)
 
 	#Section c converts mda to h5 files and does ROI/ROI+/FITS
 	if (c > 0): 
-		print '\n Section C \n'
-		#Call make_maps and force fitting. Overrides USE_FIT in maps_setting.txt
-		make_maps.main(wdir = current_directory, force_fit = 1)
-
-		dirlist = os.listdir(current_directory)
-		if 'output.fits' in dirlist: 
-			#print ' delete files in output.fits directory'
-			filelist = os.listdir(os.path.join(current_directory,'output.fits'))
-			for fl in filelist:
-				thisfile = os.path.join(os.path.join(current_directory,'output.fits'), fl)
-				os.remove(thisfile)
-		else:
-			os.makedirs(os.path.join(current_directory,'output.fits'))
-			
-		#Copy files to output_fits
-		src_files = os.listdir(os.path.join(current_directory,'output'))
-		for file_name in src_files:
-			full_file_name = os.path.join(os.path.join(current_directory,'output'), file_name)
-			if (os.path.isfile(full_file_name)):
-				shutil.copy(full_file_name, os.path.join(current_directory,'output.fits'))
-				os.remove(full_file_name)
-
+		_option_c_(current_directory)
 
 	#Section d extracts images
 	if (d > 0):
-		print 'Image extraction not implemented.'
-
-#		  main_dict['XRFmaps_dir'] = main_dict['img_dat_dir']
-#		  files = os.listdir(main_dict['XRFmaps_dir'])
-#		  imgdat_filenames = []
-#		  extension = '.h5'
-#		  for f in files:
-#			  if extension in f.lower():
-#				  imgdat_filenames.append(f)
-#		  
-#		  no_files = len(imgdat_filenames)
-#		  current_directory = main_dict['master_dir']
-#		  main_dict['XRFmaps_names'] = imgdat_filenames
-# 
-#		  
-#		  main_dict['XRFmaps_id'] = 0
-#		  
-#		  temp_string = []
-#		  try:
-#			  f = open('maps_fit_parameters_override.txt', 'rt')
-#			  for line in f:
-#				  if ':' in line : 
-#					  slist = line.split(':')
-#					  tag = slist[0]
-#					  value = ''.join(slist[1:])
-#	  
-#					  
-#					  if tag == 'ELEMENTS_TO_FIT' :  
-#						  temp_string = value.split(',')
-#						  temp_string = [x.strip() for x in temp_string]	
-#	  
-#								 
-#			  f.close()
-#		  except:
-#			  print 'Could not read maps_fit_parameters_override.txt'
-#		  
-#		  test_string = ['abs_ic', 'H_dpc_cfg', 'V_dpc_cfg', 'phase']
-#		  for istring in temp_string:
-#			  test_string.append(istring)
-#		  test_string.append('s_a')
-# 
-#		  maps_tools.extract_all(main_dict, test_string)
-
+		_option_d_()
 
 	#Generate average images
-	if (total_number_detectors > 1 and b > 0) : 
+	if total_number_detectors > 1 and b > 0 and spectra is not None:
 		print ' we are now going to create the maps_generate_average...'
 		n_channels = 2048
 		energy_channels = spectra[0].calib['off'] + spectra[0].calib['lin'] * np.arange((n_channels), dtype=np.float)
@@ -1064,29 +1083,29 @@ if __name__ == '__main__':
 	dirct = sys.argv[1]
 	print dirct
 
-	a=0
-	b=0
-	c=0
-	d=0
-	e=0
+	a = 0
+	b = 0
+	c = 0
+	d = 0
+	e = 0
 
-	options, extraParams = getopt.getopt(sys.argv[2:], 'abcde', ['a', 'b', 'c','d','f','full'])
+	options, extraParams = getopt.getopt(sys.argv[2:], 'abcde', ['a', 'b', 'c', 'd', 'f', 'full'])
 	for opt, arg in options:
 		if opt in ('-a', '--a'):
-			a=1
+			a = 1
 		elif opt in ('-b', '--b'):
-			b=1
+			b = 1
 		elif opt in ('-c', '--c'):
-			c=1
+			c = 1
 		elif opt in ('-d', '--d'):
-			d=1
+			d = 1
 		elif opt in ('-e', '--e'):
-			e=1
+			e = 1
 		elif opt in ('--full'):
-			a=1
-			b=1
-			c=1
-			d=1
-			e=1
+			a = 1
+			b = 1
+			c = 1
+			d = 1
+			e = 1
 
 	maps_batch(wdir=dirct, a=a, b=b, c=c, d=d, e=e)
