@@ -42,11 +42,13 @@ import cherrypy
 import json
 import threading
 import traceback
+import logging
 from datetime import datetime
 from plugins.DatabasePlugin import DatabasePlugin
 from plugins.SQLiteDB import SQLiteDB
 from handlers.ProcessNodeHandlers import ProcessNodeHandler, ProcessNodeJobsWebService
 import maps_batch
+import signal
 
 STR_COMPUTER_NAME = 'ComputerName'
 STR_NUM_THREADS = 'NumThreads'
@@ -94,6 +96,8 @@ class ProcessNode(object):
 			}
 		}
 		self.new_job_event = threading.Event()
+		print 'Setup signal handler'
+		signal.signal(signal.SIGINT, self.handle_sigint)
 		self.status_update_interval = 10
 		self.scheduler_host = serverSettings[Settings.SERVER_SCHEDULER_HOSTNAME]
 		self.scheduler_port = serverSettings[Settings.SERVER_SCHEDULER_PORT]
@@ -106,6 +110,10 @@ class ProcessNode(object):
 		self.create_directories()
 		self.running = True
 
+	def handle_sigint(self, sig, frame):
+		print 'handle_sigint'
+		self.stop()
+
 	def create_directories(self):
 		if not os.path.exists(STR_JOB_LOG_DIR_NAME):
 			os.makedirs(STR_JOB_LOG_DIR_NAME)
@@ -114,8 +122,8 @@ class ProcessNode(object):
 		self.new_job_event.set()
 
 	def _setup_logging_(self, log, logtype, logname):
-		maxBytes = getattr(log, "rot_maxBytes", 10000000)
-		backupCount = getattr(log, "rot_backupCount", 1000)
+		maxBytes = getattr(log, "rot_maxBytes", 20971520) # 20Mb
+		backupCount = getattr(log, "rot_backupCount", 10)
 		fname = getattr(log, logtype, logname)
 		h = logging.handlers.RotatingFileHandler(fname, 'a', maxBytes, backupCount)
 		h.setLevel(logging.DEBUG)
@@ -127,13 +135,12 @@ class ProcessNode(object):
 		self.db.subscribe()
 		self.db.create_tables()
 		webapp.job_queue = ProcessNodeJobsWebService(self.db)
-		#cherrypy.quickstart(webapp, '/', self.conf)
 		app = cherrypy.tree.mount(webapp, '/', self.conf)
 		self._setup_logging_(app.log, "rot_error_file", "logs/" + self.pn_info[STR_COMPUTER_NAME] + "_error.log")
 		self._setup_logging_(app.log, "rot_access_file", "logs/" + self.pn_info[STR_COMPUTER_NAME] + "_access.log")
 		cherrypy.engine.start()
 		try:
-			print 'posting to scheduler',self.scheduler_pn_url
+			print 'posting to scheduler', self.scheduler_pn_url
 			self.session.post(self.scheduler_pn_url, data=json.dumps(self.pn_info))
 		except:
 			print 'Error sending post'
@@ -149,9 +156,13 @@ class ProcessNode(object):
 					self.send_status_update()
 					self.process_next_job()
 		except:
+			print 'run error'
+			traceback.print_exc(file=sys.stdout)
 			self.stop()
 
 	def process_next_job(self):
+		if self.running == False:
+			return
 		print 'checking for jobs to process'
 		job_list = self.db.get_all_unprocessed_jobs()
 		saveout = sys.stdout
@@ -219,19 +230,18 @@ class ProcessNode(object):
 		print 'Finished Processing, going to Idle'
 		self.pn_info[STR_STATUS] = 'Idle'
 		self.send_status_update()
+
 	def stop(self):
 		self.running = False
 		self.new_job_event.set()
 		try:
 			self.pn_info[STR_STATUS] = 'Offline'
 			self.send_status_update()
-		except:
-			pass
-		try:
 			self.session.delete(self.scheduler_pn_url, data=json.dumps(self.pn_info))
-			cherrypy.engine.exit()
 		except:
-			pass
+			print 'stop error'
+			traceback.print_exc(file=sys.stdout)
+		cherrypy.engine.exit()
 
 	def send_status_update(self):
 		try:
@@ -239,6 +249,7 @@ class ProcessNode(object):
 			self.session.put(self.scheduler_pn_url, data=json.dumps(self.pn_info))
 		except:
 			print 'Error sending status update'
+			#traceback.print_exc(file=sys.stdout)
 
 	def send_job_update(self, job_dict):
 		try:
@@ -246,4 +257,5 @@ class ProcessNode(object):
 			print 'sent status'
 		except:
 			print 'Error sending job update'
+			#traceback.print_exc(file=sys.stdout)
 

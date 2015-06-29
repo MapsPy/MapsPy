@@ -102,7 +102,7 @@ def select_beamline(main_dict, make_maps_conf, this_beamline):
 		make_maps_conf.use_det[0] = 1
 		make_maps_conf.fit_t_be = 12000. #[8  microns]
 
-		make_maps_conf.dmaps_names	= ['SRcurrent', 'us_ic', 'ds_ic', 'abs_ic', \
+		make_maps_conf.dmaps_names = ['SRcurrent', 'us_ic', 'ds_ic', 'abs_ic', \
 									  'abs_cfg', 'H_dpc_cfg', 'V_dpc_cfg', 'dia1_dpc_cfg', 'dia2_dpc_cfg', \
 									  'H_dpc_norm', 'V_dpc_norm', 'phase', 'ELT1', 'ERT1', 'ICR1', 'OCR1', \
 									  'deadT', 'x_coord', 'y_coord', \
@@ -112,7 +112,7 @@ def select_beamline(main_dict, make_maps_conf, this_beamline):
 		make_maps_conf.use_det[0] = 1
 		make_maps_conf.fit_t_be = 8000. #[8  microns]
 
-		make_maps_conf.dmaps_names	= ['SRcurrent', 'us_ic', 'ds_ic', 'abs_ic', \
+		make_maps_conf.dmaps_names = ['SRcurrent', 'us_ic', 'ds_ic', 'abs_ic', \
 										'abs_cfg', 'H_dpc_cfg', 'V_dpc_cfg', 'dia1_dpc_cfg', 'dia2_dpc_cfg', \
 										'H_dpc_norm', 'V_dpc_norm', 'phase', 'ELT1', 'ERT1', 'ICR1', 'OCR1', \
 										'deadT', 'x_coord', 'y_coord', \
@@ -121,22 +121,21 @@ def select_beamline(main_dict, make_maps_conf, this_beamline):
 		print 'make_maps_conf.dmaps_names', make_maps_conf.dmaps_names
 
 
-	if (main_dict['beamline'] == 'Bio-CAT'):
+	if main_dict['beamline'] == 'Bio-CAT':
 		print 'now it is Bio-CAT'
 		make_maps_conf.use_det[0] = 1
 		make_maps_conf.fit_t_be = 24000. #[8  microns]
 
-		make_maps_conf.dmaps_names	= ['SRcurrent', 'us_ic', 'ds_ic', 'abs_ic', 'ELT1', 'ERT1', \
+		make_maps_conf.dmaps_names = ['SRcurrent', 'us_ic', 'ds_ic', 'abs_ic', 'ELT1', 'ERT1', \
 									  'x_coord', 'y_coord', 'dummy', 'dummy', 'dummy', \
 									  'dummy', 'dummy', 'dummy', 'dummy', 'dummy', 'dummy', \
 									  'dummy', 'dummy', 'dummy', 'dummy', 'dummy', 'dummy']
-
 
 	if main_dict['beamline'] == 'GSE-CARS':
 		make_maps_conf.use_det[0] = 1
 		make_maps_conf.fit_t_be = 24000. #[8  microns]
 
-		make_maps_conf.dmaps_names	= ['SRcurrent', 'us_ic', 'ds_ic', 'abs_ic', \
+		make_maps_conf.dmaps_names = ['SRcurrent', 'us_ic', 'ds_ic', 'abs_ic', \
 									   'abs_cfg', 'H_dpc_cfg', 'V_dpc_cfg', 'dia1_dpc_cfg', 'dia2_dpc_cfg', \
 									   'H_dpc_norm', 'V_dpc_norm', 'phase', 'ELT1', 'ERT1', 'ICR1', 'OCR1', \
 									   'deadT', 'x_coord', 'y_coord', \
@@ -146,7 +145,7 @@ def select_beamline(main_dict, make_maps_conf, this_beamline):
 		make_maps_conf.use_det[0] = 1
 		make_maps_conf.fit_t_be = 24000. 
 
-		make_maps_conf.dmaps_names	= ['SRcurrent', 'us_ic', 'ds_ic', 'abs', \
+		make_maps_conf.dmaps_names = ['SRcurrent', 'us_ic', 'ds_ic', 'abs', \
 									   'H_dpc_cfg', 'V_dpc_cfg', 'dia1_dpc_cfg', 'dia2_dpc_cfg', \
 									   'H_dpc_norm', 'V_dpc_norm', 'phase', 'ELT1', 'ERT1', 'dummy', 'dummy', \
 									   'dummy', 'dummy', 'dummy',  'dummy', \
@@ -154,11 +153,11 @@ def select_beamline(main_dict, make_maps_conf, this_beamline):
 
 	print main_dict['beamline']
 
-	if main_dict['beamline'] == 'DLS-I08' :
+	if main_dict['beamline'] == 'DLS-I08':
 		make_maps_conf.use_det[0] = 1
 		make_maps_conf.fit_t_be = 24000. 
 
-		make_maps_conf.dmaps_names	= ['dummy', 'dummy', 'dummy', 'dummy', \
+		make_maps_conf.dmaps_names = ['dummy', 'dummy', 'dummy', 'dummy', \
 									   'dummy', 'dummy', 'dummy', 'dummy', \
 									   'dummy', 'dummy', 'dummy', 'dummy', 'dummy', 'dummy', 'dummy', \
 									   'dummy', 'dummy', 'dummy',  'dummy', \
@@ -339,13 +338,12 @@ def load_spectrum(filename, spectra, append = 1):
 		print 'Not a valid data file:', filename
 		return
 
-
 	for i in range(8):
 		amp[i, 2] = amp[i, 0]
-		if amp[i, 1] == 0 : amp[i, 2] = amp[i, 2] /1000.		# pA/V
-		if amp[i, 1] == 1 : amp[i, 2] = amp[i, 2]				# nA/V
-		if amp[i, 1] == 2 : amp[i, 2] = amp[i, 2] *1000.		#uA/V
-		if amp[i, 1] == 3 : amp[i, 2] = amp[i, 2] *1000. *1000. #mA/V
+		if amp[i, 1] == 0: amp[i, 2] = amp[i, 2] / 1000.		# pA/V
+		if amp[i, 1] == 1: amp[i, 2] = amp[i, 2]				# nA/V
+		if amp[i, 1] == 2: amp[i, 2] = amp[i, 2] * 1000.		#uA/V
+		if amp[i, 1] == 3: amp[i, 2] = amp[i, 2] * 1000. * 1000. #mA/V
 
 	if counts_ds_ic == 0:
 		print 'warning downstream IC counts zero'
@@ -354,7 +352,6 @@ def load_spectrum(filename, spectra, append = 1):
 	if counts_us_ic == 0:
 		print 'warning upstream IC counts zero'
 		counts_us_ic = 1.
-
 
 	if append > 0:
 		temp_used = []
@@ -481,7 +478,7 @@ def load_spectrum(filename, spectra, append = 1):
 
 # ------------------------------------------------------------------------------------------------
 def save_spectrum(main_dict, filename, sfilename):
-	#Get info from .h5 file
+	# Get info from .h5 file
 	no_specs = 1
 	real_time = 0.0
 	live_time = 0.0
@@ -489,22 +486,21 @@ def save_spectrum(main_dict, filename, sfilename):
 	uICcts = 0
 	dICcts = 0
 	
-	amp = np.zeros((8,3), dtype=np.float)	
+	amp = np.zeros((8, 3), dtype=np.float)
 	for i in range(8):
-		if amp[i, 0] == 0. : amp[i, 2] = 1.
-		if amp[i, 0] == 1. : amp[i, 2] = 2.
-		if amp[i, 0] == 2. : amp[i, 2] = 5.
-		if amp[i, 0] == 3. : amp[i, 2] = 10.
-		if amp[i, 0] == 4. : amp[i, 2] = 20.
-		if amp[i, 0] == 5. : amp[i, 2] = 50.
-		if amp[i, 0] == 6. : amp[i, 2] = 100.
-		if amp[i, 0] == 7. : amp[i, 2] = 200.
-		if amp[i, 0] == 8. : amp[i, 2] = 500.
-		if amp[i, 1] == 0. : amp[i, 2] = amp[i, 2] /1000.		 # pA/V
-		if amp[i, 1] == 1. : amp[i, 2] = amp[i, 2]				 # nA/V
-		if amp[i, 1] == 2. : amp[i, 2] = amp[i, 2] *1000.		 #uA/V
-		if amp[i, 1] == 3. : amp[i, 2] = amp[i, 2] *1000. *1000. #mA/V
-
+		if amp[i, 0] == 0.0: amp[i, 2] = 1.
+		if amp[i, 0] == 1.0: amp[i, 2] = 2.
+		if amp[i, 0] == 2.0: amp[i, 2] = 5.
+		if amp[i, 0] == 3.0: amp[i, 2] = 10.
+		if amp[i, 0] == 4.0: amp[i, 2] = 20.
+		if amp[i, 0] == 5.0: amp[i, 2] = 50.
+		if amp[i, 0] == 6.0: amp[i, 2] = 100.
+		if amp[i, 0] == 7.0: amp[i, 2] = 200.
+		if amp[i, 0] == 8.0: amp[i, 2] = 500.
+		if amp[i, 1] == 0.0: amp[i, 2] = amp[i, 2] / 1000.		 # pA/V
+		if amp[i, 1] == 1.0: amp[i, 2] = amp[i, 2]				 # nA/V
+		if amp[i, 1] == 2.0: amp[i, 2] = amp[i, 2] * 1000.		 # uA/V
+		if amp[i, 1] == 3.0: amp[i, 2] = amp[i, 2] * 1000. * 1000. # mA/V
 
 	us_amp = np.zeros(3) 
 	ds_amp = np.zeros(3)
@@ -521,8 +517,8 @@ def save_spectrum(main_dict, filename, sfilename):
 		us_amp[:] = amp[0, :]
 		ds_amp[:] = amp[1, :]
 
-	ic0 = {'cts':0., 'sens_num':0., 'sens_unit':0., 'sens_factor':0.}
-	ic1 = {'cts':0., 'sens_num':0., 'sens_unit':0., 'sens_factor':0.}
+	ic0 = {'cts': 0., 'sens_num': 0., 'sens_unit': 0., 'sens_factor': 0.}
+	ic1 = {'cts': 0., 'sens_num': 0., 'sens_unit': 0., 'sens_factor': 0.}
 
 	for kk in range(1):
 		if kk == 0:
@@ -539,7 +535,7 @@ def save_spectrum(main_dict, filename, sfilename):
 	ch5 = maps_hdf5.h5()
 
 	fh5 = call_function_with_retry(h5py.File, 5, 0.1, 1.1, (filename, 'r'))
-	if fh5 == None:
+	if fh5 is None:
 		print 'Error opeing file ', filename
 		return		 
 	if 'MAPS' not in fh5:
@@ -573,7 +569,7 @@ def save_spectrum(main_dict, filename, sfilename):
 
 	print 'saving', sfilename
 	f = open_file_with_retry(sfilename, 'w')
-	if f == None:
+	if f is None:
 		print '-------\nError opening file to write: ',sfilename
 		return
 	#f = open(sfilename, 'w')
@@ -599,7 +595,6 @@ def save_spectrum(main_dict, filename, sfilename):
 	print>>f, line
 	line = 'CAL_QUAD: ' + str(calibration_quad[0])
 	print>>f, line
-
 
 	if main_dict['beamline'] == '2-ID-E':
 		line = ''
@@ -634,7 +629,7 @@ def save_spectrum(main_dict, filename, sfilename):
 		if ic1['sens_unit'] == 3 : line = 'ENVIRONMENT: 2xfm:A2sens_unit.VAL="uA/V"'
 		print>>f, line
 
-	if main_dict['beamline'] == '2-ID-D' :
+	if main_dict['beamline'] == '2-ID-D':
 		line = ['']
 		if ic0['sens_num'] == 0 : line = 'ENVIRONMENT: 2idd:A2sens_num.VAL="1"'
 		if ic0['sens_num'] == 1 : line = 'ENVIRONMENT: 2idd:A2sens_num.VAL="2"'
@@ -667,7 +662,6 @@ def save_spectrum(main_dict, filename, sfilename):
 		if ic1['sens_unit'] == 3 : line = 'ENVIRONMENT: 2idd:A4sens_unit.VAL="uA/V"'
 		print>>f, line
 
-
 	print>>f, 'DATA:'
 	for ie in range(len(int_spec)):
 		print>>f, '%.6f' %(int_spec[ie])
@@ -676,7 +670,7 @@ def save_spectrum(main_dict, filename, sfilename):
 	return
 
 # ------------------------------------------------------------------------------------------------
-def _option_a_(main_dict, maps_conf, wdir):
+def _option_a_(main_dict, maps_conf, wdir, cb_update_func=None):
 	print '\n Section A \n'
 	check_output_dirs(main_dict)
 	#maps_test_xrffly
@@ -685,14 +679,14 @@ def _option_a_(main_dict, maps_conf, wdir):
 	filenames = []
 	dirList=os.listdir(main_dict['mda_dir'])
 	for fname in dirList:
-		if fname[-4:] == '.mda' :
+		if fname[-4:] == '.mda':
 			filenames.append(fname)
 	no_files =len(filenames)
 
 	#If no .mda files were found look for .h5
 	if no_files == 0:
 		for fname in dirList:
-			if fname[-3:] == '.h5' :
+			if fname[-3:] == '.h5':
 				filenames.append(fname)
 	no_files = len(filenames)
 
@@ -700,7 +694,7 @@ def _option_a_(main_dict, maps_conf, wdir):
 		print 'Did not find any .mda files in /mda directory.'
 		return
 
-	make_maps.main(wdir=wdir, no_fit = True)
+	make_maps.main(main_dict, wdir=wdir, force_fit=0, no_fit=True, cb_update_func=cb_update_func)
 
 	#		 for this_detector in range(0, total_number_detectors):
 	#			 header, scan_ext= os.path.splitext(filenames[0])
@@ -712,7 +706,7 @@ def _option_a_(main_dict, maps_conf, wdir):
 	#												max_no_processors_lines, xrf_bin)
 
 # ------------------------------------------------------------------------------------------------
-def _option_b_(main_dict, maps_conf, maps_def, total_number_detectors, info_elements, current_directory):
+def _option_b_(main_dict, maps_conf, maps_def, total_number_detectors, info_elements, current_directory, cb_update_func=None):
 	print '\n Section B \n'
 	for this_detector_element in range(total_number_detectors):
 		print 'this_detector_element', this_detector_element, 'total_number_detectors', total_number_detectors
@@ -721,29 +715,27 @@ def _option_b_(main_dict, maps_conf, maps_def, total_number_detectors, info_elem
 		else:
 			suffix = ''
 
-
 		# if b then lets load the 4
 		# largest img.at files, extract the spectra, and do the fits, then
 		# rename the average override file
 
-
 		main_dict['XRFmaps_dir'] = main_dict['img_dat_dir']
 		files = os.listdir(main_dict['XRFmaps_dir'])
 		imgdat_filenames = []
-		extension = '.h5'+suffix
+		extension = '.h5' + suffix
 		for f in files:
 			if extension in f.lower():
 				imgdat_filenames.append(f)
 		imgdat_filenames.sort()
 
-		if len(imgdat_filenames) > 8 :
+		if len(imgdat_filenames) > 8:
 			imgdat_filesizes = np.zeros((len(imgdat_filenames)))
 			for ii in range(len(imgdat_filenames)):
-				fsize = os.path.getsize(os.path.join(main_dict['img_dat_dir'],imgdat_filenames[ii]))
+				fsize = os.path.getsize(os.path.join(main_dict['img_dat_dir'], imgdat_filenames[ii]))
 				imgdat_filesizes[ii] = fsize
 				#print imgdat_filenames[ii], imgdat_filesizes[ii]
 			sorted_index = np.argsort(np.array(imgdat_filesizes))
-			imgdat_filenames = [imgdat_filenames for (imgdat_filesizes,imgdat_filenames) in sorted(zip(imgdat_filesizes,imgdat_filenames))]
+			imgdat_filenames = [imgdat_filenames for (imgdat_filesizes, imgdat_filenames) in sorted(zip(imgdat_filesizes, imgdat_filenames))]
 			imgdat_filenames.reverse()
 
 			imgdat_filenames = imgdat_filenames[0:8]
@@ -753,7 +745,6 @@ def _option_b_(main_dict, maps_conf, maps_def, total_number_detectors, info_elem
 		main_dict['XRFmaps_names'] = imgdat_filenames
 
 		main_dict['XRFmaps_id'] = 0
-
 
 		spectra_filenames = []
 		#Get integrated spectra from .h5 files and save them as text files
@@ -766,9 +757,8 @@ def _option_b_(main_dict, maps_conf, maps_def, total_number_detectors, info_elem
 			save_spectrum(main_dict, sfile, savefile)
 			spectra_filenames.append(savefile)
 
-
 		#Load spectra into spectra structure
-		spectra = maps_def.define_spectra(main_dict['max_spec_channels'], main_dict['max_spectra'], main_dict['max_ICs'], mode = 'plot_spec')
+		spectra = maps_def.define_spectra(main_dict['max_spec_channels'], main_dict['max_spectra'], main_dict['max_ICs'], mode='plot_spec')
 
 		if len(spectra_filenames) == 1:
 				load_spectrum(spectra_filenames[0], spectra, append=0)
@@ -801,15 +791,15 @@ def _option_b_(main_dict, maps_conf, maps_def, total_number_detectors, info_elem
 		#				  first_run = 0
 		#print 'do_fits',type(this_w_uname), type(fitp), type(dofit_spec), type(spectra), type(suffix) , type(info_elements), type(calib), type(calib.do_fits)
 		#fitp, avg_fitp, spectra = calib.do_fits(this_w_uname, fitp, dofit_spec, spectra, 1, 1, 500, suffix, info_elements)
-		fitp, avg_fitp, spectra = calib.do_fits(this_w_uname, fitp, spectra, maxiter = 500, per_pix = 1, generate_img = 1, suffix = suffix, info_elements = info_elements)
+		fitp, avg_fitp, spectra = calib.do_fits(this_w_uname, fitp, spectra, maxiter=500, per_pix=1, generate_img=1, suffix=suffix, info_elements=info_elements)
 
 		if fitp != None:
 			avg_res_override_name = os.path.join(current_directory, 'average_resulting_maps_fit_parameters_override.txt')
 			old_override_name = os.path.join(current_directory, 'old_maps_fit_parameters_override.txt')
-			old_override_date_name = os.path.join(current_directory, 'old_'+strftime("%Y-%m-%d %H:%M:%S", gmtime())+'_maps_fit_parameters_override.txt')
-			old_override_suffix_date_name = os.path.join(current_directory, 'old_'+strftime("%Y-%m-%d %H:%M:%S", gmtime())+'_maps_fit_parameters_override.txt'+suffix)
-			maps_override_suffix_name = os.path.join(current_directory, 'maps_fit_parameters_override.txt'+suffix)
-			maps_override_name = os.path.join(current_directory,'maps_fit_parameters_override.txt')
+			old_override_date_name = os.path.join(current_directory, 'old_' + strftime("%Y-%m-%d %H:%M:%S", gmtime()) + '_maps_fit_parameters_override.txt')
+			old_override_suffix_date_name = os.path.join(current_directory, 'old_' + strftime("%Y-%m-%d %H:%M:%S", gmtime()) + '_maps_fit_parameters_override.txt' + suffix)
+			maps_override_suffix_name = os.path.join(current_directory, 'maps_fit_parameters_override.txt' + suffix)
+			maps_override_name = os.path.join(current_directory, 'maps_fit_parameters_override.txt')
 			#if os.path.isfile(avg_res_override_name):
 			#move AND rename the old AND new override files:
 			try:
@@ -821,20 +811,20 @@ def _option_b_(main_dict, maps_conf, maps_def, total_number_detectors, info_elem
 					os.rename(maps_override_suffix_name, old_override_suffix_date_name)
 			except:
 				pass
-			print 'total_num detectors = ',total_number_detectors
-			if total_number_detectors <= 1 :
+			print 'total_num detectors = ', total_number_detectors
+			if total_number_detectors <= 1:
 				try:
 					if os.path.isfile(maps_override_name):
-						print 'renaming',maps_override_name,'to', old_override_date_name
+						print 'renaming', maps_override_name, 'to', old_override_date_name
 						os.rename(maps_override_name, old_override_date_name)
 				except:
-					print 'could not rename file', maps_override_name, 'to',old_override_date_name
+					print 'could not rename file', maps_override_name, 'to', old_override_date_name
 			try:
 				if os.path.isfile(maps_override_name):
-					print 'removing',maps_override_suffix_name
+					print 'removing', maps_override_suffix_name
 					os.remove(maps_override_suffix_name)
 				if os.path.isfile(avg_res_override_name):
-					print 'renaming', avg_res_override_name,'to', maps_override_suffix_name
+					print 'renaming', avg_res_override_name, 'to', maps_override_suffix_name
 					os.rename(avg_res_override_name, maps_override_suffix_name)
 			except:
 				print 'error renaming average_resulting_maps_fit_parameters_override to maps_fit_parameters_override'
@@ -843,29 +833,29 @@ def _option_b_(main_dict, maps_conf, maps_def, total_number_detectors, info_elem
 		dirlist = os.listdir(current_directory)
 		if 'output_old' in dirlist:
 			#print ' delete files in output_old directory'
-			filelist = os.listdir(os.path.join(current_directory,'output_old'))
+			filelist = os.listdir(os.path.join(current_directory, 'output_old'))
 			for fl in filelist:
-				thisfile = os.path.join(os.path.join(current_directory,'output_old'), fl)
+				thisfile = os.path.join(os.path.join(current_directory, 'output_old'), fl)
 				os.remove(thisfile)
 		else:
-			os.makedirs(os.path.join(current_directory,'output_old'))
+			os.makedirs(os.path.join(current_directory, 'output_old'))
 		#todo: create directory if it does not exist
 		#Copy files to output_fits
-		src_files = os.listdir(os.path.join(current_directory,'output'))
+		src_files = os.listdir(os.path.join(current_directory, 'output'))
 		print src_files
 		for fn in src_files:
-			full_file_name = os.path.join(os.path.join(current_directory,'output'), fn)
+			full_file_name = os.path.join(os.path.join(current_directory, 'output'), fn)
 			if (os.path.isfile(full_file_name)):
-				shutil.copy(full_file_name, os.path.join(current_directory,'output_old'))
+				shutil.copy(full_file_name, os.path.join(current_directory, 'output_old'))
 				os.remove(full_file_name)
 
 	return spectra
 
 # ------------------------------------------------------------------------------------------------
-def _option_c_(current_directory):
+def _option_c_(main_dict, current_directory, cb_update_func=None):
 	print '\n Section C \n'
 	#Call make_maps and force fitting. Overrides USE_FIT in maps_setting.txt
-	make_maps.main(wdir=current_directory, force_fit=1)
+	make_maps.main(main_dict, wdir=current_directory, force_fit=1, no_fit=False, cb_update_func=cb_update_func)
 
 	dirlist = os.listdir(current_directory)
 	if 'output.fits' in dirlist:
@@ -886,7 +876,7 @@ def _option_c_(current_directory):
 			os.remove(full_file_name)
 
 # ------------------------------------------------------------------------------------------------
-def _option_d_():
+def _option_d_(cb_update_func=None):
 	print 'Image extraction not implemented.'
 	#		  main_dict['XRFmaps_dir'] = main_dict['img_dat_dir']
 	#		  files = os.listdir(main_dict['XRFmaps_dir'])
@@ -930,7 +920,7 @@ def _option_d_():
 	#		  maps_tools.extract_all(main_dict, test_string)
 
 # ------------------------------------------------------------------------------------------------
-def maps_batch(wdir='', a=1,b=0,c=0,d=0,e=0):
+def maps_batch(wdir='', a=1,b=0,c=0,d=0,e=0, cb_update_func=None):
 
 	verbose = True
 	time_started = strftime("%Y-%m-%d %H:%M:%S", gmtime())
@@ -955,7 +945,7 @@ def maps_batch(wdir='', a=1,b=0,c=0,d=0,e=0):
 
 	#define main_dict
 	main_dict = {'mapspy_version':'1.2',
-			'maps_date':'01. March, 2013', 
+			'maps_date':'01. March, 2013',
 			'beamline':'2-ID-E', 
 			'S_font':'', 
 			'M_font':'', 
@@ -975,21 +965,23 @@ def maps_batch(wdir='', a=1,b=0,c=0,d=0,e=0):
 			'black_background':0, 
 			'max_spec_channels':2048L, 
 			'max_spectra':4096L, 
-			'max_ICs':6L}
+			'max_ICs':6L,
+            'standard_filenames': [],
+            'total_number_detectors': 1,
+            'max_no_processors_files': 1,
+            'max_no_processors_lines': -1,
+            'write_hdf': 0,
+            'use_fit': 0,
+            'quick_dirty': 0,
+            'xrf_bin': 0,
+            'nnls': 0,
+            'detector_to_start_with': 0,
+            'xanes_scan': 0,
+            'version': 0}
 
 	# Get info from maps_settings.txt
-	total_number_detectors = 1
-	max_no_processors = 1
-	write_hdf = 0
-	use_fit = 0
-	
-	quick_dirty = 0
-	xrf_bin = 0    
-	
-	nnls = 0	
-	standard_filenames = []
 	print 'maps_batch'
-	maps_settingsfile = 'maps_settings.txt'		
+	maps_settingsfile = 'maps_settings.txt'
 	try:
 		sfilepath = os.path.join(main_dict['master_dir'], maps_settingsfile)
 		f = open_file_with_retry(sfilepath, 'rt')
@@ -1000,31 +992,31 @@ def maps_batch(wdir='', a=1,b=0,c=0,d=0,e=0):
 				value = ''.join(slist[1:])
 				
 				if tag == 'VERSION':
-					version = float(value)
+					main_dict['version'] = float(value)
 				elif tag == 'DETECTOR_ELEMENTS':
-					total_number_detectors = int(value)
+					main_dict['total_number_detectors'] = int(value)
 				elif tag == 'MAX_NUMBER_OF_FILES_TO_PROCESS':
-					max_no_processors_files = int(value)
+					main_dict['max_no_processors_files'] = int(value)
 				elif tag == 'MAX_NUMBER_OF_LINES_TO_PROCESS':
-					max_no_processors_lines = int(value)
+					main_dict['max_no_processors_lines'] = int(value)
 				elif tag == 'WRITE_HDF5':
-					write_hdf = int(value)
+					main_dict['write_hdf'] = int(value)
 				elif tag == 'USE_FIT':
-					use_fit = int(value)
+					main_dict['use_fit'] = int(value)
 				elif tag == 'QUICK_DIRTY':
-					quick_dirty = int(value)
+					main_dict['quick_dirty'] = int(value)
 				elif tag == 'XRF_BIN':
-					xrf_bin = int(value)
+					main_dict['xrf_bin'] = int(value)
 				elif tag == 'NNLS':
-					nnls = int(value)
+					main_dict['nnls'] = int(value)
 				elif tag == 'XANES_SCAN':
-					xanes_scan = int(value)
+					main_dict['xanes_scan'] = int(value)
 				elif tag == 'DETECTOR_TO_START_WITH':
-					detector_to_start_with = int(value)
+					main_dict['detector_to_start_with'] = int(value)
 				elif tag == 'BEAMLINE':
 					main_dict['beamline'] = str(value).strip()
 				elif tag == 'STANDARD':
-					standard_filenames.append(str(value).strip())
+					main_dict['standard_filenames'].append(str(value).strip())
 
 		f.close()
 
@@ -1037,35 +1029,35 @@ def maps_batch(wdir='', a=1,b=0,c=0,d=0,e=0):
 	maps_def = maps_definitions.maps_definitions()
 	maps_conf = maps_def.set_maps_definitions(main_dict['beamline'], info_elements)
 
-	print 'main_dict beamline: ', main_dict['beamline'], '  maps_config version: ', str(version)
+	print 'main_dict beamline: ', main_dict['beamline'], '  maps_config version: ', str(main_dict['version'])
 
 	select_beamline(main_dict, maps_conf, main_dict['beamline'])
 
-	print 'total number of detectors:', total_number_detectors
+	print 'total number of detectors:', main_dict['total_number_detectors']
 
 	#Section a converts mda to h5 and does ROI and ROI+ fits
 	if (a > 0) :
-		_option_a_(main_dict, maps_conf, wdir)
+		_option_a_(main_dict, maps_conf, wdir, cb_update_func)
 
 	#Section b loads 8 largest h5 files, fits them and saves fit parameters 
 	if (b > 0):
-		spectra = _option_b_(main_dict, maps_conf, maps_def, total_number_detectors, info_elements, current_directory)
+		spectra = _option_b_(main_dict, maps_conf, maps_def, main_dict['total_number_detectors'], info_elements, current_directory, cb_update_func)
 
 	#Section c converts mda to h5 files and does ROI/ROI+/FITS
 	if (c > 0): 
-		_option_c_(current_directory)
+		_option_c_(main_dict, current_directory, cb_update_func)
 
 	#Section d extracts images
 	if (d > 0):
-		_option_d_()
+		_option_d_(cb_update_func)
 
 	#Generate average images
-	if total_number_detectors > 1 and b > 0 and spectra is not None:
+	if main_dict['total_number_detectors'] > 1 and b > 0 and spectra is not None:
 		print ' we are now going to create the maps_generate_average...'
 		n_channels = 2048
 		energy_channels = spectra[0].calib['off'] + spectra[0].calib['lin'] * np.arange((n_channels), dtype=np.float)
 		makemaps = maps_generate_img_dat.analyze(info_elements, main_dict, maps_conf)
-		makemaps.generate_average_img_dat(total_number_detectors, maps_conf, energy_channels)
+		makemaps.generate_average_img_dat(main_dict['total_number_detectors'], maps_conf, energy_channels)
 
 	#Section e adds exchange information
 	if (e > 0):
@@ -1109,3 +1101,4 @@ if __name__ == '__main__':
 			e = 1
 
 	maps_batch(wdir=dirct, a=a, b=b, c=c, d=d, e=e)
+

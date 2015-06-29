@@ -43,15 +43,8 @@ import cherrypy
 import traceback
 import logging
 import logging.handlers
-import signal
 
 db = DatabasePlugin(cherrypy.engine, SQLiteDB)
-
-def handle_sigint():
-	logger.log("SIGINT catched")
-	cherrypy.engine.stop()
-
-signal.signal(signal.SIGINT, handle_sigint)
 
 class Scheduler(object):
 	def __init__(self, settings):
@@ -65,7 +58,8 @@ class Scheduler(object):
 		})
 		cherrypy.engine.subscribe("new_job", self.callback_new_job)
 		cherrypy.engine.subscribe("process_node_update", self.callback_process_node_update)
-		#cherrypy.engine.signal_handler.handlers["SIGINT"] = handle_sigint
+		if hasattr(cherrypy.engine, 'signal_handler'):
+			cherrypy.engine.signal_handler.subscribe()
 		self.conf = {
 			'/': {
 				'tools.sessions.on': True,
@@ -86,7 +80,7 @@ class Scheduler(object):
 				'tools.staticdir.dir': './public'
 			}
 		}
-	
+
 	def callback_new_job(self, job):
 		#todo: lock list 
 		print 'callback got new job', job
@@ -133,8 +127,8 @@ class Scheduler(object):
 			return exc_str
 
 	def _setup_logging_(self, log, logtype, logname):
-		maxBytes = getattr(log, "rot_maxBytes", 10000000)
-		backupCount = getattr(log, "rot_backupCount", 1000)
+		maxBytes = getattr(log, "rot_maxBytes", 20971520) # 20Mb
+		backupCount = getattr(log, "rot_backupCount", 10)
 		fname = getattr(log, logtype, logname)
 		h = logging.handlers.RotatingFileHandler(fname, 'a', maxBytes, backupCount)
 		h.setLevel(logging.DEBUG)
@@ -152,4 +146,5 @@ class Scheduler(object):
 		self._setup_logging_(app.log, "rot_error_file", "logs/scheduler_error.log")
 		self._setup_logging_(app.log, "rot_access_file", "logs/scheduler_access.log")
 		cherrypy.engine.start()
-
+		cherrypy.engine.block()
+		print 'done blocking'

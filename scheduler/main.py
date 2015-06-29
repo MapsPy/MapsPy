@@ -40,7 +40,6 @@ import sys
 import Settings
 from Scheduler import Scheduler
 from ProcessNode import ProcessNode
-import cherrypy
 settings_filename = 'settings.ini'
 
 def main():

@@ -500,17 +500,18 @@ class analyze:
 		
 		#compton peak
 		value = 0.
-		value, compton_sigma, faktor = self.compton_peak(fitp, counts, ev, p, gain, matrix = True)
+		value, compton_sigma, faktor = self.compton_peak(fitp, counts, ev, p, gain, matrix=True)
 		counts = counts + value
-		fitmatrix[:, i+1] = fitmatrix[:, i+1]+counts[:]
+		fitmatrix[:, i + 1] = fitmatrix[:, i + 1]+counts[:]
 		counts[:] = 0.
 	
-		this_i = i+2
+		this_i = i + 2
 		# pileup
 		for ii in range(9): 
 			j = 0
 			i = np.amax(keywords.mele_pos)-np.amin(keywords.kele_pos)+1+ii
-			if (add_pars[i, j].energy <= 0.) : continue
+			if add_pars[i, j].energy <= 0.:
+				continue
 			delta_energy = ev.copy() - (add_pars[i, j].energy)
 			faktor = add_pars[i, j].ratio
 			value = faktor * self.model_gauss_peak(gain, sigma[i, j], delta_energy)
@@ -1014,7 +1015,7 @@ class analyze:
 			l_line[xmin:xmax+1, j_fit] = self.counts_l[:]
 			bkground_line[xmin:xmax+1, j_fit] = background[keywords.xmin:keywords.xmax+1]
 
-		return fitted_line, ka_line, l_line, bkground_line,  values_line, bkgnd_line, tfy_line, xmin, xmax
+		return fitted_line, ka_line, l_line, bkground_line, values_line, bkgnd_line, tfy_line, xmin, xmax
 
 	# -----------------------------------------------------------------------------
 	def calc_perror(self, fjac, ipvt, npars, tol=1.e-14):

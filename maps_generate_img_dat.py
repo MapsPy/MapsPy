@@ -96,23 +96,23 @@ def fit_line_threaded(i_fit, data_line, output_dir, n_rows,  matrix, spectral_bi
 
 # ----------------------------------------------------------------------
 class analyze:
-	def __init__(self, info_elements, main, maps_conf, beamline='2-ID-E', use_fit=0):
+	def __init__(self, info_elements, main_dict, maps_conf, beamline='2-ID-E', use_fit=0):
 
 		self.info_elements = info_elements
 		self.beamline = beamline
 		
 		self.integrate = 0
 		
-		self.main = main
+		self.main_dict = main_dict
 		
 		self.pca = 0
 		self.save_ram = 0				  
 		self.verbose = 2
 		self.maxiter = 500 
 		
-		self.main_max_spectra = main['max_spectra']
-		self.max_spec_channels = main['max_spec_channels']
-		self.max_ICs = main['max_ICs']	 
+		self.main_max_spectra = main_dict['max_spectra']
+		self.max_spec_channels = main_dict['max_spec_channels']
+		self.max_ICs = main_dict['max_ICs']
 		
 		self.show_extra_pvs = 1
 		
@@ -150,7 +150,7 @@ class analyze:
 
 		xrfflyscan = 0
 		overwrite = 0
-		maps_overridefile = os.path.join(self.main['master_dir'],'maps_fit_parameters_override.txt')
+		maps_overridefile = os.path.join(self.main_dict['master_dir'], 'maps_fit_parameters_override.txt')
 		maps_intermediate_solution_file = 'maps_intermediate_solution.tmp'
 		orig_mca_arr = 0
 
@@ -163,7 +163,7 @@ class analyze:
 			overide_files_found = 0 
 			suffix = str(this_detector) 
 			print 'suff=', suffix
-			maps_overridefile = os.path.join(self.main['master_dir'],'maps_fit_parameters_override.txt')+suffix
+			maps_overridefile = os.path.join(self.main_dict['master_dir'], 'maps_fit_parameters_override.txt') + suffix
 			try:
 				f = open(maps_overridefile, 'rt')	 
 				print maps_overridefile, ' exists.'
@@ -171,7 +171,7 @@ class analyze:
 			except :
 				# if i cannot find an override file specific per detector, assuming
 				# there is a single overall file.
-				maps_overridefile = os.path.join(self.main['master_dir'],'maps_fit_parameters_override.txt')
+				maps_overridefile = os.path.join(self.main_dict['master_dir'], 'maps_fit_parameters_override.txt')
 
 		if xrf_bin > 0:
 			xrf_bin_ext = '.avg3'
@@ -211,24 +211,24 @@ class analyze:
 				print 'xanes		: ', xanes
 
 			test_textfile = 0 
-			combined_file_info = os.path.join(self.main['master_dir'], 'lookup', header + '.txt')
+			combined_file_info = os.path.join(self.main_dict['master_dir'], 'lookup', header + '.txt')
 			if os.path.isfile(combined_file_info) : test_textfile = 1
 			print 'testing test_textfile ', test_textfile
 
 			test_netcdf = 0
-			ncfile = os.path.join(self.main['master_dir'], 'flyXRF.h5', header + '_2xfm3__0.h5' )
+			ncfile = os.path.join(self.main_dict['master_dir'], 'flyXRF.h5', header + '_2xfm3__0.h5' )
 			if os.path.isfile(ncfile): test_netcdf = 1
 
 			print 'testing presence of converted flyscans', test_netcdf
 			if test_netcdf == 1:
 				test_netcdf = 4
 			if test_netcdf == 0:
-				if os.path.isfile(os.path.join(self.main['master_dir'], 'flyXRF', header + '_2xfm3__0.nc')):
+				if os.path.isfile(os.path.join(self.main_dict['master_dir'], 'flyXRF', header + '_2xfm3__0.nc')):
 					test_netcdf = 1
 				print 'testing presence of netCDF flyscans', test_netcdf
 
 			if test_netcdf == 0:
-				if os.path.isfile(os.path.join(self.main['master_dir'], 'flyXRF', header + '_DP3__0.nc')):
+				if os.path.isfile(os.path.join(self.main_dict['master_dir'], 'flyXRF', header + '_DP3__0.nc')):
 					test_netcdf = 2
 				# use test_netCDF = 2 to indicate this is a fly scan from 8bm
 			
@@ -239,7 +239,7 @@ class analyze:
 					scan_number = int(scan_number)
 					bnpfly_header = ''.join('bnp_fly_' + str(scan_number))
 
-					if os.path.isfile(os.path.join(self.main['master_dir'], 'flyXRF', bnpfly_header + '_001.nc')):
+					if os.path.isfile(os.path.join(self.main_dict['master_dir'], 'flyXRF', bnpfly_header + '_001.nc')):
 						test_netCDF = 3
 					# use test_netCDF = 3 to indicate this is a fly scan from bionanoprobe
 				except:
@@ -261,7 +261,7 @@ class analyze:
 				# name. this should be a fly scna with XRF
 				print 'trying to do the combined file'
 				nc = maps_nc.nc()
-				scan = nc.read_combined_nc_scans(mdafilename, self.main['master_dir'], header, this_detector, extra_pvs = True)
+				scan = nc.read_combined_nc_scans(mdafilename, self.main_dict['master_dir'], header, this_detector, extra_pvs = True)
 
 				print 'Finished reading combined nc scan'
 				netcdf_fly_scan = 1
@@ -283,7 +283,7 @@ class analyze:
 				# name. this should be a fly scan with XRF
 				print 'trying to do the combined file'
 
-				scan = mda.read_combined_flyscan(self.main['master_dir'], mdafilename, this_detector)
+				scan = mda.read_combined_flyscan(self.main_dict['master_dir'], mdafilename, this_detector)
 					
 				netcdf_fly_scan = 1 
 				
@@ -303,7 +303,7 @@ class analyze:
 			print 'beamline: ', beamline 
 			print 'reading DLS-I08 scan from /img.dat/*.h5'
 			filenameh5 =  os.path.basename(str(mdafilename))
-			h5filename = os.path.join(os.path.join(self.main['master_dir'], 'img.dat'), filenameh5)
+			h5filename = os.path.join(os.path.join(self.main_dict['master_dir'], 'img.dat'), filenameh5)
 			print 'filename=', h5filename
 			h5 = maps_hdf5.h5()
 			scan = h5.read_scan(h5filename)
@@ -474,7 +474,7 @@ class analyze:
 		h5 = maps_hdf5.h5()
 		if save_h5 == 1:
 			# Save full spectra to HDF5 file
-			h5file = os.path.join(self.main['img_dat_dir'], header + xrf_bin_ext + '.h5' + suffix)
+			h5file = os.path.join(self.main_dict['img_dat_dir'], header + xrf_bin_ext + '.h5' + suffix)
 			print 'now trying to write the mca spectra into the HDF5 file', h5file
 			h5.write_mca_hdf5(h5file, scan.mca_arr)
 
@@ -603,7 +603,7 @@ class analyze:
 			print 'binning the data'
 
 			this_mca_arr_dimensions = scan.mca_arr.shape
-			this_n_channels = min(mca_arr_dimensions[2], self.main['max_spec_channels'])
+			this_n_channels = min(mca_arr_dimensions[2], self.main_dict['max_spec_channels'])
 			if (xrf_bin == 2) and (n_cols > 5) and (n_rows > 5):
 				for i_bin in range(n_cols - 1):
 					if i_bin % 2 == 0:
@@ -619,13 +619,13 @@ class analyze:
 						elt1_arr[i_bin, :] = elt1_arr[i_bin - 1, :]
 
 			if (xrf_bin == 3) and (n_cols > 5) and (n_rows > 5) : 
-				current_line = np.zeros((self.main['max_spec_channels'], n_rows))
-				previous_line = np.zeros((self.main['max_spec_channels'], n_rows))
-				next_line = np.zeros((self.main['max_spec_channels'], n_rows))
+				current_line = np.zeros((self.main_dict['max_spec_channels'], n_rows))
+				previous_line = np.zeros((self.main_dict['max_spec_channels'], n_rows))
+				next_line = np.zeros((self.main_dict['max_spec_channels'], n_rows))
 				current_elt_line = np.zeros((elt1_arr.size))
 				next_elt_line = np.zeros((elt1_arr.size))				 
 				this_mca_arr_dimensions = scan.mca_arr.shape
-				this_n_channels = min(this_mca_arr_dimensions[2], self.main['max_spec_channels'])
+				this_n_channels = min(this_mca_arr_dimensions[2], self.main_dict['max_spec_channels'])
 
 				for i_bin in range(n_cols): 
 					if i_bin > 1 : 
@@ -846,11 +846,11 @@ class analyze:
 			
 		no_use_pars = wo_use_this_par.size+2
 		
-		sol_intermediate = np.zeros((no_use_pars, self.main['max_spec_channels'])) 
-		fitmatrix_reduced = np.zeros((self.main['max_spec_channels'], no_use_pars))
+		sol_intermediate = np.zeros((no_use_pars, self.main_dict['max_spec_channels']))
+		fitmatrix_reduced = np.zeros((self.main_dict['max_spec_channels'], no_use_pars))
 		
 		#Read in intermediate solution
-		filepath = os.path.join(self.main['output_dir'], maps_intermediate_solution_file) + suffix
+		filepath = os.path.join(self.main_dict['output_dir'], maps_intermediate_solution_file) + suffix
 		#saveddatafile = np.load(filepath)
 		saveddatafile = call_function_with_retry(np.load, 5, 0.1, 1.1, (filepath,))
 		if saveddatafile == None:
@@ -911,7 +911,7 @@ class analyze:
 				pool = multiprocessing.Pool(no_processors_to_use)				 
 
 				count = n_cols
-				data_lines = np.zeros((self.main['max_spec_channels'],	n_rows, n_cols))
+				data_lines = np.zeros((self.main_dict['max_spec_channels'],	n_rows, n_cols))
 				for i_fit in range(count):
 					for jj in range(n_rows):
 						data_lines[0:scan.mca_arr[i_fit, jj, :].size, jj, i_fit] = scan.mca_arr[i_fit, jj, :]					 
@@ -942,7 +942,7 @@ class analyze:
 							thisdata.dataset_orig[iline, :, mm, 2] = results_line[:, mm]
 
 			else: 
-				data_line = np.zeros((self.main['max_spec_channels'], n_rows))
+				data_line = np.zeros((self.main_dict['max_spec_channels'], n_rows))
 				count = n_cols
 				for i_fit in range(count):
 					data_line[:, :] = 0.
@@ -1105,12 +1105,12 @@ class analyze:
 
 					count = n_cols
 					#count = 1
-					data_lines = np.zeros((self.main['max_spec_channels'],	n_rows, n_cols))
+					data_lines = np.zeros((self.main_dict['max_spec_channels'],	n_rows, n_cols))
 					for i_fit in range(n_cols):
 						for jj in range(n_rows):
 							data_lines[0:scan.mca_arr[i_fit, jj, :].size, jj, i_fit] = scan.mca_arr[i_fit, jj, :]					 
 		
-					output_dir = self.main['output_dir'] 
+					output_dir = self.main_dict['output_dir']
 		
 					#					  #Single processor version for debugging
 					#					  for i_fit in range(count):
@@ -1230,7 +1230,7 @@ class analyze:
 							data_line[0:scan.mca_arr[i_fit, jj, :].size, jj] = scan.mca_arr[i_fit, jj, :]
 						elt_line[:] = elt1_arr[i_fit, :]
 
-						output_dir = self.main['output_dir']
+						output_dir = self.main_dict['output_dir']
 
 						fitted_line, ka_line, l_line, bkground_line,  values_line, bkgnd_line, tfy_line, xmin, xmax = fit.fit_line(data_line,
 												output_dir, n_rows, matrix, spectral_binning, elt_line, values_line, bkgnd_line, tfy_line, 
@@ -1378,7 +1378,7 @@ class analyze:
 
 			temp_filename = os.path.basename(mdafilename)	   
 			basename, extension = os.path.splitext(temp_filename)	 
-			filename = os.path.join(self.main['pca_dir'], basename) + '.pca.h5'
+			filename = os.path.join(self.main_dict['pca_dir'], basename) + '.pca.h5'
 			
 			gzip = 7
 
@@ -1461,7 +1461,7 @@ class analyze:
 			thisdata.max_chan_spec[0:len(max_chan_spec[:, 0]), j] = max_chan_spec[:, j]
 
 		if xanes == 0 :
-			h5file =  os.path.join(self.main['img_dat_dir'], header+xrf_bin_ext+'.h5'+suffix)  
+			h5file =  os.path.join(self.main_dict['img_dat_dir'], header+xrf_bin_ext+'.h5'+suffix)
 			print 'now trying to write HDF5 file', h5file	  
 			energy_channels = spectra[0].calib['off'] + spectra[0].calib['lin'] * np.arange((n_channels), dtype=np.float)	 
 			h5.write_hdf5(thisdata, h5file, scan.mca_arr, energy_channels, extra_pv = extra_pv, extra_pv_order = scan.extra_pv_key_list, update = True)
@@ -1489,7 +1489,7 @@ class analyze:
 			imgdat_filenames.append(temp_filename)
 		else:
 			#print 'XRFmaps_dir', self.main['XRFmaps_dir']
-			dirList=os.listdir(self.main['XRFmaps_dir'])
+			dirList=os.listdir(self.main_dict['XRFmaps_dir'])
 			for fname in dirList:
 				if fname[-4:] == '.h50':
 					imgdat_filenames.append(fname)
@@ -1506,8 +1506,8 @@ class analyze:
 			# is the avergae .dat file older than the dat0 file ? if so, generate a
 			# new avg file, otherwise skip it.
 		
-			sFile_zero = os.path.join(self.main['XRFmaps_dir'], imgdat_filenames[n_filenumber]+'.h5'+str(0))
-			sFile_avg = os.path.join(self.main['XRFmaps_dir'], imgdat_filenames[n_filenumber]+'.h5')
+			sFile_zero = os.path.join(self.main_dict['XRFmaps_dir'], imgdat_filenames[n_filenumber]+'.h5'+str(0))
+			sFile_avg = os.path.join(self.main_dict['XRFmaps_dir'], imgdat_filenames[n_filenumber]+'.h5')
 			#res_zero = os.stat(sFile_zero)
 			
 			#This is to check if the .h5 is there. Skipping because will save new one 
@@ -1521,7 +1521,7 @@ class analyze:
 
 			added_number_detectors = 0
 			for this_detector_element in range(total_number_detectors):
-				sfile = os.path.join(self.main['XRFmaps_dir'], imgdat_filenames[n_filenumber] + '.h5' + str(this_detector_element).strip())
+				sfile = os.path.join(self.main_dict['XRFmaps_dir'], imgdat_filenames[n_filenumber] + '.h5' + str(this_detector_element).strip())
 				#print sfile 
 				n_ev, n_rows, n_cols, n_energy, energy, energy_spec, scan_time_stamp, dataset_orig = self.change_xrf_resetvars()
 				temp = max([sfile.split('/'), sfile.split('\\')])
@@ -1583,7 +1583,7 @@ class analyze:
 			avg_XRFmaps_info.max_chan_spec[:, :] = avg_XRFmaps_info.max_chan_spec[:, :] / added_number_detectors
 			avg_XRFmaps_info.raw_spec[:, :] = avg_XRFmaps_info.raw_spec[:, :] / added_number_detectors
 
-			h5p.write_hdf5(avg_XRFmaps_info, os.path.join(self.main['XRFmaps_dir'], imgdat_filenames[n_filenumber]+'.h5'), avg_mca_arr, energy_channels, extra_pv=extra_pv)
+			h5p.write_hdf5(avg_XRFmaps_info, os.path.join(self.main_dict['XRFmaps_dir'], imgdat_filenames[n_filenumber]+'.h5'), avg_mca_arr, energy_channels, extra_pv=extra_pv)
 
 		return
 
@@ -1653,7 +1653,7 @@ class analyze:
 		
 		if save_csv == 1:
 			csvfilename = 'csv_' + filename + '.csv'
-			file_csv = os.path.join(self.main['output_dir'], csvfilename)
+			file_csv = os.path.join(self.main_dict['output_dir'], csvfilename)
 
 		if (png > 0) or (ps > 0):
 			if png > 0:
@@ -1687,7 +1687,7 @@ class analyze:
 				fig.add_axes()
 				axes = fig.gca()
 					
-				file_ps = os.path.join(self.main['output_dir'], ps_filename)
+				file_ps = os.path.join(self.main_dict['output_dir'], ps_filename)
 
 		if spectra[droplist_spectrum].used_chan > 0:
 			this_axis_calib = droplist_spectrum
@@ -1790,8 +1790,8 @@ class analyze:
 					axes.text(0.97, -0.23, 'mapspy', color=foreground_color, transform=axes.transAxes)
 					if (png == 1) or (png == 2) :  
 						image_filename = filename+'.png'
-						print 'saving ', os.path.join(self.main['output_dir'], image_filename)
-						fig.savefig(os.path.join(self.main['output_dir'], image_filename), dpi=dpi, facecolor=background_color, edgecolor=None)
+						print 'saving ', os.path.join(self.main_dict['output_dir'], image_filename)
+						fig.savefig(os.path.join(self.main_dict['output_dir'], image_filename), dpi=dpi, facecolor=background_color, edgecolor=None)
 
 					if ps > 0:
 						fig.savefig(file_ps)

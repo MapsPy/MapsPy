@@ -56,12 +56,12 @@ class calibration:
 	# -----------------------------------------------------------------------------
 	def read_generic_calibration(self, this_detector, total_number_detectors, no_nbs, fitp, info_elements):
 		#read info from maps_standardinfo.txt
-		maps_standardInfoFilename = os.path.join(self.main_dict['master_dir'],'maps_standardinfo.txt')
-		print 'opening ',maps_standardInfoFilename
+		maps_standardInfoFilename = os.path.join(self.main_dict['master_dir'], 'maps_standardinfo.txt')
+		print 'opening ', maps_standardInfoFilename
 		standardInfoFile = open_file_with_retry(maps_standardInfoFilename, 'rt') 
-		if standardInfoFile == None:
+		if standardInfoFile is None:
 			return
-		#parse the file for filename, elements, and weights
+		# parse the file for filename, elements, and weights
 		standardinfo_dict = dict()
 		line = standardInfoFile.readline()
 		while len(line) > 0 :
@@ -119,7 +119,7 @@ class calibration:
 		srcurrent_name = ''
 
 		overide_files_found = 0
-		maps_overridefile = os.path.join(self.main_dict['master_dir'],'maps_fit_parameters_override.txt')
+		maps_overridefile = os.path.join(self.main_dict['master_dir'], 'maps_fit_parameters_override.txt')
 		try:
 			f = open(maps_overridefile, 'rt')
 			print maps_overridefile, ' exists.'
