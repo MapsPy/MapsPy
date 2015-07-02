@@ -96,7 +96,7 @@ def select_beamline(main_dict, make_maps_conf, this_beamline):
 	make_maps_conf.use_beamline = this_beamline
 
 	print 'make_maps_conf.version', make_maps_conf.version
-	print 'main[beamline]', main_dict['beamline']
+	print 'main_dict[beamline]', main_dict['beamline']
 
 	if main_dict['beamline'] == '2-ID-E':
 		make_maps_conf.use_det[0] = 1
@@ -179,7 +179,7 @@ def load_spectrum(filename, spectra, append = 1):
 	ds_amp = np.zeros((3))
 
 	f = open_file_with_retry(filename, 'rt')
-	if f == None:
+	if f is None:
 		print 'load_spectrum(): Could not open file:', filename
 		return
 
@@ -203,7 +203,6 @@ def load_spectrum(filename, spectra, append = 1):
 
 	amp = np.zeros((8, 3))		 # 8 amplifiers, each with a numerical value(0) and a unit(1), resulting in  a factor (3)
 	amp[:, 0] = 1. # put in a numerical value default of 1.
-
 
 	real_time = []
 	live_time = []
@@ -845,7 +844,7 @@ def _option_b_(main_dict, maps_conf, maps_def, total_number_detectors, info_elem
 		print src_files
 		for fn in src_files:
 			full_file_name = os.path.join(os.path.join(current_directory, 'output'), fn)
-			if (os.path.isfile(full_file_name)):
+			if os.path.isfile(full_file_name):
 				shutil.copy(full_file_name, os.path.join(current_directory, 'output_old'))
 				os.remove(full_file_name)
 
@@ -854,6 +853,7 @@ def _option_b_(main_dict, maps_conf, maps_def, total_number_detectors, info_elem
 # ------------------------------------------------------------------------------------------------
 def _option_c_(main_dict, current_directory, cb_update_func=None):
 	print '\n Section C \n'
+	check_output_dirs(main_dict)
 	#Call make_maps and force fitting. Overrides USE_FIT in maps_setting.txt
 	make_maps.main(main_dict, wdir=current_directory, force_fit=1, no_fit=False, cb_update_func=cb_update_func)
 
@@ -966,18 +966,18 @@ def maps_batch(wdir='', a=1,b=0,c=0,d=0,e=0, cb_update_func=None):
 			'max_spec_channels':2048L, 
 			'max_spectra':4096L, 
 			'max_ICs':6L,
-            'standard_filenames': [],
-            'total_number_detectors': 1,
-            'max_no_processors_files': 1,
-            'max_no_processors_lines': -1,
-            'write_hdf': 0,
-            'use_fit': 0,
-            'quick_dirty': 0,
-            'xrf_bin': 0,
-            'nnls': 0,
-            'detector_to_start_with': 0,
-            'xanes_scan': 0,
-            'version': 0}
+			'standard_filenames': [],
+			'total_number_detectors': 1,
+			'max_no_processors_files': 1,
+			'max_no_processors_lines': -1,
+			'write_hdf': 0,
+			'use_fit': 0,
+			'quick_dirty': 0,
+			'xrf_bin': 0,
+			'nnls': 0,
+			'detector_to_start_with': 0,
+			'xanes_scan': 0,
+			'version': 0}
 
 	# Get info from maps_settings.txt
 	print 'maps_batch'

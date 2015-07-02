@@ -479,14 +479,13 @@ class detector_maps:
 				anl = maps_analyze.analyze()
 				nrml, ntmb, rdt = anl.maps_simple_dpc_integration(nrml, ntmb, no_int = no_int)
 				# notem nrml, ntmb, now normalized (what comes up ust go down)
-				if make_maps_conf.dmaps[this_det].name == 'H_dpc_norm' : 
+				if make_maps_conf.dmaps[this_det].name == 'H_dpc_norm':
 					dmaps_set[0:nx, 0:ny, this_det] = nrml
-				if make_maps_conf.dmaps[this_det].name == 'V_dpc_norm' : 
+				if make_maps_conf.dmaps[this_det].name == 'V_dpc_norm':
 					dmaps_set[0:nx, 0:ny, this_det] = ntmb
-				if make_maps_conf.dmaps[this_det].name == 'phase' : 
-					dmaps_set[0:nx, 0:ny, this_det] = rdt		   
-	  
-	  
+				if make_maps_conf.dmaps[this_det].name == 'phase':
+					dmaps_set[0:nx, 0:ny, this_det] = rdt
+
 			if 'deadT' in make_maps_conf.dmaps[this_det].name:
 				if ('OCR1' in det_descr) and ('ICR1' in det_descr):
 					wo_1 = det_descr.index('OCR1')

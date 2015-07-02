@@ -1184,6 +1184,9 @@ class analyze:
 						bkgnd[start+iline, :] = bkgnd_line[:]
 						tfy[start+iline, :] = tfy_line[:]
 
+						if fitted_line is None:
+							continue
+
 						for jj in range(n_rows):
 							fitted_temp[xmin:xmax+1, kk] = fitted_temp[xmin:xmax+1, kk] + fitted_line[xmin:xmax+1, jj]
 							Ka_temp[xmin:xmax+1, kk] = Ka_temp[xmin:xmax+1, kk] + ka_line[xmin:xmax+1, jj]
@@ -1232,9 +1235,12 @@ class analyze:
 
 						output_dir = self.main_dict['output_dir']
 
-						fitted_line, ka_line, l_line, bkground_line,  values_line, bkgnd_line, tfy_line, xmin, xmax = fit.fit_line(data_line,
+						fitted_line, ka_line, l_line, bkground_line, values_line, bkgnd_line, tfy_line, xmin, xmax = fit.fit_line(data_line,
 												output_dir, n_rows, matrix, spectral_binning, elt_line, values_line, bkgnd_line, tfy_line, 
 												info_elements, fitp, old_fitp, fitp.add_pars, keywords, add_matrixfit_pars, xrf_bin, calib)
+
+						if fitted_line is None:
+							continue
 
 						for jj in range(n_rows):
 							fitted_temp[xmin:xmax + 1, kk] = fitted_temp[xmin:xmax + 1, kk] + fitted_line[xmin:xmax + 1, jj]
@@ -1488,7 +1494,7 @@ class analyze:
 			basename, extension = os.path.splitext(temp_filename)	  
 			imgdat_filenames.append(temp_filename)
 		else:
-			#print 'XRFmaps_dir', self.main['XRFmaps_dir']
+			#print 'XRFmaps_dir', self.main_dict['XRFmaps_dir']
 			dirList=os.listdir(self.main_dict['XRFmaps_dir'])
 			for fname in dirList:
 				if fname[-4:] == '.h50':

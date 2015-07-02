@@ -160,7 +160,7 @@ class fitp_info:
 		
 		# in add pars, have room for up to 7 pileup peaks
 		npars = np.amax(mele_pos) - np.amin(kele_pos) + 1 + 10
-		self.add_pars = np.empty( (npars, 12), dtype=object)	  
+		self.add_pars = np.empty((npars, 12), dtype=object)
 		for i in range(npars):
 			for j in range(12):
 				self.add_pars[i, j] = Cpar()
@@ -251,7 +251,7 @@ class maps_fit_parameters:
 		# to disable compton UNCOMMENT below
 		# fitp.s.batch[fitp.keywords.compton_pos,*] = [1]
 
-		fitp.s.name[fitp.keywords.added_params] = ['snip_width', 'si_escape', 'ge_escape', 'linear'] + ['pileup']*9
+		fitp.s.name[fitp.keywords.added_params] = ['snip_width', 'si_escape', 'ge_escape', 'linear'] + ['pileup'] * 9
 		fitp.s.val[fitp.keywords.added_params] = [0.15, 0., 0., 0.]+ [1e-10]*9
 		fitp.s.use[fitp.keywords.added_params] = [1, 1, 1, 1] + [1]*9
 		fitp.s.min[fitp.keywords.added_params] = [0.1, 0., 0., 0.] + [ -10]*9
@@ -488,7 +488,7 @@ class maps_fit_parameters:
 
 #-----------------------------------------------------------------------------
 # Read fit parameters from a file
-	def read_fitp(self, filename, info_elements, det = 0, string_only = False): 
+	def read_fitp(self, filename, info_elements, det=0, string_only=False):
 		
 		fitp = self.fitp
 		
@@ -512,14 +512,14 @@ class maps_fit_parameters:
 				
 				elif tag == 'IDENTIFYING_NAME_[WHATEVERE_YOU_LIKE]' : string = value
 				
-				elif tag == 'ELEMENTS_TO_FIT' :  
+				elif tag == 'ELEMENTS_TO_FIT':
 					test_string = value.split(',')
 					test_string = [x.strip() for x in test_string]	  
-					if string_only : 
+					if string_only:
 						f.close() 
-						return test_string
+						return fitp, test_string, None
 					
-				elif tag == 'ELEMENTS_WITH_PILEUP' :  
+				elif tag == 'ELEMENTS_WITH_PILEUP':
 					pileup_string = value.split(',')
 					pileup_string = [x.strip() for x in pileup_string]
 
@@ -538,99 +538,99 @@ class maps_fit_parameters:
 					if verbose: print tag, temp
 					fitp.s.min[keywords.energy_pos[0]] = temp[det]
 
-				elif tag == 'CAL_SLOPE_[E_LINEAR]' :  
+				elif tag == 'CAL_SLOPE_[E_LINEAR]':
 					temp = map(float,value.split(','))
 					if verbose: print tag, temp
 					fitp.s.val[keywords.energy_pos[1]] = temp[det]
 
-				elif tag == 'CAL_SLOPE_[E_LINEAR]_MAX' : 
+				elif tag == 'CAL_SLOPE_[E_LINEAR]_MAX':
 					temp = map(float,value.split(','))
 					if verbose: print tag, temp
 					fitp.s.max[keywords.energy_pos[1]] = temp[det]
 
-				elif tag == 'CAL_SLOPE_[E_LINEAR]_MIN' :  
+				elif tag == 'CAL_SLOPE_[E_LINEAR]_MIN':
 					temp = map(float,value.split(','))
 					if verbose: print tag, temp
 					fitp.s.min[keywords.energy_pos[1]] = temp[det]
 
-				elif tag == 'CAL_QUAD_[E_QUADRATIC]'  :  
+				elif tag == 'CAL_QUAD_[E_QUADRATIC]':
 					temp = map(float,value.split(','))
 					if verbose: print tag, temp
 					fitp.s.val[keywords.energy_pos[2]] = temp[det]
 					# if this parameter is zero, do NOT fit 
-					if (fitp.s.val[keywords.energy_pos[2]]) == 0. : 
-						fitp.s.batch[keywords.energy_pos[2],:] = 1
+					if (fitp.s.val[keywords.energy_pos[2]]) == 0.0:
+						fitp.s.batch[keywords.energy_pos[2], :] = 1
 						fitp.s.use[keywords.energy_pos[2]] = 1
 					else: 
-						fitp.s.batch[keywords.energy_pos[2],:] = fitp.s.batch[keywords.energy_pos[1],:] 
+						fitp.s.batch[keywords.energy_pos[2], :] = fitp.s.batch[keywords.energy_pos[1], :]
 						fitp.s.use[keywords.energy_pos[2]] = fitp.s.use[keywords.energy_pos[1]]
 
-				elif tag == 'CAL_QUAD_[E_QUADRATIC]_MAX' :	
+				elif tag == 'CAL_QUAD_[E_QUADRATIC]_MAX':
 					temp = map(float,value.split(','))
 					if verbose: print tag, temp
 					fitp.s.max[keywords.energy_pos[2]] = temp[det]
 
-				elif tag == 'CAL_QUAD_[E_QUADRATIC]_MIN' :	
+				elif tag == 'CAL_QUAD_[E_QUADRATIC]_MIN':
 					temp = map(float,value.split(','))
 					if verbose: print tag, temp
 					fitp.s.min[keywords.energy_pos[2]] = temp[det]
 
-				elif tag == 'FWHM_OFFSET' :  
+				elif tag == 'FWHM_OFFSET':
 					temp = map(float,value.split(','))
 					if verbose: print tag, temp
 					fitp.s.val[keywords.fwhm_pos[0]] = temp[det]
 
-				elif tag == 'FWHM_FANOPRIME'  :  
+				elif tag == 'FWHM_FANOPRIME':
 					temp = map(float,value.split(','))
 					if verbose: print tag, temp
 					fitp.s.val[keywords.fwhm_pos[1]] = temp[det]
 
-				elif tag == 'COHERENT_SCT_ENERGY' :  
+				elif tag == 'COHERENT_SCT_ENERGY':
 					temp = float(value)
 					if verbose: print tag, temp
 					fitp.s.val[keywords.coherent_pos[0]] = temp
 
-				elif tag == 'COHERENT_SCT_ENERGY_MAX' : 
+				elif tag == 'COHERENT_SCT_ENERGY_MAX':
 					temp = float(value)
 					if verbose: print tag, temp
 					fitp.s.max[keywords.coherent_pos[0]] = temp
 
-				elif tag == 'COHERENT_SCT_ENERGY_MIN' : 
+				elif tag == 'COHERENT_SCT_ENERGY_MIN':
 					temp = float(value)
 					if verbose: print tag, temp
 					fitp.s.min[keywords.coherent_pos[0]] = temp
 
-				elif tag == 'COMPTON_ANGLE' :  
+				elif tag == 'COMPTON_ANGLE':
 					temp = map(float,value.split(','))
 					if verbose: print tag, temp
 					fitp.s.val[keywords.compton_pos[0]] = temp[det]
 
-				elif tag == 'COMPTON_ANGLE_MAX' :
+				elif tag == 'COMPTON_ANGLE_MAX':
 					temp = map(float,value.split(','))
 					if verbose: print tag, temp
 					fitp.s.max[keywords.compton_pos[0]] = temp[det]
 
-				elif tag == 'COMPTON_ANGLE_MIN' : 
+				elif tag == 'COMPTON_ANGLE_MIN':
 					temp = map(float,value.split(','))
 					if verbose: print tag, temp
 					fitp.s.min[keywords.compton_pos[0]] = temp[det]
 
-				elif tag == 'COMPTON_FWHM_CORR' :  
+				elif tag == 'COMPTON_FWHM_CORR':
 					temp = map(float,value.split(','))
 					if verbose: print tag, temp
 					fitp.s.val[keywords.compton_pos[1]] = temp[det]
 
-				elif tag == 'COMPTON_STEP' : 
+				elif tag == 'COMPTON_STEP':
 					temp = map(float,value.split(','))
 					if verbose: print tag, temp
 					fitp.s.val[keywords.compton_pos[3]] = temp[det]
 
-				elif tag == 'COMPTON_F_TAIL' :	
+				elif tag == 'COMPTON_F_TAIL':
 					temp = map(float,value.split(','))
 					if verbose: print tag, temp
 					fitp.s.val[keywords.compton_pos[4]] = temp[det]
 
-				elif tag == 'COMPTON_GAMMA' : 
+				elif tag == 'COMPTON_GAMMA':
 					temp = map(float,value.split(','))
 					if verbose: print tag, temp
 					fitp.s.val[keywords.compton_pos[5]] = temp[det]
@@ -871,53 +871,58 @@ class maps_fit_parameters:
 
 				elif tag == 'SI_ESCAPE_FACTOR' : 
 					temp = float(value)
-					if verbose: print tag, temp
+					if verbose:
+						print tag, temp
 					fitp.s.val[keywords.added_params[1]] = temp
 
 				elif tag == 'GE_ESCAPE_FACTOR' : 
 					temp = float(value)
-					if verbose: print tag, temp
+					if verbose:
+						print tag, temp
 					fitp.s.val[keywords.added_params[2]] = temp
 
 				elif tag == 'ESCAPE_LINEAR' :  
 					temp = float(value)
-					if verbose: print tag, temp
+					if verbose:
+						print tag, temp
 					fitp.s.val[keywords.added_params[3]] = temp
 
 				elif tag == 'SI_ESCAPE_ENABLE' : 
 					temp = float(value)
-					if verbose: print tag, temp
-					if temp == 0. :
+					if verbose:
+						print tag, temp
+					if temp == 0.0:
 						fitp.s.use[keywords.added_params[1]] = 1
-						fitp.s.batch[keywords.added_params[1],1:4] = 1
+						fitp.s.batch[keywords.added_params[1], 1:4] = 1
 						fitp.s.use[keywords.added_params[3]] = 1
-						fitp.s.batch[keywords.added_params[3],1:4] = 1
+						fitp.s.batch[keywords.added_params[3], 1:4] = 1
 					else: 
 						fitp.s.use[keywords.added_params[1]] = 2
-						fitp.s.batch[keywords.added_params[1],1:4] = 2
+						fitp.s.batch[keywords.added_params[1], 1:4] = 2
 						fitp.s.use[keywords.added_params[3]] = 2
-						fitp.s.batch[keywords.added_params[3],1:4] = 2
+						fitp.s.batch[keywords.added_params[3], 1:4] = 2
 	
-				elif tag == 'GE_ESCAPE_ENABLE' :  
+				elif tag == 'GE_ESCAPE_ENABLE':
 					temp = float(value)
-					if verbose: print tag, temp
-					if temp == 0. :
+					if verbose:
+						print tag, temp
+					if temp == 0.:
 						fitp.s.use[keywords.added_params[2]] = 1
-						fitp.s.batch[keywords.added_params[2],1:4] = 1
+						fitp.s.batch[keywords.added_params[2], 1:4] = 1
 						fitp.s.use[keywords.added_params[3]] = 1
-						fitp.s.batch[keywords.added_params[3],1:4] = 1
+						fitp.s.batch[keywords.added_params[3], 1:4] = 1
 					else:
 						fitp.s[keywords.added_params[2]].use = 2
-						fitp.s.batch[keywords.added_params[2],1:4] = 2
+						fitp.s.batch[keywords.added_params[2], 1:4] = 2
 						fitp.s[keywords.added_params[3]].use = 2
-						fitp.s.batch[keywords.added_params[3],1:4] = 2
+						fitp.s.batch[keywords.added_params[3], 1:4] = 2
 
 		f.close()
 		
 		return fitp, test_string, pileup_string
 	
 #-----------------------------------------------------------------------------	  
-	def write_fit_parameters(self, main, fitp, filename, suffix=''):
+	def write_fit_parameters(self, main_dict, fitp, filename, suffix=''):
 
 		print 'saving ', filename
 		
@@ -947,7 +952,7 @@ class maps_fit_parameters:
 		DS_AMP_SENS_UNIT = -1	
 							
 		#Look for override files in main.master_dir
-		maps_overridefile = os.path.join(main['master_dir'], 'maps_fit_parameters_override.txt')+suffix
+		maps_overridefile = os.path.join(main_dict['master_dir'], 'maps_fit_parameters_override.txt')+suffix
 		try:
 			f = open(maps_overridefile, 'rt')	 
 			print maps_overridefile, ' exists.'
@@ -955,7 +960,7 @@ class maps_fit_parameters:
 		except :
 			# if i cannot find an override file specific per detector, assuming
 			# there is a single overall file.
-			maps_overridefile = os.path.join(main['master_dir'], 'maps_fit_parameters_override.txt')
+			maps_overridefile = os.path.join(main_dict['master_dir'], 'maps_fit_parameters_override.txt')
 
 		try:
 			f = open_file_with_retry(maps_overridefile, 'rt')
@@ -1018,7 +1023,7 @@ class maps_fit_parameters:
 
 		BRANCHING_FAMILY_ADJUSTMENT_L = []
 		BRANCHING_RATIO_ADJUSTMENT_L = []
-		filepath = os.path.join(main['master_dir'], 'maps_fit_parameters_override.txt')
+		filepath = os.path.join(main_dict['master_dir'], 'maps_fit_parameters_override.txt')
 		f2 = open_file_with_retry(filepath, 'rt')
 		if f2 == None:
 			print 'Error opening file ',filepath,'to write to!'

@@ -999,10 +999,9 @@ class analyze:
 
 			#return the number of function evaluations:
 			niter = self.nfev
-			if niter == 1 : 
-				text = 'warning: number of iterations resulting from call of maps_fit_spectrum is 1. Must abort this action. '
-				print text
-				return
+			if niter == 1:
+				print 'warning: number of iterations resulting from call of maps_fit_spectrum is 1. Must abort this action. '
+				return None, None, None, None, None, None, None, None, None
 
 			fitp_values = u[:]
 			fitp_values[keywords.peaks] = 10.**u[keywords.peaks]
@@ -1263,11 +1262,11 @@ class analyze:
 		
 		hc = 0.001239842		# wavelength-energy relationship, microns / keV
 
-		if nrml.ndim < 1 : 
+		if nrml.ndim < 1:
 			nrml = 0
 			ntmb = 0
 			rdt = 0
-			return 
+			return nrml, ntmb, rdt
 		
 		sz = nrml.shape
 		nx = sz[0]

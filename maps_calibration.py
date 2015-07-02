@@ -83,7 +83,7 @@ class calibration:
 		print standardinfo_dict
 		'''
 		#open standards file 
-		standardFilename = os.path.join(self.main['master_dir'],standardinfo_dict['FILENAME'])
+		standardFilename = os.path.join(self.main_dict['master_dir'],standardinfo_dict['FILENAME'])
 		if total_number_detectors > 1:
 			standardFilename += str(this_detector)
 		mca_dict = load_mca(standardFilename)
@@ -185,6 +185,9 @@ class calibration:
 																														srcurrent_name=srcurrent_name,
 																														us_ic_name=us_ic_name,
 																														ds_ic_name=ds_ic_name)
+			if calibration is None:
+				return
+
 			if data.size <=1 :
 				print 'error: standard does not contain data : ' + std.name
 			no_mca_detectors = data.shape
@@ -832,7 +835,7 @@ class calibration:
 		f = open_file_with_retry(filename, 'rt')
 		if f is None:
 			print 'Could not open file:', filename
-			return
+			return None, None, None, None, None, None, None, None, None, None
 
 		line = ''
 		line = f.readline() # 1. line is version
@@ -870,60 +873,60 @@ class calibration:
 				value = ''.join(slist[1:])
 
 				if	 tag == 'VERSION': version = float(value)
-				elif tag == 'DATE' : date  =  value
-				elif tag == 'ELEMENTS' : n_detector_elements = int(value)
-				elif tag == 'CHANNELS' : n_channels = int(value)
-				elif tag == 'ROIS' : 
+				elif tag == 'DATE': date  =  value
+				elif tag == 'ELEMENTS': n_detector_elements = int(value)
+				elif tag == 'CHANNELS': n_channels = int(value)
+				elif tag == 'ROIS':
 					n_rois = np.zeros((n_detector_elements), dtype=int)
 					value = value.split(' ')
 					valuelist = [int(x) for x in value if x != '']
 					n_rois[:] = valuelist
 					max_rois = np.max(n_rois)
-				elif tag == 'REAL_TIME'  : 
+				elif tag == 'REAL_TIME':
 					real_time = np.zeros((n_detector_elements))
 					value = value.split(' ')
 					valuelist = [float(x) for x in value if x != '']
 					real_time[:] = valuelist
-				elif tag == 'LIVE_TIME'  :	
+				elif tag == 'LIVE_TIME':
 					live_time = np.zeros((n_detector_elements))
 					value = value.split(' ')
 					valuelist = [float(x) for x in value if x != '']
 					#print 'live time', valuelist
 					live_time[:] = valuelist
-				elif tag == 'CAL_OFFSET'  :  
+				elif tag == 'CAL_OFFSET':
 					value = value.split(' ')
 					valuelist = [float(x) for x in value if x != '']
 					calibration['offset'][:] = valuelist 
-				elif tag == 'CAL_SLOPE'  :	
+				elif tag == 'CAL_SLOPE':
 					value = value.split(' ')
 					valuelist = [float(x) for x in value if x != '']
 					calibration['slope'][:] = valuelist				 
-				elif tag == 'CAL_QUAD'	:  
+				elif tag == 'CAL_QUAD':
 					value = value.split(' ')
 					valuelist = [float(x) for x in value if x != '']
 					calibration['quad'][:] = valuelist 
-				elif tag == 'TWO_THETA'  :	
+				elif tag == 'TWO_THETA':
 					two_theta = np.zeros((n_detector_elements))
 					value = value.split(' ')
 					valuelist = [float(x) for x in value if x != '']
 					two_theta[:] = valuelist
-				elif tag == 'UPSTREAM_IONCHAMBER' :  
+				elif tag == 'UPSTREAM_IONCHAMBER':
 					IC_US = np.zeros((n_detector_elements))
 					value = value.split(' ')
 					valuelist = [float(x) for x in value if x != '']
 					IC_US[:] = valuelist
-				elif tag == 'DOWNSTREAM_IONCHAMBER' :  
+				elif tag == 'DOWNSTREAM_IONCHAMBER':
 					IC_DS = np.zeros((n_detector_elements))
 					value = value.split(' ')
 					valuelist = [float(x) for x in value if x != '']
 					IC_DS[:] = valuelist
-				elif tag == 'ENVIRONMENT' :  
+				elif tag == 'ENVIRONMENT':
 					value = ':'.join(slist[1:])
 					pos = value.find('=')
 					etag = value[0:pos].strip()
 					vallist = value.split('"')
 					temp = vallist[1]
-					if etag == 'S:SRcurrentAI' :
+					if etag == 'S:SRcurrentAI':
 						current = float(temp)	 
 					elif etag == '2xfm:scaler1_cts1.B':
 						if IC_US == 0 : IC_US = float(temp)			  
@@ -958,7 +961,7 @@ class calibration:
 							if (temp == "mA/V") : amp[0, 1] = 3
 						else:
 							amp[0, 1] = float(temp)			 
-					elif etag[5:] == 'A2sens_unit.VAL' : 
+					elif etag[5:] == 'A2sens_unit.VAL':
 						if (temp == "nA/V") or	(temp == "pA/V") or (temp == "uA/V") or (temp == "mA/V"):
 							if (temp == "pA/V") : amp[1, 1] = 0
 							if (temp == "nA/V") : amp[1, 1] = 1
@@ -966,7 +969,7 @@ class calibration:
 							if (temp == "mA/V") : amp[1, 1] = 3
 						else: 
 							amp[1, 1] = float(temp)
-					elif etag[5:] == 'A3sens_unit.VAL' : 
+					elif etag[5:] == 'A3sens_unit.VAL':
 						if (temp == "nA/V") or	(temp == "pA/V") or (temp == "uA/V") or (temp == "mA/V"):
 							if (temp == "pA/V") : amp[2, 1] = 0
 							if (temp == "nA/V") : amp[2, 1] = 1
@@ -974,7 +977,7 @@ class calibration:
 							if (temp == "mA/V") : amp[2, 1] = 3
 						else: 
 							amp[2, 1] = float(temp)
-					elif etag[5:] == 'A4sens_unit.VAL' : 
+					elif etag[5:] == 'A4sens_unit.VAL':
 						if (temp == "nA/V") or (temp == "pA/V") or (temp == "uA/V") or (temp == "mA/V") : 
 							if (temp == "pA/V") : amp[3, 1] = 0
 							if (temp == "nA/V") : amp[3, 1] = 1
@@ -982,17 +985,17 @@ class calibration:
 							if (temp == "mA/V") : amp[3, 1] = 3
 						else:
 							amp[3, 1] = float(temp)
-					if len(srcurrent_name) > 0 : 
-						if etag == srcurrent_name : 
+					if len(srcurrent_name) > 0:
+						if etag == srcurrent_name:
 							current = float(temp)
-					if len(us_ic_name) > 0 : 
-						if etag == us_ic_name : 
+					if len(us_ic_name) > 0:
+						if etag == us_ic_name:
 							IC_US = float(temp)
 					if len(ds_ic_name) > 0: 
-						if etag == ds_ic_name : 
+						if etag == ds_ic_name:
 							IC_DS = float(temp)
 
-				elif tag == 'DATA' :  
+				elif tag == 'DATA':
 					found_data = 1
 					dataindex = lines.index(line)
 					break
@@ -1093,7 +1096,7 @@ class calibration:
 
 		if nbs_files_found == 0: 
 			print 'Did not find NBS calibration file, returning'
-			return
+			return None
 		if nbs_files_found == 1:
 			filepath = os.path.join(self.main_dict['master_dir'], filename)
 
@@ -1101,6 +1104,8 @@ class calibration:
 																														 srcurrent_name = srcurrent_name, 
 																														 us_ic_name = us_ic_name, 
 																														 ds_ic_name = ds_ic_name)
+			if calibration is None:
+				return None
 			if self.maps_conf.use_det.sum() > 0:
 				if current == 0:
 					warning_msg = 'Could not find synchrotron current in the NBS standard. Will proceed assuming a SRcurrent of 100 mA'
@@ -1127,7 +1132,8 @@ class calibration:
 					print 'warning: number of selected detectors does NOT match number OF detectors found in the mca file'
 
 				wo = np.where(self.maps_conf.use_det == 1)[0]
-				if len(wo) == 0 : return 
+				if len(wo) == 0:
+					return None
 				elif len(wo) == 1:
 					nbs.live_time = live_time
 					nbs.real_time = real_time					 
@@ -1145,7 +1151,8 @@ class calibration:
 		line = 'calibration curve for ' + desc1
 		print>>file_ptr, line.strip()
 		line = 'desc, name, Z, for_SRCurrent_norm, for_US_IC_norm, for_DS_IC_norm' + desc3 + ', measured_counts, error_bar'
-		if make_maps_conf.version >= 8: line = line + ', measured_nb1832, measured_nb1833'
+		if make_maps_conf.version >= 8:
+			line = line + ', measured_nb1832, measured_nb1833'
 		print>>file_ptr,  line.strip()
 		for ii in range(make_maps_conf.n_chan):
 			line = 'calib_curve_' + desc2 + ',' + make_maps_conf.chan[ii].name + ', '
@@ -1179,7 +1186,7 @@ class calibration:
 			os.makedirs(directory)
 			if not os.path.exists(directory):
 				print 'warning: did not find the output directory, and could not create a new output directory. Will abort this action'
-				return 0
+				return
 
 		# determine no of maximal supported detectors	 n_max
 		n_max = len(make_maps_conf.element_standard.real_time)
@@ -1190,10 +1197,10 @@ class calibration:
 			f = open_file_with_retry(filename, 'w')
 			if f is None:
 				print 'Could not open info_file:', filename
-				return 0
+				return
 		except :
 			print 'Could not open info_file:', filename
-			return 0
+			return
 
 		'''
 		# make_maps_conf
@@ -1729,8 +1736,8 @@ class calibration:
 
 			fit = maps_analyze.analyze()
 			u, fitted_spec, background, xmin, xmax, perror = fit.fit_spectrum(fitp, spectra[wo[i]].data, spectra[wo[i]].used_chan, spectra[wo[i]].calib, 
-							first = first, matrix = matrix, maxiter = maxiter)
-			if u == None:
+							first=first, matrix=matrix, maxiter=maxiter)
+			if u is None:
 				print 'Error calling fit_spectrum!. returning'
 				return None, None, None
 
@@ -1800,7 +1807,7 @@ class calibration:
 			spectra[self.main_dict['max_spectra']-8].data[:] = 0.
 			spectra[self.main_dict['max_spectra']-8].data[xmin:xmax + 1] = fitted_spec[:]
 			spectra[self.main_dict['max_spectra']-8].name = 'fitted'
-			for isp in range(self.main_dict['max_spectra']-8,self.main_dict['max_spectra']-3):
+			for isp in range(self.main_dict['max_spectra'] - 8, self.main_dict['max_spectra'] - 3):
 				spectra[isp].used_chan = spectra[wo[i]].used_chan 
 				spectra[isp].calib['off'] = spectra[wo[i]].calib['off'] 
 				spectra[isp].calib['lin'] = spectra[wo[i]].calib['lin']
@@ -1820,14 +1827,14 @@ class calibration:
 
 			filename = 'specfit_' + names[wo[i] + 1] + suffix
 			maps_tools.plot_spectrum(info_elements,
-									 spectra = spectra,
-									 i_spectrum = wo[i],
-									 add_plot_spectra = add_plot_spectra,
-									 add_plot_names = add_plot_names,
-									 ps = 0,
-									 fitp = fitp,
-									 filename= filename,
-									 outdir = self.main_dict['output_dir'])
+									spectra=spectra,
+									i_spectrum=wo[i],
+									add_plot_spectra=add_plot_spectra,
+									add_plot_names=add_plot_names,
+									ps=0,
+									fitp=fitp,
+									filename=filename,
+									outdir=self.main_dict['output_dir'])
 
 			if per_pix == 0:
 				dirt = self.main_dict['output_dir']

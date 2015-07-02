@@ -106,12 +106,12 @@ class henke:
 	def zcompound(self, compound_string, z_array, paren_multiplier=False):
 		
 		verbose = False
-		if verbose: print 'compound_string', compound_string
+		if verbose:
+			print 'compound_string', compound_string
 		if paren_multiplier == False:
 			z_array = np.zeros(92)
 			paren_multiplier=1.
 
-	  
 		max_z_index=93
 		
 		last_char_index = len(compound_string) - 1
@@ -120,7 +120,7 @@ class henke:
 		# is strip off the first element and process it.  We then
 		# call the routine over again to handle the next part of
 		# the string...
-		if (compound_string[0] != '(') :
+		if compound_string[0] != '(':
 			# Look to see if the string has an element
 			# like "C" or like "He".
 			first_char=compound_string[0]
@@ -129,15 +129,15 @@ class henke:
 			else: 
 				second_char = ''
 			this_element_name = first_char
-	  
-			if ((second_char >= 'a') and (second_char <= 'z')) :
+
+			if second_char >= 'a' and second_char <= 'z':
 				this_element_name = this_element_name + second_char
 				num_start_index = 2
 			else:
 				this_element_name = this_element_name + ' '
 				num_start_index = 1
-	  
-		if verbose: print 'this_element_name:',this_element_name,', num_start_index:', num_start_index		
+
+		if verbose: print 'this_element_name:', this_element_name, ', num_start_index:', num_start_index
 		
 		this_z=0
 		if	 this_element_name == 'H ': this_z=1
@@ -233,22 +233,18 @@ class henke:
 		elif this_element_name == 'Pa': this_z=91
 		elif this_element_name == 'U ': this_z=92
 		else: this_z=0
-		
-			
-		if (this_z == 0) :
-			print 'zcompound is confused: ',compound_string
+
+		if (this_z == 0):
+			print 'zcompound is confused: ', compound_string
 			compound_string=''
-			z_array = 0
-			return
-		
-		
-		
+			return np.zeros(0)
+
 		# Find the next element or parenthesis, as
 		# anything before it must be a number.
 		postnum_index = num_start_index
-		if len(compound_string) > num_start_index+1 :
+		if len(compound_string) > num_start_index + 1:
 			test_char = compound_string[postnum_index]
-		else :
+		else:
 			test_char = ''
 		while ( ((test_char == '0') or (test_char == '1') or \
 				 (test_char == '2') or (test_char == '2') or \
@@ -256,43 +252,40 @@ class henke:
 				 (test_char == '5') or (test_char == '6') or \
 				 (test_char == '7') or (test_char == '8') or \
 				 (test_char == '9') or (test_char == '.')) and \
-				 (postnum_index <= last_char_index) ) :
-			postnum_index=postnum_index+1
+				 (postnum_index <= last_char_index) ):
+			postnum_index = postnum_index + 1
 			if (postnum_index <= last_char_index) :
-				test_char=compound_string[postnum_index]
+				test_char = compound_string[postnum_index]
 			else:
-				test_char=''
-			  
+				test_char = ''
+
 		# is there more?
 		if (num_start_index != postnum_index) :
 			number_string=compound_string[num_start_index:postnum_index]
-			num_multiplier=1.
-			if verbose: print 'Trying to interpret ',number_string,' as a number.'
-			if (len(number_string) != 0) :
+			num_multiplier = 1.
+			if verbose:
+				print 'Trying to interpret ', number_string, ' as a number.'
+			if len(number_string) != 0:
 				num_multiplier = float(number_string)
 		else:
-			num_multiplier=1.
+			num_multiplier = 1.
 
 		# We've handled this element, so pop it into the
 		# matrix and continue.
 		if (this_z <= max_z_index) :
-			z_array[this_z-1] = z_array[this_z-1] + num_multiplier 
+			z_array[this_z - 1] = z_array[this_z - 1] + num_multiplier
 		else:
-			print 'zcompound: z_array smaller than ',max_z_index
-			z_array = 0
-			return
+			print 'zcompound: z_array smaller than ', max_z_index
+			return np.zeros(0)
 
 		# And deal with what's left
-		remaining_string=compound_string[postnum_index:last_char_index+1]
- 
-		if len(remaining_string) > 0:
-			z_array = self.zcompound(remaining_string,z_array,paren_multiplier=True)
-		
+		remaining_string=compound_string[postnum_index:last_char_index + 1]
 
-		
+		if len(remaining_string) > 0:
+			z_array = self.zcompound(remaining_string, z_array, paren_multiplier=True)
+
 		return z_array
-	
-	
+
 #-----------------------------------------------------------------------------	  
 	def zatwt(self, z_array): 
 		
@@ -395,7 +388,7 @@ class henke:
 				elif i+1 == 92: this_atwt=238.0289
 				else: this_atwt=0.
 
-				atwt=atwt+z_array[i]*this_atwt
+				atwt = atwt + z_array[i] * this_atwt
 
 		return atwt
 
@@ -404,8 +397,7 @@ class henke:
 	def extra(self, ielement = -1): 
 		
 		energies, f1, f2, n_extra, energies_extra, f1_extra, f2_extra = self.read(ielement, all = False)
-		
-		if n_extra != 0:
+		if n_extra is not None and n_extra != 0:
 			energies_all=np.concatenate((energies,energies_extra), axis=0)
 			f1_all=np.concatenate((f1,f1_extra), axis=0)
 			f2_all=np.concatenate((f2,f2_extra), axis=0)
@@ -418,14 +410,13 @@ class henke:
 			f1_all=f1
 			f2_all=f2
 
-
 		return energies, f1, f2, energies_extra, f1_extra, f2_extra
 
 #-----------------------------------------------------------------------------	  
-	def read(self, ielement = -1, all = True): 
+	def read(self, ielement=-1, all=True):
 		
 		# If we don't specifiy element return all energies 
-		if ielement == -1 : 
+		if ielement == -1:
 			all = True
 		
 		verbose = False
@@ -433,14 +424,14 @@ class henke:
 		
 		filename = 'reference/henke.xdr'
 		try:
-			file = open(str(filename),'rb')
+			file = open(str(filename), 'rb')
 		except:
 			try:
 				filename = '../reference/henke.xdr'
-				file = open(str(filename),'rb')
+				file = open(str(filename), 'rb')
 			except:
 				print 'Could not open file ', filename
-				return -1
+				return None, None, None, None, None, None, None
 		
 		if verbose:
 			print 'File: ', filename   
@@ -455,11 +446,10 @@ class henke:
 			if verbose:
 				print 'n_energies: ', n_energies  
 				print 'n_elements: ', n_elements	
-				expected_pos = expected_pos+2*4
-				print 'Actual, expected file position before reading energies: ' ,u.get_position(), expected_pos
-			
-			
-			energies = u.unpack_farray(n_energies, u.unpack_float)	 
+				expected_pos = expected_pos + 2 * 4
+				print 'Actual, expected file position before reading energies: ' , u.get_position(), expected_pos
+
+			energies = u.unpack_farray(n_energies, u.unpack_float)
 			energies = np.array(energies) 
 			if verbose:
 				print 'energies: ', energies  
@@ -470,8 +460,8 @@ class henke:
 			this_f2 = np.zeros((n_energies))
 
 			if verbose:		   
-				expected_pos = expected_pos+4*n_energies
-				print 'Actual, expected file position before reading elements: ',u.get_position(), expected_pos
+				expected_pos = expected_pos + 4 * n_energies
+				print 'Actual, expected file position before reading elements: ', u.get_position(), expected_pos
 		
 			for i_element in range(n_elements):
 				this_f1 = u.unpack_farray(n_energies, u.unpack_float)
@@ -482,7 +472,7 @@ class henke:
 				#print f1
 
 			if verbose:		   
-				expected_pos =expected_pos+n_elements*n_energies*2*4
+				expected_pos = expected_pos + n_elements * n_energies * 2 * 4
 				print 'Actual, expected file position before reading n_extra_energies: ', u.get_position(), expected_pos
 
 			n_extra_energies  = u.unpack_int()
@@ -490,10 +480,9 @@ class henke:
 				print 'n_extra_energies: ', n_extra_energies 
 			
 			if verbose:		   
-				expected_pos = expected_pos+4
-				print 'Actual, expected file position before reading extras: ',u.get_position(), expected_pos
-			
-			
+				expected_pos = expected_pos + 4
+				print 'Actual, expected file position before reading extras: ', u.get_position(), expected_pos
+
 			n_extra = np.zeros((n_elements), dtype = np.int)
 			extra_energies = np.zeros((n_elements, n_extra_energies))
 			extra_f1 = np.zeros((n_elements, n_extra_energies))
@@ -522,22 +511,22 @@ class henke:
 			if verbose:
 				print 'energies: ', energies  
 			
-			byte_offset = 4+4+4*n_energies + 8*ielement*n_energies
+			byte_offset = 4 + 4 + 4 * n_energies + 8 * ielement * n_energies
 			u.set_position(byte_offset)
 			
 			f1 = u.unpack_farray(n_energies, u.unpack_float)
 			f2 = u.unpack_farray(n_energies, u.unpack_float)
 			
-			byte_offset = 4+4+4*n_energies + 8*n_elements*n_energies
+			byte_offset = 4 + 4 + 4 * n_energies + 8 * n_elements * n_energies
 			u.set_position(byte_offset)
 			
 			n_extra_energies = u.unpack_int()
-			if verbose: print 'n_extra_energies ', n_extra_energies
-			
-			
+			if verbose:
+				print 'n_extra_energies ', n_extra_energies
+
 			# Now we have the above plus i_element times the quantity:
 			#	(2 for n_extra, and n_extra_energies each of three floats)
-			byte_offset = 4l+4l+4l*n_energies + 8l*n_elements*n_energies + 4l + ielement*(4l+12l*n_extra_energies)
+			byte_offset = 4l + 4l + 4l * n_energies + 8l * n_elements * n_energies + 4l + ielement * (4l + 12l * n_extra_energies)
 			u.set_position(byte_offset)
 			
 			n_extra = u.unpack_int()
@@ -552,11 +541,9 @@ class henke:
 		file.close()
 		
 		return energies, f1, f2, n_extra, extra_energies, extra_f1, extra_f2
-	
-	
-	
-#-----------------------------------------------------------------------------	  
-	def array(self, compound_name, density, graze_mrad = 0):
+
+	# -----------------------------------------------------------------------------
+	def array(self, compound_name, density, graze_mrad=0):
 
 		z_array = []
 		z_array, atwt = self.compound(compound_name,density)
@@ -567,29 +554,29 @@ class henke:
 		maxz = 92
 		first_time = 1
 		for i in range(maxz):
-			if (z_array[i] != 0.):
+			if z_array[i] != 0.0:
 				energies, this_f1, this_f2, n_extra, extra_energies, extra_f1, extra_f2 = self.read(ielement=i)
+				if energies is None:
+					continue
 				print this_f1.shape
-				if (first_time == 1) :
-					f1 = z_array[i]*this_f1
-					f2 = z_array[i]*this_f2
+				if first_time == 1:
+					f1 = z_array[i] * this_f1
+					f2 = z_array[i] * this_f2
 					first_time = 0
 				else:
-					f1 = f1+z_array[i]*this_f1
-					f2 = f2+z_array[i]*this_f2
-
+					f1 = f1 + z_array[i] * this_f1
+					f2 = f2 + z_array[i] * this_f2
 
 		num_energies = len(energies)
 		AVOGADRO=6.02204531e23
 		HC_ANGSTROMS=12398.52
 		RE=2.817938070e-13			  # in cm
-  
-		if (atwt != 0.0) :
+
+		if atwt != 0.0:
 			molecules_per_cc = density * AVOGADRO / atwt
 		else:
 			molecules_per_cc = 0.0
 
-  
 		wavelength_angstroms = HC_ANGSTROMS/energies
 		# This constant has wavelength in angstroms and then
 		# they are converted to centimeters.
@@ -597,12 +584,11 @@ class henke:
 		delta = constant * f1
 		beta = constant * f2
 		# Alpha is in inverse meters squared
-		alpha = 1.e4 * density * AVOGADRO * RE / (2.*np.math.pi*atwt)
+		alpha = 1.e4 * density * AVOGADRO * RE / (2. * np.math.pi * atwt)
 		#alpha = alpha[0]
 
-  
-		if (graze_mrad == 0.):
-			reflect=np.ones((num_energies))
+		if graze_mrad == 0.0:
+			reflect = np.ones((num_energies))
 		else:
 			theta = 1.0e-3 * graze_mrad
 			sinth = np.sin(theta)
@@ -623,7 +609,6 @@ class henke:
 				 gamma * gamma)
 			reflect= 50.0 * i_sigma * (1 + piosig)
 
-
 		denom = energies*4.*np.math.pi*beta
 
 		zeroes = np.where(denom == 0.)
@@ -632,47 +617,40 @@ class henke:
 		
 		inverse_mu = np.array((len(energies)))
 
-		inverse_mu = 1.239852/denom
-		if (len(zeroes) > 0) :
+		inverse_mu = 1.239852 / denom
+		if len(zeroes) > 0:
 			inverse_mu[zeroes] = np.inf
 
-
 		return energies, f1, f2, delta, beta, graze_mrad, reflect, inverse_mu, atwt, alpha
-  
 
-
-#-----------------------------------------------------------------------------	  
-	def get_henke(self, compound_name, density, energy):  
-			
-	
-		if (len(compound_name) == 0) :
+	# -----------------------------------------------------------------------------
+	def get_henke(self, compound_name, density, energy):
+		if len(compound_name) == 0:
 			print 'henke, compound_name, density, energy, f1, f2, delta, beta, '
 			print '    graze_mrad, reflect, inverse_mu=inverse_mu'
 			print '  inverse_mu is 1/e absorption length in microns. '
 			print '  atwt is the atom-averaged atomic weight for the compound'
-			return
-	 
-		
+			return None, None, None, None, None, None, None, None
+
 		enarr, f1arr, f2arr, deltaarr, betaarr, graze_mrad, reflect_arr, inverse_mu, atwt, alpha = self.array(compound_name, density)		   
-	
+
 		num_energies = len(enarr)
 		
 		high_index = 0
-		while ((energy > enarr[high_index]) and (high_index < (num_energies-1))) :
-			high_index = high_index+1
-		
-		
-		if (high_index == 0) : high_index = 1
-		low_index = high_index-1
+		while (energy > enarr[high_index]) and (high_index < (num_energies - 1)):
+			high_index = high_index + 1
+
+		if high_index == 0:
+			high_index = 1
+		low_index = high_index - 1
 		
 		ln_lower_energy = np.math.log(enarr[low_index])
 		ln_higher_energy = np.math.log(enarr[high_index])
-		fraction = (np.math.log(energy)-ln_lower_energy)/(ln_higher_energy-ln_lower_energy)
-		
+		fraction = (np.math.log(energy) - ln_lower_energy) / (ln_higher_energy - ln_lower_energy)
 
 		f1_lower = f1arr[low_index]
 		f1_higher = f1arr[high_index]
-		f1 =  f1_lower + fraction * (f1_higher - f1_lower)
+		f1 = f1_lower + fraction * (f1_higher - f1_lower)
 		
 		ln_f2_lower = np.math.log(np.abs(f2arr(low_index)))
 		ln_f2_higher = np.math.log(np.abs(f2arr(high_index)))
@@ -684,32 +662,26 @@ class henke:
 		
 		ln_beta_lower = np.math.log(np.abs(betaarr(low_index)))
 		ln_beta_higher = np.math.log(np.abs(betaarr(high_index)))
-		beta = np.math.exp(ln_beta_lower + fraction * (ln_beta_higher - ln_beta_lower) )
+		beta = np.math.exp(ln_beta_lower + fraction * (ln_beta_higher - ln_beta_lower))
 		
 		reflect_lower = reflect_arr[low_index]
 		reflect_higher = reflect_arr[high_index]
 		reflect =  reflect_lower + fraction * (reflect_higher - reflect_lower)
 	
-		if (beta != 0.) :
+		if beta != 0.0:
 			inverse_mu = 1.239852/(energy*4.*np.math.pi*beta) 
 		else:
 			inverse_mu = np.Inf
-	 
-		
+
 		return f1, f2, delta, beta, graze_mrad, reflect, inverse_mu, atwt 
 
-
-	
-#-----------------------------------------------------------------------------	  
-	def get_henke_single(self, name, density, energy_array):	  
-   
-
+	# -----------------------------------------------------------------------------
+	def get_henke_single(self, name, density, energy_array):
 		AVOGADRO = 6.02204531e23
 		HC_ANGSTROMS = 12398.52
 		RE = 2.817938070e-13		# in cm
 
-
-		z_array, atwt = self.compound(name.strip(), density)  
+		z_array, atwt = self.compound(name.strip(), density)
 		if len(z_array) == 0:
 			z_array = self.zcompound(name, z_array)
 			atwt = self.zatwt(z_array)
@@ -721,14 +693,12 @@ class henke:
 			return 0, 0, 0, 0
 		
 		z = wo+1
-		if (atwt != 0.0) :
+		if (atwt != 0.0):
 			molecules_per_cc = density * AVOGADRO / atwt
 		else:
 			molecules_per_cc = 0.0
 
-	
-		energies_all, f1_all, f2_all, energies_extra, f1_extra, f2_extra =	self.extra(ielement = z-1)	
-
+		energies_all, f1_all, f2_all, energies_extra, f1_extra, f2_extra = self.extra(ielement=z - 1)
 
 		if isinstance(energy_array, float):
 			n_array = 1
@@ -741,50 +711,40 @@ class henke:
 	
 		for i in range(n_array) : 
 			energy = energy_array
-		   
+
 			wavelength_angstroms = HC_ANGSTROMS/energy
 			# This constant has wavelength in angstroms and then
 			# they are converted to centimeters.
 			constant = RE * (1.0e-16 * wavelength_angstroms * wavelength_angstroms) * \
 						molecules_per_cc / (2.0 * np.pi)
-		   
-		   
+
 			wo = np.where(energies_all > energy)[0]
 			# the first value that is larger than energy must be the closest value
 			if len(wo) == 0:
 				hi_e_ind = 0 
 			else:
 				hi_e_ind = wo[0]
-	
-		   
+
 			wo = np.where(energies_all < energy)[0]
 			# the last value that is smaller than energy must be the closest value
 			if len(wo) == 0 :
-				lo_e_ind = len(energies_all)-1 
+				lo_e_ind = len(energies_all) - 1
 			else:
-				lo_e_ind = wo[-1] 
-		   
+				lo_e_ind = wo[-1]
+
 			ln_lower_energy = np.math.log(energies_all[lo_e_ind])
 			ln_higher_energy = np.math.log(energies_all[hi_e_ind])
-			fraction = (np.math.log(energy)-ln_lower_energy)/(ln_higher_energy-ln_lower_energy)
-		   
+			fraction = (np.math.log(energy) - ln_lower_energy) / (ln_higher_energy - ln_lower_energy)
+
 			f1_lower = f1_all[lo_e_ind]
 			f1_higher = f1_all[hi_e_ind]
-			f1_array[i] =  f1_lower + fraction * (f1_higher - f1_lower)
-		   
+			f1_array[i] = f1_lower + fraction * (f1_higher - f1_lower)
+
 			ln_f2_lower = np.math.log(np.abs(f2_all[lo_e_ind]))
 			ln_f2_higher = np.math.log(np.abs(f2_all[hi_e_ind]))
-			f2_array[i] = np.math.exp(ln_f2_lower + fraction * (ln_f2_higher - ln_f2_lower))	   
-		   
+			f2_array[i] = np.math.exp(ln_f2_lower + fraction * (ln_f2_higher - ln_f2_lower))
+
 			delta_array[i] = constant * f1_array[i]
 			beta_array[i] = constant * f2_array[i]
 
 		return f1_array, f2_array, delta_array, beta_array
-
-	
-	 
-		
-		
-	   
-		
-		

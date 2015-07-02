@@ -48,70 +48,13 @@ import maps_analyze
 import maps_calibration
 from file_io.file_util import open_file_with_retry
 
-
-# ------------------------------------------------------------------------------------------------
-def check_output_dirs(main):
-
-	dir = main['output_dir']
-	if not os.path.exists(dir):
-		os.makedirs(dir)
-		if not os.path.exists(dir):
-			print 'warning: did not find the output directory, and could not create a new output directory. Will abort this action'
-			return 0
-
-	dir = main['pca_dir']
-	if not os.path.exists(dir):
-		os.makedirs(dir)
-		if not os.path.exists(dir):
-			print 'warning: did not find the pca directory, and could not create a new pca directory. Will abort this action'
-			return 0
-
-	dir = main['img_dat_dir']
-	if not os.path.exists(dir):
-		os.makedirs(dir)
-		if not os.path.exists(dir):
-			print 'warning: did not find the img_dat directory, and could not create a new img_datdirectory. Will abort this action'
-			return 0
-
-	dir = main['line_dat_dir']
-	if not os.path.exists(dir):
-		os.makedirs(dir)
-		if not os.path.exists(dir):
-			print 'warning: did not find the line_dat directory, and could not create a new line_dat directory. Will abort this action'
-			return 0
-
-	dir = main['xanes_dat_dir']
-	if not os.path.exists(dir):
-		os.makedirs(dir)
-		if not os.path.exists(dir):
-			print 'warning: did not find the xanes_dat directory, and could not create a new xanes_dat directory. Will abort this action'
-			return 0
-
-	dir = main['fly_dat_dir']
-	if not os.path.exists(dir):
-		os.makedirs(dir)
-		if not os.path.exists(dir):
-			print 'warning: did not find the fly_dat directory, and could not create a new fly_dat directory. Will abort this action'
-			return 0
-
-	dir = os.path.join(main['master_dir'], 'lookup')
-	if not os.path.exists(dir):
-		os.makedirs(dir)
-
-	dir = os.path.join(main['master_dir'],'rois')
-	if not os.path.exists(dir):
-		os.makedirs(dir)
-
-	return 1
-
-
 # ------------------------------------------------------------------------------------------------
 def mp_make_maps(info_elements, main, maps_conf, header, mdafilename, this_detector, use_fit, total_number_detectors, 
-				 quick_dirty, nnls, xrf_bin, max_no_processors_lines):
+				quick_dirty, nnls, xrf_bin, max_no_processors_lines):
 
 	makemaps = maps_generate_img_dat.analyze(info_elements, main, maps_conf, use_fit=use_fit)
 	makemaps.generate_img_dat_threaded(header, mdafilename, this_detector, total_number_detectors,
-									   quick_dirty, nnls, max_no_processors_lines, xrf_bin)
+									quick_dirty, nnls, max_no_processors_lines, xrf_bin)
 
 	return
 
@@ -148,19 +91,20 @@ def main(main_dict, wdir='', force_fit=0, no_fit=False, cb_update_func=None):
 
 	maps_def = maps_definitions.maps_definitions()
 	maps_conf = maps_def.set_maps_definitions(main_dict['beamline'], info_elements, version=main_dict['version'])
-
-	if main_dict['max_no_processors_lines'] == -1:
+	max_no_processors_lines = main_dict['max_no_processors_lines']
+	if max_no_processors_lines == -1:
 		max_no_processors_lines = multiprocessing.cpu_count() - 1
 		print 'cpu_count() = %d\n' % multiprocessing.cpu_count()
 		print 'max_no_processors_lines to fit lines ', max_no_processors_lines
 
-	# make sure the output directory exists, if not, create it.
-	test = check_output_dirs(main_dict)
+	# make sure the output directory exists, if not, create it. This is done in maps_batch
+	#test = check_output_dirs(main_dict)
 	# if output directory does NOT exists, and the creation failed, return
-	if test == 0:
-		return
-
-	if main_dict['total_number_detectors'] < 2:
+	#if test == 0:
+	#	return
+	total_number_detectors = main_dict['total_number_detectors']
+	quick_dirty = main_dict['quick_dirty']
+	if total_number_detectors < 2:
 		quick_dirty = 0
 	if quick_dirty != 0:
 		total_number_detectors = 1
@@ -177,7 +121,7 @@ def main(main_dict, wdir='', force_fit=0, no_fit=False, cb_update_func=None):
 	for fname in dirList:
 		if fname[-4:] == '.mda':
 			filenames.append(fname)
-	no_files =len(filenames)
+	no_files = len(filenames)
 
 	# If no .mda files were found look for .h5
 	dirList = os.listdir(main_dict['img_dat_dir'])
@@ -203,10 +147,10 @@ def main(main_dict, wdir='', force_fit=0, no_fit=False, cb_update_func=None):
 
 	detector_number_arr = np.zeros((no_files), dtype=int)
 	#detector_number_arr_orig = np.zeros((no_files), dtype=int)
-
+	suffix = ''
 	for this_detector in range(main_dict['detector_to_start_with'], total_number_detectors):
 		# Look for override files in main.master_dir
-		if (total_number_detectors > 1) :
+		if (total_number_detectors > 1):
 			overide_files_found = 0
 			suffix = str(this_detector)
 			print 'suff=', suffix
@@ -434,10 +378,10 @@ def main(main_dict, wdir='', force_fit=0, no_fit=False, cb_update_func=None):
 		seconds_start = time.time()
 
 		#make sure the output directory exists, if not, create it.
-		test = check_output_dirs(main_dict)
+		#test = check_output_dirs(main_dict)
 		# if output directory does NOT exists, and the creation failed, return
-		if test == 0:
-			return
+		#if test == 0:
+		#	return
 
 		if (no_processors_to_use_files >= 2):
 			#Need to modify stout to flush prints
