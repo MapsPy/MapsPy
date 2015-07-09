@@ -47,7 +47,7 @@ from datetime import datetime
 from plugins.DatabasePlugin import DatabasePlugin
 from plugins.SQLiteDB import SQLiteDB
 from handlers.ProcessNodeHandlers import ProcessNodeHandler, ProcessNodeJobsWebService
-import maps_batch
+from maps_batch import maps_batch
 import signal
 
 STR_COMPUTER_NAME = 'ComputerName'
@@ -214,7 +214,7 @@ class ProcessNode(object):
 				log_path = os.path.join(STR_JOB_LOG_DIR_NAME, log_name)
 				logfile = open(log_path,'wt')
 				sys.stdout = logfile
-				maps_batch.main(wdir=job_dict['DataPath'], a=key_a, b=key_b, c=key_c, d=key_d, e=key_e)
+				maps_batch(wdir=job_dict['DataPath'], a=key_a, b=key_b, c=key_c, d=key_d, e=key_e)
 				sys.stdout = saveout
 				logfile.close()
 				job_dict['Status'] = 2 #3 = completed
