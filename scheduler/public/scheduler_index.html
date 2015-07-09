@@ -45,6 +45,12 @@
             {
                 procMask += 16;
             }
+            /*
+            if ($('#analysis-type-f')[0].checked === true)
+            {
+                procMask += 32;
+            }
+            */
             return procMask;
         }
 
@@ -75,11 +81,12 @@
                     'ProcMask': $procMask,
                     'BeamLine': '2-ID-E',
                     'DataPath': $("#DataPath").val(),
-                    'Version': '1.00',
+                    'Version': '9.00',
                     'Standards': '',
-                    'DetectorToStartWith': 0,
+                    'DetectorToStartWith': parseInt($("#option-detector-to-start-with").val(), 10),
                     'XRF_Bin': $xrfbin,
-                    'MaxLinesToProc': 11,
+                    'MaxLinesToProc': parseInt($("#option-proc-per-line").val(), 10),
+                    'MaxFilesToProc': parseInt($("#option-proc-per-file").val(), 10),
                     'DetectorElements': parseInt($("#option-detector-elements").val(), 10),
                     'XANES_Scan': $xanes,
                     'NNLS': $nnls,
@@ -151,28 +158,32 @@
             return $str;
         }
         
-        function convert_procmask_number_to_string(aData)
+         function convert_procmask_number_to_string(aData)
         {
             var $str = "";
             if( (aData.ProcMask & 1) === 1)
             {
-              $str += 'A ';
+                $str += '(A) Analyze datasets using ROI and ROI+ :: ';
             }
             if( (aData.ProcMask & 2) === 2)
             {
-              $str += 'B ';
+                $str += '(B) Extract integrated spectra from analyzed files and fit the spectra to optimize fit parameters :: ';
             }
             if( (aData.ProcMask & 4) === 4)
             {
-              $str += 'C ';
+                $str += '(C) Analyze datasets using ROI, ROI+ and per pixel fitting :: ';
             }
             if( (aData.ProcMask & 8) === 8)
             {
-              $str += 'D ';
+                $str += '(D) :: ';
             }
             if( (aData.ProcMask & 16) === 16)
             {
-              $str += 'E ';
+                $str += '(E) Add exchange information to analyzed files :: ';
+            }
+            if( (aData.ProcMask & 32) === 32)
+            {
+                $str += '(F) Create hdf5 file from single line netcdf files for flyscan :: ';
             }
             return $str;
         }
@@ -209,13 +220,21 @@
                     'DataPath: '+d.DataPath+'<br>'+
                     'Processing Type: '+convert_procmask_number_to_string(d)+'<br>'+
                     'Priority: '+d.Priority+'<br>'+
-                    'DetectorElements: '+d.DetectorElements+'<br>'+
+                    'Detector Elements: '+d.DetectorElements+'<br>'+
+                    'Detector To Start With: '+d.DetectorToStartWith+'<br>'+
                     'Version: '+d.Version+'<br>'+
                     'Quick and Dirty: '+d.QuickAndDirty+'<br>'+
                     'NNLS: '+d.NNLS+'<br>'+
                     'XANES_Scan: '+d.XANES_Scan+'<br>'+
                     'BeamLine: '+d.BeamLine+'<br>'+
-                    '<a href=/get_output_list?job_path='+d.DataPath+'>Output Directory</a><br>'+
+                    'Priority: '+d.Priority+'<br>'+
+                    'Lines processed in parrallel: '+d.MaxLinesToProc+'<br>'+
+                    'Files processed in parrallel: '+d.MaxFilesToProc+'<br>'+
+                    //'StartProcTime: '+d.StartProcTime+'<br>'+
+                    //'FinishProcTime: '+d.FinishProcTime+'<br>'+
+                    //'Process Node: '+d.Process_Node_Id+'<br>'+ //todo parse name from it
+                    '<a href=/get_output_list?job_path='+d.DataPath+'>Output Directory</a> (output_old) <br>'+
+                    '<a href=/get_output_list?job_path='+d.DataPath+'&process_type=PER_PIXEL>Output Directory</a> (output.fits) Per Pixel Fitting<br>'+
                     '<a href=http://'+$host+'/get_job_log?log_path='+d.Log_Path+'>Job Log</a>';
         }
 
@@ -439,21 +458,24 @@
                     </div>
                 </div>
                <br>
-               <input type="checkbox" id="analysis-type-a" value="A">A<br>
-               <input type="checkbox" id="analysis-type-b" value="B">B<br>
-               <input type="checkbox" id="analysis-type-c" value="C">C<br>
-               <input type="checkbox" id="analysis-type-d" value="D">D<br>
-               <input type="checkbox" id="analysis-type-e" value="E">E<br>
-               Total Number of Detectors:
-               <input type="text" id="option-detector-elements" value="4"><br>
-               Number of <b>files</b> to process simultaneously:
-               <input type="text" id="option-proc-per-file" value="1"> <br>
-               Number of <b>lines</b> to process simultaneously:
-               <input type="text" id="opiton-proc-per-line" value="1"><br>
-               <input type="checkbox" id="option-quick-and-dirty">Quick and Dirty
-               <input type="checkbox" id="option-xrf-bin">XRF Bin
-               <input type="checkbox" id="option-nnls">NNLS
-               <input type="checkbox" id="option-xanes">XANES Scan
+                <input type="checkbox" id="analysis-type-a" value="A">A: Analyze datasets using ROI and ROI+<br>
+                <input type="checkbox" id="analysis-type-b" value="B">B: Extract integrated spectra from analyzed files and fit the spectra to optimize fit parameters<br>
+                <input type="checkbox" id="analysis-type-c" value="C">C: Analyze datasets using ROI, ROI+ and per pixel fitting<br>
+<!--                <input type="checkbox" id="analysis-type-d" value="D">D: N/A<br> -->
+                <input type="checkbox" id="analysis-type-e" value="E">E: Add exchange information to analyzed files<br>
+                <input type="checkbox" id="analysis-type-f" value="F">F: Create hdf5 file from single line netcdf files for flyscan<br>
+                Total Number of Detectors:
+                <input type="text" id="option-detector-elements" value="4"><br>
+                Detector to start with:
+                <input type="text" id="option-detector-to-start-with" value="0"><br>
+                Number of <b>files</b> to process simultaneously:
+                <input type="text" id="option-proc-per-file" value="1"> <br>
+                Number of <b>lines</b> to process simultaneously:
+                <input type="text" id="option-proc-per-line" value="1"><br>
+                <input type="checkbox" id="option-quick-and-dirty">Quick and Dirty
+                <input type="checkbox" id="option-xrf-bin">XRF Bin
+                <input type="checkbox" id="option-nnls">NNLS
+                <input type="checkbox" id="option-xanes">XANES Scan
 <!--
             write_hdf = 0
             detector_to_start_with = 0

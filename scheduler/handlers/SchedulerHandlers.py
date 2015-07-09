@@ -70,11 +70,17 @@ class SchedulerHandler(object):
 		return file('public/scheduler_index.html')
 
 	@cherrypy.expose
-	def get_output_list(self, job_path=None):
+	def get_output_list(self, job_path=None, process_type=None):
 		rfile = file('public/get_output_list.html')
 		retstr = rfile.read()
+		#default directory is output_old, but if it is matrix fit then use output.fit
 		img_path = os.path.join(job_path, 'output_old/*.png')
 		txt_path = os.path.join(job_path, 'output_old/*.txt')
+		if process_type is not None:
+			print 'proc type = ',process_type
+			if process_type == 'PER_PIXEL':
+				img_path = os.path.join(job_path, 'output.fits/*.png')
+				txt_path = os.path.join(job_path, 'output.fits/*.txt')
 		retstr += '<ul>\n'
 		for link in glob.glob(img_path):
 			strLink = unicodedata.normalize('NFKD', link).encode('ascii','ignore')
@@ -99,7 +105,7 @@ class SchedulerHandler(object):
 			#job_dir_dict = gen_job_dir_dict(job_root, True, []) 
 			job_roots_dict = self.settings.getSetting(Settings.SECTION_JOB_DIR_ROOTS)
 			path = job_roots_dict[job_root]
-			dir_list = [{'id': path, 'parent':'#', 'text':job_root, 'state':{'opened':True} }]
+			dir_list = [{'id': path, 'parent': '#', 'text': job_root, 'state': {'opened': True}}]
 			#dir_list = [{'id': path, 'parent':'#', 'text':job_root}]) if os.path.isdir(os.path.join(path, name)) ]
 			#job_dir_dict['children'] = dir_list
 			dir_list += get_dirs(path, depth)
