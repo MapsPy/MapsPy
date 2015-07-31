@@ -79,7 +79,7 @@
                 type: 'POST',
                 url:"/job",
                 contentType: 'application/json; charset=utf-8',
-                data: JSON.stringify({'MaxFilesToProc': 1,
+                data: JSON.stringify({'MaxFilesToProc': parseInt($("#option-proc-per-file").val(), 10),
                     'ProcMask': $procMask,
                     'BeamLine': '2-ID-E',
                     'DataPath': $("#DataPath").val(),
