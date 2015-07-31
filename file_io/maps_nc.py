@@ -74,11 +74,9 @@ class nc:
 		show_extra_pvs = 1
 		extra_pv = 0
 		binning = 0
-		
-		
+
 		mda = maps_mda.mda()
 		scan = mda.read_scan(filename, threeD_only = threeD_only, invalid_file = invalid_file, extra_pvs = True)
-		
 
 		invalid_file = invalid_file[0]
 
@@ -97,12 +95,12 @@ class nc:
 		if det_des in scan.detector_description_arr:
 			ind = scan.detector_description_arr.index(det_des)
 			scan.detector_description_arr[ind] = '2xfm:scaler3_cts1.B'
-			scan.detector_arr[:, :, ind] = scan.detector_arr[:, :, ind]/det_time
+			scan.detector_arr[:, :, ind] = scan.detector_arr[:, :, ind] / det_time
 		det_des = '2xfm:mcs:mca3.VAL'
 		if det_des in scan.detector_description_arr:
 			ind = scan.detector_description_arr.index(det_des)
 			scan.detector_description_arr[ind] = '2xfm:scaler3_cts1.C'
-			scan.detector_arr[:, :, ind] = scan.detector_arr[:, :, ind]/det_time
+			scan.detector_arr[:, :, ind] = scan.detector_arr[:, :, ind] / det_time
 		det_des = '2xfm:mcs:mca4.VAL'
 		if det_des in scan.detector_description_arr:
 			ind = scan.detector_description_arr.index(det_des)
@@ -191,30 +189,27 @@ class nc:
 		scan.detector_description_arr.append('dxpXMAP2xfm3:mca4.ELTM')
 		
 		new_det_len = len(scan.detector_description_arr)
- 
+
 		new_detector_arr=np.zeros((scan.x_pixels, scan.y_pixels, new_det_len))
 		new_detector_arr[:, :, 0:old_det_len] = scan.detector_arr[:, :, 0:old_det_len]	
 		scan.detector_arr = new_detector_arr
 
 		for i_lines in range(n_rows):
-			ncfile = os.path.join(path,'flyXRF', header+'_2xfm3__'+str(i_lines)+'.nc' )
+			ncfile = os.path.join(path, 'flyXRF', header + '_2xfm3__' + str(i_lines) + '.nc' )
 
-			xmapdat = read_xmap_netcdf(ncfile,True)
+			xmapdat = read_xmap_netcdf(ncfile, True)
 			if xmapdat == None:
 				return None
 			for ix in range(n_cols): 
 				if ix < len(xmapdat.liveTime[:, 0]):
 					scan.mca_arr[ix, i_lines, 0:2000] = xmapdat.data[ix, this_detector, 0:2000]
-					scan.detector_arr[ix, i_lines, new_det_len-1] = xmapdat.liveTime[ix, 0]
-					scan.detector_arr[ix, i_lines, new_det_len-2] = xmapdat.liveTime[ix, 1]
-					scan.detector_arr[ix, i_lines, new_det_len-3] = xmapdat.liveTime[ix, 2]
-					scan.detector_arr[ix, i_lines, new_det_len-4] = xmapdat.liveTime[ix, 3]
-
-  
+					scan.detector_arr[ix, i_lines, new_det_len - 1] = xmapdat.liveTime[ix, 0]
+					scan.detector_arr[ix, i_lines, new_det_len - 2] = xmapdat.liveTime[ix, 1]
+					scan.detector_arr[ix, i_lines, new_det_len - 3] = xmapdat.liveTime[ix, 2]
+					scan.detector_arr[ix, i_lines, new_det_len - 4] = xmapdat.liveTime[ix, 3]
 
 		return scan
-		
-		
+
 #----------------------------------------------------------------------
 # From xmap_nc.py
 #----------------------------------------------------------------------
@@ -270,7 +265,8 @@ def read_xmap_netcdf(fname, verbose=False):
 	# Reads a netCDF file created with the DXP xMAP driver
 	# with the netCDF plugin buffers
 
-	if verbose: print ' reading ', fname
+	if verbose:
+		print ' reading ', fname
 
 	t0 = time.time()
 	# read data from array_data variable of netcdf file

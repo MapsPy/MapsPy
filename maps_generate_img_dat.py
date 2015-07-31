@@ -130,7 +130,105 @@ class analyze:
 		if beamline == '2-BM': self.crate = '2bmb'
 		if beamline == 'Bio-CAT': self.crate = 'biocat'
 		if beamline == 'GSE-CARS': self.crate = 'gsecars'
-		
+
+	# ----------------------------------------------------------------------
+	def __binning__(self, scan, xrf_bin, n_cols, n_rows, mca_arr_dimensions, elt1_arr):
+		print 'binning the data'
+
+		this_mca_arr_dimensions = scan.mca_arr.shape
+		this_n_channels = min(mca_arr_dimensions[2], self.main_dict['max_spec_channels'])
+		if (xrf_bin == 2) and (n_cols > 5) and (n_rows > 5):
+			for i_bin in range(n_cols - 1):
+				if i_bin % 2 == 0:
+					for jj in range(n_rows):
+						if jj % 2 == 0:
+							scan.mca_arr[i_bin, jj, 0:this_n_channels] = scan.mca_arr[i_bin, jj, 0:this_n_channels] + scan.mca_arr[i_bin + 1, jj, 0:this_n_channels] + scan.mca_arr[i_bin, jj+1, 0:this_n_channels]+scan.mca_arr[i_bin+1, jj+1, 0:this_n_channels]
+							elt1_arr[i_bin, jj] = elt1_arr[i_bin, jj] + elt1_arr[i_bin + 1, jj]+elt1_arr[i_bin, jj + 1]+elt1_arr[i_bin + 1, jj + 1]
+						else:
+							scan.mca_arr[i_bin, jj, 0:this_n_channels] = scan.mca_arr[i_bin, jj - 1, 0:this_n_channels]
+							elt1_arr[i_bin, jj] = elt1_arr[i_bin, jj - 1]
+				else:
+					scan.mca_arr[i_bin, :, 0:this_n_channels] = scan.mca_arr[i_bin - 1, :, 0:this_n_channels]
+					elt1_arr[i_bin, :] = elt1_arr[i_bin - 1, :]
+
+		if (xrf_bin == 3) and (n_cols > 5) and (n_rows > 5) :
+			current_line = np.zeros((self.main_dict['max_spec_channels'], n_rows))
+			previous_line = np.zeros((self.main_dict['max_spec_channels'], n_rows))
+			next_line = np.zeros((self.main_dict['max_spec_channels'], n_rows))
+			current_elt_line = np.zeros((elt1_arr.size))
+			next_elt_line = np.zeros((elt1_arr.size))
+			this_mca_arr_dimensions = scan.mca_arr.shape
+			this_n_channels = min(this_mca_arr_dimensions[2], self.main_dict['max_spec_channels'])
+
+			for i_bin in range(n_cols):
+				if i_bin > 1 :
+					previous_elt_line = current_elt_line.copy()
+					current_elt_line = next_elt_line.copy()
+					previous_line = current_line.copy()
+					current_line = next_line.copy()
+				else:
+					for jj in range(n_rows-1) :
+						current_line[0:this_n_channels, jj] = scan.mca_arr[i_bin, jj, 0:this_n_channels]
+					current_elt_line = elt1_arr[i_bin, :]
+					previous_line = current_line
+					previous_elt_line = current_elt_line
+
+				if i_bin < n_cols-1 :
+					for jj in range(n_rows) :
+						next_line[0:this_n_channels, jj] = scan.mca_arr[i_bin+1, jj, 0:this_n_channels]
+					next_elt_line = elt1_arr[i_bin+1, :]
+
+				if n_rows-2 > 1 :
+					jj = 0
+					scan.mca_arr[i_bin, jj, 0:this_n_channels] = previous_line[0:this_n_channels, jj] + previous_line[0:this_n_channels, jj] + previous_line[0:this_n_channels, jj+1] + \
+						current_line[0:this_n_channels, jj] + current_line[0:this_n_channels, jj] + current_line[0:this_n_channels, jj+1] + \
+						next_line[0:this_n_channels, jj] + next_line[0:this_n_channels, jj] + next_line[0:this_n_channels, jj+1]
+					elt1_arr[i_bin, jj] = np.sum([previous_elt_line[jj:jj+1], current_elt_line[jj:jj+1], next_elt_line[jj:jj+1],
+												previous_elt_line[jj], current_elt_line[jj], next_elt_line[jj]])
+					for jj in range(n_rows-1) :
+						scan.mca_arr[i_bin, jj, 0:this_n_channels] = previous_line[0:this_n_channels, jj-1] + previous_line[0:this_n_channels, jj] + previous_line[0:this_n_channels, jj+1] + \
+							current_line[0:this_n_channels, jj-1] + current_line[0:this_n_channels, jj] + current_line[0:this_n_channels, jj+1] + \
+							next_line[0:this_n_channels, jj-1] + next_line[0:this_n_channels, jj] + next_line[0:this_n_channels, jj+1]
+						elt1_arr[i_bin, jj] = np.sum([previous_elt_line[jj-1:jj+1], current_elt_line[jj-1:jj+1], next_elt_line[jj-1:jj+1]])
+
+					jj = n_rows-1
+					scan.mca_arr[i_bin, jj, 0:this_n_channels] = previous_line[0:this_n_channels, jj] + previous_line[0:this_n_channels, jj] + previous_line[0:this_n_channels, jj] + \
+						current_line[0:this_n_channels, jj] + current_line[0:this_n_channels, jj] + current_line[0:this_n_channels, jj] + \
+						next_line[0:this_n_channels, jj] + next_line[0:this_n_channels, jj] + next_line[0:this_n_channels, jj]
+					elt1_arr[i_bin, jj] = np.sum([previous_elt_line[jj-1:jj], current_elt_line[jj-1:jj], next_elt_line[jj-1:jj],
+												previous_elt_line[jj], current_elt_line[jj], next_elt_line[jj]])
+
+		if (xrf_bin == 4) and (n_cols > 5) and (n_rows > 5) :
+			for i_bin in range(n_cols-2) :
+				if i_bin % 3. == 0:
+					for jj in range(n_rows-2):
+						if jj % 3 == 0:
+							scan.mca_arr[i_bin, jj, 0:this_n_channels] = scan.mca_arr[i_bin, jj, 0:this_n_channels]+scan.mca_arr[i_bin+1, jj, 0:this_n_channels]+scan.mca_arr[i_bin+2, jj, 0:this_n_channels]+\
+								scan.mca_arr[i_bin, jj+1, 0:this_n_channels]+scan.mca_arr[i_bin+1, jj+1, 0:this_n_channels]+scan.mca_arr[i_bin+2, jj+1, 0:this_n_channels]+\
+								scan.mca_arr[i_bin, jj+2, 0:this_n_channels]+scan.mca_arr[i_bin+1, jj+2, 0:this_n_channels]+scan.mca_arr[i_bin+2, jj+2, 0:this_n_channels]
+							elt1_arr[i_bin, jj] = elt1_arr[i_bin, jj]+elt1_arr[i_bin+1, jj]+elt1_arr[i_bin+2, jj]+elt1_arr[i_bin+2, jj]+\
+											  elt1_arr[i_bin, jj+1]+elt1_arr[i_bin+1, jj+1]+elt1_arr[i_bin, jj+1]+elt1_arr[i_bin+2, jj+1]+\
+											  elt1_arr[i_bin, jj+2]+elt1_arr[i_bin+1, jj+2]+elt1_arr[i_bin, jj+2]+elt1_arr[i_bin+2, jj+2]
+						else:
+							if (jj+2) % 3 == 0:
+								scan.mca_arr[i_bin, jj, 0:this_n_channels] = scan.mca_arr[i_bin, jj-1, 0:this_n_channels]
+								elt1_arr[i_bin, jj] = elt1_arr[i_bin, jj-1]
+
+							if (jj+1) % 3 == 0:
+								scan.mca_arr[i_bin, jj, 0:this_n_channels] = scan.mca_arr[i_bin, jj-2, 0:this_n_channels]
+								elt1_arr[i_bin, jj] = elt1_arr[i_bin, jj-2]
+
+				else:
+					if (i_bin+2) % 3 == 0:
+						scan.mca_arr[i_bin, :, 0:this_n_channels] = scan.mca_arr[i_bin-1, :, 0:this_n_channels]
+						elt1_arr[i_bin, :] = elt1_arr[i_bin-1, :]
+
+					if (i_bin+1) % 3 == 0:
+						scan.mca_arr[i_bin, :, 0:this_n_channels] = scan.mca_arr[i_bin-2, :, 0:this_n_channels]
+						elt1_arr[i_bin, :] = elt1_arr[i_bin-2, :]
+
+		return elt1_arr
+
 	# ----------------------------------------------------------------------
 	def generate_img_dat_threaded(self, header, mdafilename, this_detector, 
 								total_number_detectors, quick_dirty, nnls,
@@ -216,8 +314,9 @@ class analyze:
 			print 'testing test_textfile ', test_textfile
 
 			test_netcdf = 0
-			ncfile = os.path.join(self.main_dict['master_dir'], 'flyXRF.h5', header + '_2xfm3__0.h5' )
-			if os.path.isfile(ncfile): test_netcdf = 1
+			ncfile = os.path.join(self.main_dict['master_dir'], 'flyXRF.h5', header + '_2xfm3__0.h5')
+			if os.path.isfile(ncfile):
+				test_netcdf = 1
 
 			print 'testing presence of converted flyscans', test_netcdf
 			if test_netcdf == 1:
@@ -261,7 +360,7 @@ class analyze:
 				# name. this should be a fly scna with XRF
 				print 'trying to do the combined file'
 				nc = maps_nc.nc()
-				scan = nc.read_combined_nc_scans(mdafilename, self.main_dict['master_dir'], header, this_detector, extra_pvs = True)
+				scan = nc.read_combined_nc_scans(mdafilename, self.main_dict['master_dir'], header, this_detector, extra_pvs=True)
 
 				print 'Finished reading combined nc scan'
 				netcdf_fly_scan = 1
@@ -287,7 +386,7 @@ class analyze:
 					
 				netcdf_fly_scan = 1 
 				
-			elif (xanes == 1):
+			elif xanes == 1:
 				print 'xanes scans not supported - returning'
 				return
 			
@@ -299,10 +398,10 @@ class analyze:
 				
 				print 'Finished reading scan from ', mdafilename
 
-		if (beamline == 'DLS-I08'):
+		if beamline == 'DLS-I08':
 			print 'beamline: ', beamline 
 			print 'reading DLS-I08 scan from /img.dat/*.h5'
-			filenameh5 =  os.path.basename(str(mdafilename))
+			filenameh5 = os.path.basename(str(mdafilename))
 			h5filename = os.path.join(os.path.join(self.main_dict['master_dir'], 'img.dat'), filenameh5)
 			print 'filename=', h5filename
 			h5 = maps_hdf5.h5()
@@ -572,14 +671,26 @@ class analyze:
 																 make_maps_conf, scan.x_coord_arr, scan.y_coord_arr, beamline,
 																 n_cols, n_rows, maps_overridefile)
 
+
 		dmaps_names = []
-		for item in make_maps_conf.dmaps: dmaps_names.append(item.name)
+		for item in make_maps_conf.dmaps:
+			dmaps_names.append(item.name)
+
+		# elt1_ = dmaps_set[:, :, dmaps_names.index('ELT1')]
+		ert1_ = dmaps_set[:, :, dmaps_names.index('ERT1')]
+		icr1_ = dmaps_set[:, :, dmaps_names.index('ICR1')]
+		ocr1_ = dmaps_set[:, :, dmaps_names.index('OCR1')]
+		#if ert1_[0] > 0 and icr1_[0] > 0 and ocr1_[0] > 0:
+		if ert1_.sum() > 0 and icr1_.sum() > 0 and ocr1_.sum() > 0:
+			dmaps_set[:, :, dmaps_names.index('ELT1')] = dmaps_set[:, :, dmaps_names.index('ERT1')] * dmaps_set[:, :, dmaps_names.index('OCR1')] / dmaps_set[:, :, dmaps_names.index('ICR1')]
+			# ICR = Input Counts/Trigger Filter Livetime OCR = Output Counts / Real Time Energy Filter Livetime = Real Time * OCR/ICR.
+
 		elt1_arr = []
 		if 'ELT1' in dmaps_names:
 			elt1_arr = dmaps_set[:, :, dmaps_names.index('ELT1')]
 		elt1_arr = np.array(elt1_arr)
 		if np.sum(elt1_arr) == 0.0:
-			print 'WARNING: did not find elapsed life time. Will continue assuming ELT1 was 1s, but this is just an ARBITRARY value' 
+			print 'WARNING: did not find elapsed life time. Will continue assuming ELT1 was 1s, but this is just an ARBITRARY value'
 			elt1_arr[:, :] = 1.
 	
 		elt2_arr = []
@@ -598,108 +709,16 @@ class analyze:
 				print 'WARNING: did not find elapsed life time. Will continue assuming ELT3 was 1s, but this is just an ARBITRARY value' 
 				elt3_arr[:, :] = 1.
 
-		#Bin the data if required
+		# Bin the data if required
 		if xrf_bin > 0:
-			print 'binning the data'
-
-			this_mca_arr_dimensions = scan.mca_arr.shape
-			this_n_channels = min(mca_arr_dimensions[2], self.main_dict['max_spec_channels'])
-			if (xrf_bin == 2) and (n_cols > 5) and (n_rows > 5):
-				for i_bin in range(n_cols - 1):
-					if i_bin % 2 == 0:
-						for jj in range(n_rows): 
-							if jj % 2 == 0: 
-								scan.mca_arr[i_bin, jj, 0:this_n_channels] = scan.mca_arr[i_bin, jj, 0:this_n_channels] + scan.mca_arr[i_bin + 1, jj, 0:this_n_channels] + scan.mca_arr[i_bin, jj+1, 0:this_n_channels]+scan.mca_arr[i_bin+1, jj+1, 0:this_n_channels]
-								elt1_arr[i_bin, jj] = elt1_arr[i_bin, jj] + elt1_arr[i_bin + 1, jj]+elt1_arr[i_bin, jj + 1]+elt1_arr[i_bin + 1, jj + 1]
-							else:
-								scan.mca_arr[i_bin, jj, 0:this_n_channels] = scan.mca_arr[i_bin, jj - 1, 0:this_n_channels]
-								elt1_arr[i_bin, jj] = elt1_arr[i_bin, jj - 1]
-					else:
-						scan.mca_arr[i_bin, :, 0:this_n_channels] = scan.mca_arr[i_bin - 1, :, 0:this_n_channels]
-						elt1_arr[i_bin, :] = elt1_arr[i_bin - 1, :]
-
-			if (xrf_bin == 3) and (n_cols > 5) and (n_rows > 5) : 
-				current_line = np.zeros((self.main_dict['max_spec_channels'], n_rows))
-				previous_line = np.zeros((self.main_dict['max_spec_channels'], n_rows))
-				next_line = np.zeros((self.main_dict['max_spec_channels'], n_rows))
-				current_elt_line = np.zeros((elt1_arr.size))
-				next_elt_line = np.zeros((elt1_arr.size))				 
-				this_mca_arr_dimensions = scan.mca_arr.shape
-				this_n_channels = min(this_mca_arr_dimensions[2], self.main_dict['max_spec_channels'])
-
-				for i_bin in range(n_cols): 
-					if i_bin > 1 : 
-						previous_elt_line = current_elt_line.copy()
-						current_elt_line = next_elt_line.copy()
-						previous_line = current_line.copy()
-						current_line = next_line.copy()
-					else:
-						for jj in range(n_rows-1) :
-							current_line[0:this_n_channels, jj] = scan.mca_arr[i_bin, jj, 0:this_n_channels]
-						current_elt_line = elt1_arr[i_bin, :]
-						previous_line = current_line 
-						previous_elt_line = current_elt_line 
-
-					if i_bin < n_cols-1 : 
-						for jj in range(n_rows) :
-							next_line[0:this_n_channels, jj] = scan.mca_arr[i_bin+1, jj, 0:this_n_channels]
-						next_elt_line = elt1_arr[i_bin+1, :]
-
-					if n_rows-2 > 1 : 
-						jj = 0
-						scan.mca_arr[i_bin, jj, 0:this_n_channels] = previous_line[0:this_n_channels, jj] + previous_line[0:this_n_channels, jj] + previous_line[0:this_n_channels, jj+1] + \
-							current_line[0:this_n_channels, jj] + current_line[0:this_n_channels, jj] + current_line[0:this_n_channels, jj+1] + \
-							next_line[0:this_n_channels, jj] + next_line[0:this_n_channels, jj] + next_line[0:this_n_channels, jj+1]				
-						elt1_arr[i_bin, jj] = np.sum([previous_elt_line[jj:jj+1], current_elt_line[jj:jj+1], next_elt_line[jj:jj+1], 
-													previous_elt_line[jj], current_elt_line[jj], next_elt_line[jj]])
-						for jj in range(n_rows-1) : 
-							scan.mca_arr[i_bin, jj, 0:this_n_channels] = previous_line[0:this_n_channels, jj-1] + previous_line[0:this_n_channels, jj] + previous_line[0:this_n_channels, jj+1] + \
-								current_line[0:this_n_channels, jj-1] + current_line[0:this_n_channels, jj] + current_line[0:this_n_channels, jj+1] + \
-								next_line[0:this_n_channels, jj-1] + next_line[0:this_n_channels, jj] + next_line[0:this_n_channels, jj+1]				  
-							elt1_arr[i_bin, jj] = np.sum([previous_elt_line[jj-1:jj+1], current_elt_line[jj-1:jj+1], next_elt_line[jj-1:jj+1]])
-
-						jj = n_rows-1
-						scan.mca_arr[i_bin, jj, 0:this_n_channels] = previous_line[0:this_n_channels, jj] + previous_line[0:this_n_channels, jj] + previous_line[0:this_n_channels, jj] + \
-							current_line[0:this_n_channels, jj] + current_line[0:this_n_channels, jj] + current_line[0:this_n_channels, jj] + \
-							next_line[0:this_n_channels, jj] + next_line[0:this_n_channels, jj] + next_line[0:this_n_channels, jj]				  
-						elt1_arr[i_bin, jj] = np.sum([previous_elt_line[jj-1:jj], current_elt_line[jj-1:jj], next_elt_line[jj-1:jj], 
-													previous_elt_line[jj], current_elt_line[jj], next_elt_line[jj]])
-
-			if (xrf_bin == 4) and (n_cols > 5) and (n_rows > 5) :
-				for i_bin in range(n_cols-2) : 
-					if i_bin % 3. == 0: 
-						for jj in range(n_rows-2):
-							if jj % 3 == 0:
-								scan.mca_arr[i_bin, jj, 0:this_n_channels] = scan.mca_arr[i_bin, jj, 0:this_n_channels]+scan.mca_arr[i_bin+1, jj, 0:this_n_channels]+scan.mca_arr[i_bin+2, jj, 0:this_n_channels]+\
-									scan.mca_arr[i_bin, jj+1, 0:this_n_channels]+scan.mca_arr[i_bin+1, jj+1, 0:this_n_channels]+scan.mca_arr[i_bin+2, jj+1, 0:this_n_channels]+\
-									scan.mca_arr[i_bin, jj+2, 0:this_n_channels]+scan.mca_arr[i_bin+1, jj+2, 0:this_n_channels]+scan.mca_arr[i_bin+2, jj+2, 0:this_n_channels]
-								elt1_arr[i_bin, jj] = elt1_arr[i_bin, jj]+elt1_arr[i_bin+1, jj]+elt1_arr[i_bin+2, jj]+elt1_arr[i_bin+2, jj]+\
-												  elt1_arr[i_bin, jj+1]+elt1_arr[i_bin+1, jj+1]+elt1_arr[i_bin, jj+1]+elt1_arr[i_bin+2, jj+1]+\
-												  elt1_arr[i_bin, jj+2]+elt1_arr[i_bin+1, jj+2]+elt1_arr[i_bin, jj+2]+elt1_arr[i_bin+2, jj+2]
-							else:
-								if (jj+2) % 3 == 0: 
-									scan.mca_arr[i_bin, jj, 0:this_n_channels] = scan.mca_arr[i_bin, jj-1, 0:this_n_channels]
-									elt1_arr[i_bin, jj] = elt1_arr[i_bin, jj-1]
-
-								if (jj+1) % 3 == 0: 
-									scan.mca_arr[i_bin, jj, 0:this_n_channels] = scan.mca_arr[i_bin, jj-2, 0:this_n_channels]
-									elt1_arr[i_bin, jj] = elt1_arr[i_bin, jj-2]
-
-					else:
-						if (i_bin+2) % 3 == 0:
-							scan.mca_arr[i_bin, :, 0:this_n_channels] = scan.mca_arr[i_bin-1, :, 0:this_n_channels]
-							elt1_arr[i_bin, :] = elt1_arr[i_bin-1, :]
-
-						if (i_bin+1) % 3 == 0: 
-							scan.mca_arr[i_bin, :, 0:this_n_channels] = scan.mca_arr[i_bin-2, :, 0:this_n_channels]
-							elt1_arr[i_bin, :] = elt1_arr[i_bin-2, :]
+			elt1_arr = self.__binning__(scan, xrf_bin, n_cols, n_rows, mca_arr_dimensions, elt1_arr)
 
 		if 'ELT2' in dmaps_names:
 			elt2_arr = dmaps_set[:, :, dmaps_names.index('ELT2')]
 		if 'ELT3' in dmaps_names:
 			elt3_arr = dmaps_set[:, :, dmaps_names.index('ELT3')] 
 
-		#print 'calculate elemental maps using XRF	'
+		# print 'calculate elemental maps using XRF	'
 		# calculate elemental maps using XRF	 
 		temp_elementsuse = []
 		for item in make_maps_conf.chan:
