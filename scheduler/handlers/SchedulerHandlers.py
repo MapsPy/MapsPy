@@ -64,10 +64,83 @@ class SchedulerHandler(object):
 	def __init__(self, db, settings=None):
 		self.db = db
 		self.settings = settings
+		self.api_dict = {'functions': [{'Function': 'api',
+										'Parameters': 'N/A',
+										'Description': 'Show the API help page'
+										},
+									   {
+									    'Function': 'help',
+										'Parameters': 'N/A',
+										'Description': 'Show the API help page'
+									   },
+									   {
+										'Function': 'get_output_list',
+										'Parameters': 'job_path, process_type (PER_PIXEL or ROI)',
+										'Description': 'Gets directory content for $job_path/output_old or $job_path/output.fit'
+									   },
+									   {
+										'Function': 'get_dataset_dirs_list',
+										'Parameters': 'job_path, depth',
+										'Description': 'Get a list of jobs directories. Search recursively to depth.'
+									   },
+									   {
+										'Function': 'get_spectrum_image_list',
+										'Parameters': 'job_path',
+										'Description': ''
+									   },
+									   {
+										'Function': 'get_mda_list',
+										'Parameters': 'job_path',
+										'Description': 'Get a list of mda files in $jobs_path/mda'
+									   },
+									   {
+										'Function': 'get_spectrum_image',
+										'Parameters': 'path',
+										'Description': 'Get the spectrum image file'
+									   },
+									   {
+										'Function': 'get_spectrum_txt',
+										'Parameters': 'path',
+										'Description': 'Get the spectrum data txt file'
+									   },
+									   {
+										'Function': 'get_all_unprocessed_jobs',
+										'Parameters': 'N/A',
+										'Description': 'Get all the queued jobs'
+									   },
+									   {
+										'Function': 'get_all_processing_jobs',
+										'Parameters': 'N/A',
+										'Description': 'Get all the processing jobs'
+									   },
+									   {
+										'Function': 'get_all_finished_jobs',
+										'Parameters': 'N/A',
+										'Description': 'Get all the finished jobs'
+									   }
+									   ]}
+
+	def show_api(self):
+		ret_str = '<!DOCTYPE html><html><head></head><body><table>'
+		for entry in self.api_dict['functions']:
+			ret_str += '<tr><td>Function: </td><td><b>' + entry['Function'] + '</b></td></tr>'
+			ret_str += '<tr><td>Parameters: </td><td>' + entry['Parameters'] + '</td><tr>'
+			ret_str += '<tr><td>Description: </td><td>' + entry['Description'] + '</td><tr>'
+			ret_str += '<tr><td></td><td>----------------------------------------------------</td></tr>'
+		ret_str += '</table></body></html>'
+		return ret_str
 
 	@cherrypy.expose
 	def index(self):
 		return file('public/scheduler_index.html')
+
+	@cherrypy.expose
+	def api(self):
+		return self.show_api()
+
+	@cherrypy.expose
+	def help(self):
+		return self.show_api()
 
 	@cherrypy.expose
 	def get_output_list(self, job_path=None, process_type=None):
@@ -99,43 +172,38 @@ class SchedulerHandler(object):
 
 	@cherrypy.expose
 	@cherrypy.tools.json_out()
-	def get_dataset_dirs_list(self, job_root, depth=0):
-		try:
-			depth = int(depth)
-			#job_dir_dict = gen_job_dir_dict(job_root, True, []) 
-			job_roots_dict = self.settings.getSetting(Settings.SECTION_JOB_DIR_ROOTS)
-			path = job_roots_dict[job_root]
-			dir_list = [{'id': path, 'parent': '#', 'text': job_root, 'state': {'opened': True}}]
-			#dir_list = [{'id': path, 'parent':'#', 'text':job_root}]) if os.path.isdir(os.path.join(path, name)) ]
-			#job_dir_dict['children'] = dir_list
-			dir_list += get_dirs(path, depth)
-			print dir_list
-			#print job_dir_dict
-			dd = dict()
-			dd['core'] = dict()
-			#dd['core']['data'] = [job_dir_dict]
-			dd['core']['data'] = dir_list
-			jenc = json.JSONEncoder()
-			return jenc.encode(dd)
-		except:
-			exc_str = traceback.format_exc()
-			return exc_str
+	def get_dataset_dirs_list(self, job_path, depth=0):
+		depth = int(depth)
+		job_roots_dict = self.settings.getSetting(Settings.SECTION_JOB_DIR_ROOTS)
+		path = job_roots_dict[job_path]
+		dir_list = [{'id': path, 'parent': '#', 'text': job_path, 'state': {'opened': True}}]
+		dir_list += get_dirs(path, depth)
+		dd = dict()
+		dd['core'] = dict()
+		dd['core']['data'] = dir_list
+		jenc = json.JSONEncoder()
+		return jenc.encode(dd)
 
 	@cherrypy.expose
 	@cherrypy.tools.json_out()
 	def get_spectrum_image_list(self, job_path):
-		try:
-			data_dict = dict()
-			img_path = os.path.join(job_path, 'output_old/*.png')
-			txt_path = os.path.join(job_path, 'output_old/*.txt')
-			#print img_path
-			data_dict['images'] = glob.glob(img_path)
-			data_dict['txt'] = glob.glob(txt_path)
-			jenc = json.JSONEncoder()
-			return jenc.encode(data_dict)
-		except:
-			exc_str = traceback.format_exc()
-			return exc_str
+		data_dict = dict()
+		img_path = os.path.join(job_path, 'output_old/*.png')
+		txt_path = os.path.join(job_path, 'output_old/*.txt')
+		#print img_path
+		data_dict['images'] = glob.glob(img_path)
+		data_dict['txt'] = glob.glob(txt_path)
+		jenc = json.JSONEncoder()
+		return jenc.encode(data_dict)
+
+	@cherrypy.expose
+	@cherrypy.tools.json_out()
+	def get_mda_list(self, job_path):
+		data_dict = dict()
+		mda_path = os.path.join(job_path, 'mda/*.mda')
+		data_dict['mda_files'] = glob.glob(mda_path)
+		jenc = json.JSONEncoder()
+		return jenc.encode(data_dict)
 
 	def check_path(self, path):
 		try:
@@ -152,38 +220,30 @@ class SchedulerHandler(object):
 
 	@cherrypy.expose
 	def get_spectrum_image(self, path):
-		try:
-			encoded_string = ''
-			path = path.replace('..','')
-			if self.check_path(path) == True:
-				with open(path, "rb") as image_file:
-					encoded_string = base64.b64encode(image_file.read())
-				retstr = '<img alt="My Image" src="data:image/png;base64,'+ encoded_string + '" />'
-				return retstr
-				#return file(image_path)
-			else:
-				return "Error: file not file "+path
-		except:
-			exc_str = traceback.format_exc()
-			return exc_str
+		encoded_string = ''
+		path = path.replace('..','')
+		if self.check_path(path) == True:
+			with open(path, "rb") as image_file:
+				encoded_string = base64.b64encode(image_file.read())
+			retstr = '<img alt="My Image" src="data:image/png;base64,'+ encoded_string + '" />'
+			return retstr
+			#return file(image_path)
+		else:
+			return "Error: file not file "+path
 
 	@cherrypy.expose
 	def get_spectrum_txt(self, path):
-		try:
-			path = path.replace('..','')
-			if self.check_path(path) == True:
-				retstr = '<!DOCTYPE html><html><head></head><body><pre>'
-				with open(path, "rt") as txt_file:
-					retstr += txt_file.read()
-				#retstr = '<img alt="My Image" src="data:image/png;base64,'+ encoded_string + '" />'
-				retstr += '</pre></body></html>'
-				return retstr
-				#return file(image_path)
-			else:
-				return "Error: file not file "+path
-		except:
-			exc_str = traceback.format_exc()
-			return exc_str
+		path = path.replace('..','')
+		if self.check_path(path) == True:
+			retstr = '<!DOCTYPE html><html><head></head><body><pre>'
+			with open(path, "rt") as txt_file:
+				retstr += txt_file.read()
+			#retstr = '<img alt="My Image" src="data:image/png;base64,'+ encoded_string + '" />'
+			retstr += '</pre></body></html>'
+			return retstr
+			#return file(image_path)
+		else:
+			return "Error: file not file "+path
 
 	@cherrypy.expose
 	def get_all_unprocessed_jobs(self, *args, **kwargs):

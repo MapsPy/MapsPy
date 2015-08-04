@@ -32,7 +32,6 @@ SUCH DAMAGE.
 
 
 import os, os.path
-
 import Settings
 import requests
 from handlers.SchedulerHandlers import SchedulerHandler, SchedulerJobsWebService, SchedulerProcessNodeWebService
@@ -43,6 +42,7 @@ import cherrypy
 import traceback
 import logging
 import logging.handlers
+import threading
 
 db = DatabasePlugin(cherrypy.engine, SQLiteDB)
 
@@ -50,6 +50,7 @@ class Scheduler(object):
 	def __init__(self, settings):
 		self.all_settings = settings
 		self.settings = settings.getSetting(Settings.SECTION_SERVER)
+		self.job_lock = threading.RLock()
 		cherrypy.config.update({
 			'server.socket_host': self.settings[Settings.SERVER_HOSTNAME],
 			'server.socket_port': int(self.settings[Settings.SERVER_PORT]),
@@ -82,30 +83,36 @@ class Scheduler(object):
 		}
 
 	def callback_new_job(self, job):
-		#todo: lock list 
 		print 'callback got new job', job
-		p_node = None
-		if job['Process_Node_Id'] > -1:
-			p_node = db.get_process_node_by_id()
-		else:
-			node_list = db.get_all_process_nodes()
-			print 'searching for idle node'
-			for node in node_list:
-				if node['Status'] == 'Idle':
-					p_node = node
-					break
-		if p_node != None:
-			job['Process_Node_Id'] = p_node['Id']
-			url = 'http://' + str(p_node['Hostname']) + ':' + str(p_node['Port']) + '/job_queue'
-			print 'sending job to ', p_node['ComputerName'], 'url', url
-			s = requests.Session()
-			r = s.post(url, data=json.dumps(job))
-			print 'result', r.status_code, ':', r.text
+		try:
+			self.job_lock.acquire(True)
+			p_node = None
+			if job['Process_Node_Id'] > -1:
+				p_node = db.get_process_node_by_id()
+			else:
+				node_list = db.get_all_process_nodes()
+				print 'searching for idle node'
+				for node in node_list:
+					if node['Status'] == 'Idle':
+						p_node = node
+						break
+			if p_node != None:
+				job['Process_Node_Id'] = p_node['Id']
+				url = 'http://' + str(p_node['Hostname']) + ':' + str(p_node['Port']) + '/job_queue'
+				print 'sending job to ', p_node['ComputerName'], 'url', url
+				s = requests.Session()
+				r = s.post(url, data=json.dumps(job))
+				print 'result', r.status_code, ':', r.text
+				self.job_lock.release()
+		except:
+			self.job_lock.release()
+			exc_str = traceback.format_exc()
+			return exc_str
 
 	def callback_process_node_update(self, node):
-		#todo: lock list 
 		print 'callback', node['ComputerName']
 		try:
+			self.job_lock.acquire(True)
 			if node.has_key('Id') == False:
 				print 'getting node'
 				node = db.get_process_node_by_name(node['ComputerName'])
@@ -122,7 +129,9 @@ class Scheduler(object):
 						r = s.post(url, data=json.dumps(job))
 						print 'result', r.status_code, ':', r.text
 						break
+			self.job_lock.release()
 		except:
+			self.job_lock.release()
 			exc_str = traceback.format_exc()
 			return exc_str
 
@@ -141,7 +150,6 @@ class Scheduler(object):
 		webapp = SchedulerHandler(db, self.all_settings)
 		webapp.process_node = SchedulerProcessNodeWebService(db)
 		webapp.job = SchedulerJobsWebService(db)
-		#cherrypy.quickstart(webapp, '/', self.conf)
 		app = cherrypy.tree.mount(webapp, '/', self.conf)
 		self._setup_logging_(app.log, "rot_error_file", "logs/scheduler_error.log")
 		self._setup_logging_(app.log, "rot_access_file", "logs/scheduler_access.log")

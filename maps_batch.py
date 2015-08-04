@@ -669,7 +669,7 @@ def save_spectrum(main_dict, filename, sfilename):
 	return
 
 # ------------------------------------------------------------------------------------------------
-def _option_a_(main_dict, maps_conf, wdir, cb_update_func=None):
+def _option_a_(main_dict, maps_conf, cb_update_func=None):
 	print '\n Section A \n'
 	check_output_dirs(main_dict)
 	#maps_test_xrffly
@@ -693,7 +693,7 @@ def _option_a_(main_dict, maps_conf, wdir, cb_update_func=None):
 		print 'Did not find any .mda files in /mda directory.'
 		return
 
-	make_maps.main(main_dict, wdir=wdir, force_fit=0, no_fit=True, cb_update_func=cb_update_func)
+	make_maps.main(main_dict, force_fit=0, no_fit=True, cb_update_func=cb_update_func)
 
 	#		 for this_detector in range(0, total_number_detectors):
 	#			 header, scan_ext= os.path.splitext(filenames[0])
@@ -705,8 +705,9 @@ def _option_a_(main_dict, maps_conf, wdir, cb_update_func=None):
 	#												max_no_processors_lines, xrf_bin)
 
 # ------------------------------------------------------------------------------------------------
-def _option_b_(main_dict, maps_conf, maps_def, total_number_detectors, info_elements, current_directory, cb_update_func=None):
+def _option_b_(main_dict, maps_conf, maps_def, total_number_detectors, info_elements, cb_update_func=None):
 	print '\n Section B \n'
+	current_directory = main_dict['master_dir']
 	for this_detector_element in range(total_number_detectors):
 		print 'this_detector_element', this_detector_element, 'total_number_detectors', total_number_detectors
 		if (total_number_detectors > 1):
@@ -851,11 +852,12 @@ def _option_b_(main_dict, maps_conf, maps_def, total_number_detectors, info_elem
 	return spectra
 
 # ------------------------------------------------------------------------------------------------
-def _option_c_(main_dict, current_directory, cb_update_func=None):
+def _option_c_(main_dict, cb_update_func=None):
 	print '\n Section C \n'
+	current_directory = main_dict['master_dir']
 	check_output_dirs(main_dict)
 	#Call make_maps and force fitting. Overrides USE_FIT in maps_setting.txt
-	make_maps.main(main_dict, wdir=current_directory, force_fit=1, no_fit=False, cb_update_func=cb_update_func)
+	make_maps.main(main_dict, force_fit=1, no_fit=False, cb_update_func=cb_update_func)
 
 	dirlist = os.listdir(current_directory)
 	if 'output.fits' in dirlist:
@@ -941,8 +943,6 @@ def maps_batch(wdir='', a=1,b=0,c=0,d=0,e=0, cb_update_func=None):
 		print 'Error - Directory ', wdir, ' does not exist. Please specify working directory.'
 		return
 
-	current_directory = wdir
-
 	#define main_dict
 	main_dict = {'mapspy_version':'1.2',
 			'maps_date':'01. March, 2013',
@@ -950,15 +950,15 @@ def maps_batch(wdir='', a=1,b=0,c=0,d=0,e=0, cb_update_func=None):
 			'S_font':'', 
 			'M_font':'', 
 			'L_font':'', 
-			'master_dir':	current_directory, 
-			'output_dir':	os.path.join(current_directory, 'output'), 
-			'img_dat_dir':	os.path.join(current_directory, 'img.dat'), 
-			'line_dat_dir': os.path.join(current_directory, 'line.dat'), 
-			'xanes_dat_dir':os.path.join(current_directory, 'xanes.dat'), 
-			'fly_dat_dir':	os.path.join(current_directory, 'fly.dat'), 
-			'mda_dir':		os.path.join(current_directory, 'mda'), 
-			'pca_dir':		os.path.join(current_directory, 'pca.dat'), 
-			'XRFmaps_dir':	os.path.join(current_directory, 'img.dat'), 
+			'master_dir':	wdir,
+			'output_dir':	os.path.join(wdir, 'output'),
+			'img_dat_dir':	os.path.join(wdir, 'img.dat'),
+			'line_dat_dir': os.path.join(wdir, 'line.dat'),
+			'xanes_dat_dir':os.path.join(wdir, 'xanes.dat'),
+			'fly_dat_dir':	os.path.join(wdir, 'fly.dat'),
+			'mda_dir':		os.path.join(wdir, 'mda'),
+			'pca_dir':		os.path.join(wdir, 'pca.dat'),
+			'XRFmaps_dir':	os.path.join(wdir, 'img.dat'),
 			'XRFmaps_names':[''], 
 			'XRFmaps_id':0, 
 			'print_annotations':1, 
@@ -1037,15 +1037,15 @@ def maps_batch(wdir='', a=1,b=0,c=0,d=0,e=0, cb_update_func=None):
 
 	#Section a converts mda to h5 and does ROI and ROI+ fits
 	if (a > 0) :
-		_option_a_(main_dict, maps_conf, wdir, cb_update_func)
+		_option_a_(main_dict, maps_conf, cb_update_func)
 
 	#Section b loads 8 largest h5 files, fits them and saves fit parameters 
 	if (b > 0):
-		spectra = _option_b_(main_dict, maps_conf, maps_def, main_dict['total_number_detectors'], info_elements, current_directory, cb_update_func)
+		spectra = _option_b_(main_dict, maps_conf, maps_def, main_dict['total_number_detectors'], info_elements, cb_update_func)
 
 	#Section c converts mda to h5 files and does ROI/ROI+/FITS
 	if (c > 0): 
-		_option_c_(main_dict, current_directory, cb_update_func)
+		_option_c_(main_dict, cb_update_func)
 
 	#Section d extracts images
 	if (d > 0):

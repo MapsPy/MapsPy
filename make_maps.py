@@ -59,24 +59,10 @@ def mp_make_maps(info_elements, main, maps_conf, header, mdafilename, this_detec
 	return
 
 # ------------------------------------------------------------------------------------------------
-def main(main_dict, wdir='', force_fit=0, no_fit=False, cb_update_func=None):
+def main(main_dict, force_fit=0, no_fit=False, cb_update_func=None):
 	verbose = True
 
 	maps_intermediate_solution_file = 'maps_intermediate_solution.tmp'
-	# remove quotations marks if any in wdir
-	wdir.strip('"')
-	if "'" in wdir:
-		wdir = wdir[1:-1]
-
-	wdir = os.path.normpath(wdir)
-
-	if verbose:
-		print 'working directory =', wdir
-
-	if not os.path.exists(wdir):
-		print 'Error - Directory ', wdir, ' does not exist. Please specify working directory.'
-		return
-
 	if verbose:
 		print 'main structure: ', main_dict
 
