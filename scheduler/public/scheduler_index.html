@@ -15,6 +15,168 @@
         //--------------------------- gen functions ----------------------------
         //----------------------------------------------------------------------
         
+        function convert_procmask_number_to_string(aData)
+        {
+            var $str = "";
+            if( (aData.ProcMask & 1) === 1)
+            {
+                $str += '(A) Analyze datasets using ROI and ROI+ :: ';
+            }
+            if( (aData.ProcMask & 2) === 2)
+            {
+                $str += '(B) Extract integrated spectra from analyzed files and fit the spectra to optimize fit parameters :: ';
+            }
+            if( (aData.ProcMask & 4) === 4)
+            {
+                $str += '(C) Analyze datasets using ROI, ROI+ and per pixel fitting :: ';
+            }
+            if( (aData.ProcMask & 8) === 8)
+            {
+                $str += '(D) :: ';
+            }
+            if( (aData.ProcMask & 16) === 16)
+            {
+                $str += '(E) Add exchange information to analyzed files :: ';
+            }
+            if( (aData.ProcMask & 32) === 32)
+            {
+                $str += '(F) Create hdf5 file from single line netcdf files for flyscan :: ';
+            }
+            return $str;
+        }
+        
+        //----------------------------------------------------------------------
+        
+        function convert_status_number_to_string(aData)
+        {
+            var $str = "";
+            if(aData.Status === 0)
+            {
+              $str = 'Waiting';
+            }
+            if(aData.Status === 1)
+            {
+              $str = 'Processing';
+            }
+            if(aData.Status === 2)
+            {
+              $str = 'Completed';
+            }
+            if(aData.Status > 2)
+            {
+              $str = 'Error Occured';
+            }
+            return $str;
+        }
+        
+        //----------------------------------------------------------------------
+
+        function create_job_data_table($id, $url)
+        {
+            var $table = $($id).DataTable(
+            {
+                "ajax": $url,
+                "fnRowCallback": function( nRow, aData, iDisplayIndex, iDisplayIndexFull )
+                {
+                    var $status = convert_status_number_to_string(aData);
+                    $('td', nRow).eq(3).html($status);
+                    var $procmask = convert_procmask_number_to_string(aData);
+                    $('td', nRow).eq(4).html($procmask);
+                },
+                "columns": [
+                {
+                    "class":          "details-control",
+                    "orderable":      false,
+                    "data":           null,
+                    "defaultContent": ""
+                },
+                { "data": "Id" },
+                { "data": "DataPath" },
+                { "data": "Status" },
+                { "data": "ProcMask" }
+                ],
+                "order": [[1, 'desc']]
+            });
+            return $table;
+        }
+        
+        //----------------------------------------------------------------------
+        
+        function find_computername_by_process_node_id( Process_Node_Id )
+        {
+            $host = "";
+            $node_list = $pn_table.data();
+            $node_list.each( function (node)
+            {
+                if (node.Id === Process_Node_Id)
+                {
+                    $host = node.ComputerName;
+                    return $host;
+                }
+            });
+            return $host;
+        }
+        
+        //----------------------------------------------------------------------
+        
+        function find_hostname_by_process_node_id( Process_Node_Id )
+        {
+            $host = "";
+            $node_list = $pn_table.data();
+            $node_list.each( function (node)
+            {
+                if (node.Id === Process_Node_Id)
+                {
+                    $host = node.Hostname+":"+node.Port;
+                    return $host;
+                }
+            });
+            return $host;
+        }
+        
+        //----------------------------------------------------------------------
+        
+        function format_job_details ( d ) 
+        {
+            $host = find_hostname_by_process_node_id(d.Process_Node_Id);
+            return  'Id: '+d.Id+'<br>'+
+                    'DataPath: '+d.DataPath+'<br>'+
+                    'Processing Type: '+convert_procmask_number_to_string(d)+'<br>'+
+                    'Priority: '+d.Priority+'<br>'+
+                    'Detector Elements: '+d.DetectorElements+'<br>'+
+                    'Detector To Start With: '+d.DetectorToStartWith+'<br>'+
+                    'Version: '+d.Version+'<br>'+
+                    'Quick and Dirty: '+d.QuickAndDirty+'<br>'+
+                    'NNLS: '+d.NNLS+'<br>'+
+                    'XANES_Scan: '+d.XANES_Scan+'<br>'+
+                    'BeamLine: '+d.BeamLine+'<br>'+
+                    'Priority: '+d.Priority+'<br>'+
+                    'Lines processed in parrallel: '+d.MaxLinesToProc+'<br>'+
+                    'Files processed in parrallel: '+d.MaxFilesToProc+'<br>'+
+                    //'StartProcTime: '+d.StartProcTime+'<br>'+
+                    //'FinishProcTime: '+d.FinishProcTime+'<br>'+
+                    'Dataset Files To Process: ' + d.DatasetFilesToProc +'<br>'+
+                    'Process Node: '+find_computername_by_process_node_id(d.Process_Node_Id)+'<br>'+ 
+                    '<a href=/get_output_list?job_path='+d.DataPath+'>Output Directory</a> (output_old) <br>'+
+                    '<a href=/get_output_list?job_path='+d.DataPath+'&process_type=PER_PIXEL>Output Directory</a> (output.fits) Per Pixel Fitting<br>'+
+                    '<a href=http://'+$host+'/get_job_log?log_path='+d.Log_Path+'>Job Log</a>';
+        }
+
+        //----------------------------------------------------------------------
+        
+        function format_pn_details ( d ) 
+        {
+            return  'Id: '+d.Id+'<br>'+
+                    'Computer Name: '+d.ComputerName+'<br>'+
+                    'Status: '+d.Status+'<br>'+
+                    'NumThreads: '+d.NumThreads+'<br>'+
+                    'Hostname: '+d.Hostname+'<br>'+
+                    'Port: '+d.Port+'<br>'+
+                    'Heartbeat: '+d.Heartbeat;
+        }
+        
+        //----------------------------------------------------------------------
+        
         function gen_job_mask()
         {
             var procMask = 0;
@@ -60,76 +222,6 @@
             }
             return val;
         }
-        
-        //----------------------------------------------------------------------
-        
-        function convert_status_number_to_string(aData)
-        {
-            var $str = "";
-            if(aData.Status === 0)
-            {
-              $str = 'Waiting';
-            }
-            if(aData.Status === 1)
-            {
-              $str = 'Processing';
-            }
-            if(aData.Status === 2)
-            {
-              $str = 'Completed';
-            }
-            if(aData.Status > 2)
-            {
-              $str = 'Error Occured';
-            }
-            return $str;
-        }
-        
-        //----------------------------------------------------------------------
-        
-        function convert_procmask_number_to_string(aData)
-        {
-            var $str = "";
-            if( (aData.ProcMask & 1) === 1)
-            {
-                $str += '(A) Analyze datasets using ROI and ROI+ :: ';
-            }
-            if( (aData.ProcMask & 2) === 2)
-            {
-                $str += '(B) Extract integrated spectra from analyzed files and fit the spectra to optimize fit parameters :: ';
-            }
-            if( (aData.ProcMask & 4) === 4)
-            {
-                $str += '(C) Analyze datasets using ROI, ROI+ and per pixel fitting :: ';
-            }
-            if( (aData.ProcMask & 8) === 8)
-            {
-                $str += '(D) :: ';
-            }
-            if( (aData.ProcMask & 16) === 16)
-            {
-                $str += '(E) Add exchange information to analyzed files :: ';
-            }
-            if( (aData.ProcMask & 32) === 32)
-            {
-                $str += '(F) Create hdf5 file from single line netcdf files for flyscan :: ';
-            }
-            return $str;
-        }
-        
-        //----------------------------------------------------------------------
-        
-        function format_pn_details ( d ) 
-        {
-            return  'Id: '+d.Id+'<br>'+
-                    'Computer Name: '+d.ComputerName+'<br>'+
-                    'Status: '+d.Status+'<br>'+
-                    'NumThreads: '+d.NumThreads+'<br>'+
-                    'Hostname: '+d.Hostname+'<br>'+
-                    'Port: '+d.Port+'<br>'+
-                    'Heartbeat: '+d.Heartbeat;
-        }
-        
         //----------------------------------------------------------------------
         
         function populate_datasets_list()
@@ -168,97 +260,6 @@
         }
         
         //----------------------------------------------------------------------
-        
-        function find_hostname_by_process_node_id( Process_Node_Id )
-        {
-            $host = "";
-            $node_list = $pn_table.data();
-            $node_list.each( function (node)
-            {
-                if (node.Id === Process_Node_Id)
-                {
-                    $host = node.Hostname+":"+node.Port;
-                    return $host;
-                }
-            });
-            return $host;
-        }
-        
-        //----------------------------------------------------------------------
-        
-        function find_computername_by_process_node_id( Process_Node_Id )
-        {
-            $host = "";
-            $node_list = $pn_table.data();
-            $node_list.each( function (node)
-            {
-                if (node.Id === Process_Node_Id)
-                {
-                    $host = node.ComputerName;
-                    return $host;
-                }
-            });
-            return $host;
-        }
-        //----------------------------------------------------------------------
-        
-        function format_job_details ( d ) 
-        {
-            $host = find_hostname_by_process_node_id(d.Process_Node_Id);
-            return  'Id: '+d.Id+'<br>'+
-                    'DataPath: '+d.DataPath+'<br>'+
-                    'Processing Type: '+convert_procmask_number_to_string(d)+'<br>'+
-                    'Priority: '+d.Priority+'<br>'+
-                    'Detector Elements: '+d.DetectorElements+'<br>'+
-                    'Detector To Start With: '+d.DetectorToStartWith+'<br>'+
-                    'Version: '+d.Version+'<br>'+
-                    'Quick and Dirty: '+d.QuickAndDirty+'<br>'+
-                    'NNLS: '+d.NNLS+'<br>'+
-                    'XANES_Scan: '+d.XANES_Scan+'<br>'+
-                    'BeamLine: '+d.BeamLine+'<br>'+
-                    'Priority: '+d.Priority+'<br>'+
-                    'Lines processed in parrallel: '+d.MaxLinesToProc+'<br>'+
-                    'Files processed in parrallel: '+d.MaxFilesToProc+'<br>'+
-                    //'StartProcTime: '+d.StartProcTime+'<br>'+
-                    //'FinishProcTime: '+d.FinishProcTime+'<br>'+
-                    'Process Node: '+find_computername_by_process_node_id(d.Process_Node_Id)+'<br>'+ 
-                    '<a href=/get_output_list?job_path='+d.DataPath+'>Output Directory</a> (output_old) <br>'+
-                    '<a href=/get_output_list?job_path='+d.DataPath+'&process_type=PER_PIXEL>Output Directory</a> (output.fits) Per Pixel Fitting<br>'+
-                    '<a href=http://'+$host+'/get_job_log?log_path='+d.Log_Path+'>Job Log</a>';
-        }
-
-        //----------------------------------------------------------------------
-
-        function create_job_data_table($id, $url)
-        {
-            var $table = $($id).DataTable(
-            {
-                "ajax": $url,
-                "fnRowCallback": function( nRow, aData, iDisplayIndex, iDisplayIndexFull )
-                {
-                    var $status = convert_status_number_to_string(aData);
-                    $('td', nRow).eq(3).html($status);
-                    var $procmask = convert_procmask_number_to_string(aData);
-                    $('td', nRow).eq(4).html($procmask);
-                },
-                "columns": [
-                {
-                    "class":          "details-control",
-                    "orderable":      false,
-                    "data":           null,
-                    "defaultContent": ""
-                },
-                { "data": "Id" },
-                { "data": "DataPath" },
-                { "data": "Status" },
-                { "data": "ProcMask" }
-                ],
-                "order": [[1, 'desc']]
-            });
-            return $table;
-        }
-        
-        //----------------------------------------------------------------------
         //--------------------------- button clicks ----------------------------
         //----------------------------------------------------------------------
         
@@ -269,6 +270,11 @@
             var $xrfbin = get_check_value('#option-xrf-bin');
             var $nnls = get_check_value('#option-nnls');
             var $xanes = get_check_value('#option-xanes');
+            var $dataset_filenames = 'all';
+            if ( $("#chk_all_datasets")[0].checked === false )
+            {
+                $dataset_filenames = $('#datasets_list').val().join();
+            }
             
             if($procMask === 0)
             {
@@ -300,7 +306,8 @@
                     'StartProcTime': 0,
                     'FinishProcTime': 0,
                     'Log_Path': '',
-                    'Process_Node_Id': -1
+                    'Process_Node_Id': -1,
+                    'DatasetFilesToProc': $dataset_filenames
                 }),
                 datatype: "json",
                 success: function(data) 
@@ -418,7 +425,6 @@
         $('.overlay').hide();
         var detailPnRows = [];
         var detailJobRows = [];
-        
 
         setInterval(function()
         {
@@ -627,6 +633,13 @@
                 <input type="checkbox" id="option-xrf-bin">XRF Bin
                 <input type="checkbox" id="option-nnls">NNLS
                 <input type="checkbox" id="option-xanes">XANES Scan
+                <!-- future feature
+                <br>
+                Process Node:
+                <select id="proc_node_option">
+                    <option value="any">Any
+                </select>
+                -->
 <!--
             write_hdf = 0
             detector_to_start_with = 0

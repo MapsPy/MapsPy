@@ -154,7 +154,7 @@ class ProcessNode(object):
 					self.process_next_job()
 				else:
 					self.send_status_update()
-					self.process_next_job()
+					#self.process_next_job()
 		except:
 			print 'run error'
 			traceback.print_exc(file=sys.stdout)
@@ -198,6 +198,7 @@ class ProcessNode(object):
 				key_c = 0
 				key_d = 0
 				key_e = 0
+				key_f = 0 # for netcdf to hdf5 future feature
 				if proc_mask & 1 == 1:
 					key_a = 1
 				if proc_mask & 2 == 2:
@@ -208,6 +209,8 @@ class ProcessNode(object):
 					key_d = 1
 				if proc_mask & 16 == 16:
 					key_e = 1
+				if proc_mask & 32 == 32:
+					key_f = 1
 				#os.chdir(job_dict['DataPath'])
 				log_name = 'Job_' + str(job_dict['Id']) + '_' + datetime.strftime(datetime.now(),"%y_%m_%d_%H_%M_%S") + '.log'
 				job_dict['Log_Path'] = log_name

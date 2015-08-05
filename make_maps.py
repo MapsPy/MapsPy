@@ -102,6 +102,7 @@ def main(main_dict, force_fit=0, no_fit=False, cb_update_func=None):
 	if verbose:
 		print 'no_processors_to_use for files', no_processors_to_use_files
 
+	#TODO: change so that we can pass specific filenames
 	filenames = []
 	dirList=os.listdir(main_dict['mda_dir'])
 	for fname in dirList:
