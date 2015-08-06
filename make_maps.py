@@ -102,24 +102,29 @@ def main(main_dict, force_fit=0, no_fit=False, cb_update_func=None):
 	if verbose:
 		print 'no_processors_to_use for files', no_processors_to_use_files
 
-	#TODO: change so that we can pass specific filenames
-	filenames = []
-	dirList=os.listdir(main_dict['mda_dir'])
-	for fname in dirList:
-		if fname[-4:] == '.mda':
-			filenames.append(fname)
-	no_files = len(filenames)
-
-	# If no .mda files were found look for .h5
-	dirList = os.listdir(main_dict['img_dat_dir'])
-	if no_files == 0:
+	if main_dict['dataset_files_to_proc'] == 'all':
+		filenames = []
+		dirList=os.listdir(main_dict['mda_dir'])
 		for fname in dirList:
-			if fname[-3:] == '.h5':
+			if fname[-4:] == '.mda':
 				filenames.append(fname)
+		no_files = len(filenames)
+
+		# If no .mda files were found look for .h5
+		dirList = os.listdir(main_dict['img_dat_dir'])
+		if no_files == 0:
+			for fname in dirList:
+				if fname[-3:] == '.h5':
+					filenames.append(fname)
+	else:
+		filenames = main_dict['dataset_files_to_proc']
+
 	no_files = len(filenames)
 	if no_files == 0:
 		print 'Did not find any .mda files in /mda directory.'
 		return
+	else:
+		print 'Processing files: ', filenames
 	#filenames_orig = filenames[:]
 	#basename, scan_ext= os.path.splitext(filenames[0])
 

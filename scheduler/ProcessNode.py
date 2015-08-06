@@ -188,6 +188,7 @@ class ProcessNode(object):
 				f.write('XANES_SCAN:' + str(job_dict['XANES_Scan']).strip() + '\n')
 				f.write('DETECTOR_TO_START_WITH:' + str(job_dict['DetectorToStartWith']).strip() + '\n')
 				f.write('BEAMLINE:' + str(job_dict['BeamLine']).strip() + '\n')
+				f.write('DatasetFilesToProc:' + str(job_dict['DatasetFilesToProc']).strip() + '\n')
 				standard_filenames = job_dict['Standards'].split(';')
 				for item in standard_filenames:
 					f.write('STANDARD:' + item.strip() + '\n')

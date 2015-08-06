@@ -73,7 +73,7 @@
 
         function create_job_data_table($id, $url)
         {
-            var $table = $($id).DataTable(
+            return $($id).DataTable(
             {
                 "ajax": $url,
                 "fnRowCallback": function( nRow, aData, iDisplayIndex, iDisplayIndexFull )
@@ -97,48 +97,24 @@
                 ],
                 "order": [[1, 'desc']]
             });
-            return $table;
-        }
-        
-        //----------------------------------------------------------------------
-        
-        function find_computername_by_process_node_id( Process_Node_Id )
-        {
-            $host = "";
-            $node_list = $pn_table.data();
-            $node_list.each( function (node)
-            {
-                if (node.Id === Process_Node_Id)
-                {
-                    $host = node.ComputerName;
-                    return $host;
-                }
-            });
-            return $host;
-        }
-        
-        //----------------------------------------------------------------------
-        
-        function find_hostname_by_process_node_id( Process_Node_Id )
-        {
-            $host = "";
-            $node_list = $pn_table.data();
-            $node_list.each( function (node)
-            {
-                if (node.Id === Process_Node_Id)
-                {
-                    $host = node.Hostname+":"+node.Port;
-                    return $host;
-                }
-            });
-            return $host;
+
         }
         
         //----------------------------------------------------------------------
         
         function format_job_details ( d ) 
         {
-            $host = find_hostname_by_process_node_id(d.Process_Node_Id);
+            var $host_and_port = '';
+            var $host_name = '';
+            $node_list = $pn_table.data();
+            $node_list.each( function (node)
+            {
+                if (node.Id === d.Process_Node_Id)
+                {
+                    $host_and_port = node.Hostname+":"+node.Port;
+                    $host_name = node.ComputerName;
+                }
+            });
             return  'Id: '+d.Id+'<br>'+
                     'DataPath: '+d.DataPath+'<br>'+
                     'Processing Type: '+convert_procmask_number_to_string(d)+'<br>'+
@@ -156,10 +132,10 @@
                     //'StartProcTime: '+d.StartProcTime+'<br>'+
                     //'FinishProcTime: '+d.FinishProcTime+'<br>'+
                     'Dataset Files To Process: ' + d.DatasetFilesToProc +'<br>'+
-                    'Process Node: '+find_computername_by_process_node_id(d.Process_Node_Id)+'<br>'+ 
+                    'Process Node: '+$host_name+'<br>'+ 
                     '<a href=/get_output_list?job_path='+d.DataPath+'>Output Directory</a> (output_old) <br>'+
                     '<a href=/get_output_list?job_path='+d.DataPath+'&process_type=PER_PIXEL>Output Directory</a> (output.fits) Per Pixel Fitting<br>'+
-                    '<a href=http://'+$host+'/get_job_log?log_path='+d.Log_Path+'>Job Log</a>';
+                    '<a href=http://'+$host_and_port+'/get_job_log?log_path='+d.Log_Path+'>Job Log</a>';
         }
 
         //----------------------------------------------------------------------
@@ -215,12 +191,11 @@
 
         function get_check_value(name)
         {
-            var val = 0;
             if( $(name)[0].checked)
             {
-                val = 1;
+                return 1;
             }
-            return val;
+            return 0;
         }
         //----------------------------------------------------------------------
         
@@ -423,8 +398,8 @@
         $("#analysis-type-a").prop("checked", true);
         $("#datasets_list").hide();
         $('.overlay').hide();
-        var detailPnRows = [];
-        var detailJobRows = [];
+        var $detailPnRows = [];
+        var $detailJobRows = [];
 
         setInterval(function()
         {
@@ -440,7 +415,7 @@
         {
             var tr = $(this).closest('tr');
             var row = $finished_table.row( tr );
-            var idx = $.inArray( tr.attr('id'), detailJobRows );
+            var idx = $.inArray( tr.attr('id'), $detailJobRows );
 
             if ( row.child.isShown() ) 
             {
@@ -448,7 +423,7 @@
                 row.child.hide();
 
                 // Remove from the 'open' array
-                detailJobRows.splice( idx, 1 );
+                $detailJobRows.splice( idx, 1 );
             }
             else 
             {
@@ -458,7 +433,7 @@
                 // Add to the 'open' array
                 if ( idx === -1 ) 
                 {
-                    detailJobRows.push( tr.attr('id') );
+                    $detailJobRows.push( tr.attr('id') );
                 }
             }
         });
@@ -467,7 +442,7 @@
  
         $finished_table.on( 'draw', function () 
         {
-            $.each( detailJobRows, function ( i, id ) 
+            $.each( $detailJobRows, function ( i, id ) 
             {
                 $('#'+id+' td.details-control').trigger( 'click' );
             });
@@ -478,8 +453,8 @@
         $('#process_node_table').on( 'click', 'tr td.details-control', function () 
         {
             var tr = $(this).closest('tr');
-            var row = $finished_table.row( tr );
-            var idx = $.inArray( tr.attr('ComputerName'), detailPnRows );
+            var row = $pn_table.row( tr );
+            var idx = $.inArray( tr.attr('ComputerName'), $detailPnRows );
 
             if ( row.child.isShown() ) 
             {
@@ -487,7 +462,7 @@
                 row.child.hide();
 
                 // Remove from the 'open' array
-                detailPnRows.splice( idx, 1 );
+                $detailPnRows.splice( idx, 1 );
             }
             else 
             {
@@ -497,7 +472,7 @@
                 // Add to the 'open' array
                 if ( idx === -1 ) 
                 {
-                    detailPnRows.push( tr.attr('ComputerName') );
+                    $detailPnRows.push( tr.attr('ComputerName') );
                 }
             }
         });
@@ -506,7 +481,7 @@
 
         $pn_table.on( 'draw', function () 
         {
-            $.each( detailPnRows, function ( i, id ) 
+            $.each( $detailPnRows, function ( i, id ) 
             {
                 $('#'+id+' td.details-control').trigger( 'click' );
             });

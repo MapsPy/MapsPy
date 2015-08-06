@@ -675,24 +675,6 @@ def _option_a_(main_dict, maps_conf, cb_update_func=None):
 	#maps_test_xrffly
 	maps_conf.use_fit = 0
 
-	filenames = []
-	dirList=os.listdir(main_dict['mda_dir'])
-	for fname in dirList:
-		if fname[-4:] == '.mda':
-			filenames.append(fname)
-	no_files =len(filenames)
-
-	#If no .mda files were found look for .h5
-	if no_files == 0:
-		for fname in dirList:
-			if fname[-3:] == '.h5':
-				filenames.append(fname)
-	no_files = len(filenames)
-
-	if no_files == 0:
-		print 'Did not find any .mda files in /mda directory.'
-		return
-
 	make_maps.main(main_dict, force_fit=0, no_fit=True, cb_update_func=cb_update_func)
 
 	#		 for this_detector in range(0, total_number_detectors):
@@ -977,6 +959,7 @@ def maps_batch(wdir='', a=1,b=0,c=0,d=0,e=0, cb_update_func=None):
 			'nnls': 0,
 			'detector_to_start_with': 0,
 			'xanes_scan': 0,
+			'dataset_files_to_proc': 'all',
 			'version': 0}
 
 	# Get info from maps_settings.txt
@@ -1017,7 +1000,8 @@ def maps_batch(wdir='', a=1,b=0,c=0,d=0,e=0, cb_update_func=None):
 					main_dict['beamline'] = str(value).strip()
 				elif tag == 'STANDARD':
 					main_dict['standard_filenames'].append(str(value).strip())
-
+				elif tag == 'DatasetFilesToProc':
+					main_dict['dataset_files_to_proc'] = str(value).strip().split(',')
 		f.close()
 
 	except:
