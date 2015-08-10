@@ -223,11 +223,12 @@ class SchedulerHandler(object):
 		encoded_string = ''
 		path = path.replace('..','')
 		if self.check_path(path) == True:
+			# fix for + symbol
+			path = path.replace('+', '%2b')
 			with open(path, "rb") as image_file:
 				encoded_string = base64.b64encode(image_file.read())
 			retstr = '<img alt="My Image" src="data:image/png;base64,'+ encoded_string + '" />'
 			return retstr
-			#return file(image_path)
 		else:
 			return "Error: file not file "+path
 
@@ -235,13 +236,13 @@ class SchedulerHandler(object):
 	def get_spectrum_txt(self, path):
 		path = path.replace('..','')
 		if self.check_path(path) == True:
+			path = path.replace('+', '%2b')
 			retstr = '<!DOCTYPE html><html><head></head><body><pre>'
 			with open(path, "rt") as txt_file:
 				retstr += txt_file.read()
 			#retstr = '<img alt="My Image" src="data:image/png;base64,'+ encoded_string + '" />'
 			retstr += '</pre></body></html>'
 			return retstr
-			#return file(image_path)
 		else:
 			return "Error: file not file "+path
 
