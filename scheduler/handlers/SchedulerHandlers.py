@@ -146,7 +146,7 @@ class SchedulerHandler(object):
 	def get_output_list(self, job_path=None, process_type=None):
 		rfile = file('public/get_output_list.html')
 		retstr = rfile.read()
-		#default directory is output_old, but if it is matrix fit then use output.fit
+		# default directory is output_old, but if it is matrix fit then use output.fit
 		img_path = os.path.join(job_path, 'output_old/*.png')
 		txt_path = os.path.join(job_path, 'output_old/*.txt')
 		if process_type is not None:
@@ -156,17 +156,17 @@ class SchedulerHandler(object):
 				txt_path = os.path.join(job_path, 'output.fits/*.txt')
 		retstr += '<ul>\n'
 		for link in glob.glob(img_path):
-			strLink = unicodedata.normalize('NFKD', link).encode('ascii','ignore')
+			strLink = unicodedata.normalize('NFKD', link).encode('ascii', 'ignore')
 			subname = strLink.split('/')
 			name = subname[len(subname) -1]
-			retstr += '<li><a href=/get_spectrum_image?path='+strLink+' click=display_image link='+strLink+'>'+name+'</a></li>\n'
+			retstr += '<li><a href=/get_spectrum_image?path=' + strLink.replace('+', '%2b') + ' click=display_image link=' + strLink.replace('+', '%2b') + '>' + name + '</a></li>\n'
 		retstr += '</ul>\n<ul>\n'
 		for link in glob.glob(txt_path):
-			strLink = unicodedata.normalize('NFKD', link).encode('ascii','ignore')
+			strLink = unicodedata.normalize('NFKD', link).encode('ascii', 'ignore')
 			subname = strLink.split('/')
 			print subname
 			name = subname[len(subname) -1]
-			retstr += '<li><a href=/get_spectrum_txt?path='+strLink+' click=display_image link='+strLink+'>'+name+'</a></li>\n'
+			retstr += '<li><a href=/get_spectrum_txt?path=' + strLink.replace('+', '%2b') + ' click=display_image link=' + strLink.replace('+', '%2b') + '>' + name + '</a></li>\n'
 		retstr += '</ul>\n</body>\n</html>'
 		return retstr
 
@@ -223,8 +223,6 @@ class SchedulerHandler(object):
 		encoded_string = ''
 		path = path.replace('..','')
 		if self.check_path(path) == True:
-			# fix for + symbol
-			path = path.replace('+', '%2b')
 			with open(path, "rb") as image_file:
 				encoded_string = base64.b64encode(image_file.read())
 			retstr = '<img alt="My Image" src="data:image/png;base64,'+ encoded_string + '" />'
@@ -236,7 +234,6 @@ class SchedulerHandler(object):
 	def get_spectrum_txt(self, path):
 		path = path.replace('..','')
 		if self.check_path(path) == True:
-			path = path.replace('+', '%2b')
 			retstr = '<!DOCTYPE html><html><head></head><body><pre>'
 			with open(path, "rt") as txt_file:
 				retstr += txt_file.read()
