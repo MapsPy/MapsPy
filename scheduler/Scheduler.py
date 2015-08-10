@@ -114,14 +114,19 @@ class Scheduler(object):
 		try:
 			self.job_lock.acquire(True)
 			if node.has_key('Id') == False:
-				print 'getting node'
-				node = db.get_process_node_by_name(node['ComputerName'])
-				print 'new node', node
+				print 'getting id for node', node
+				new_node = db.get_process_node_by_name(node['ComputerName'])
+				node['Id'] = new_node['Id']
+				print 'updated node', node
+				s = requests.Session()
+				url = 'http://' + str(node['Hostname']) + ':' + str(node['Port']) + '/update_id'
+				r = s.post(url, data={'Id': node['Id']})
+				print 'update result', r.status_code, ':', r.text
 			if node['Status'] == 'Idle':
 				job_list = db.get_all_unprocessed_jobs()
 				for job in job_list:
 					print 'checking job', job
-					if job['Process_Node_Id'] < 0 or  job['Process_Node_Id'] == node['Id']:
+					if job['Process_Node_Id'] < 0 or job['Process_Node_Id'] == node['Id']:
 						job['Process_Node_Id'] = node['Id']
 						url = 'http://' + str(node['Hostname']) + ':' + str(node['Port']) + '/job_queue'
 						print '_sending job to ', node['ComputerName'], 'url', url
@@ -133,7 +138,7 @@ class Scheduler(object):
 		except:
 			self.job_lock.release()
 			exc_str = traceback.format_exc()
-			return exc_str
+			print exc_str
 
 	def _setup_logging_(self, log, logtype, logname):
 		maxBytes = getattr(log, "rot_maxBytes", 20971520) # 20Mb

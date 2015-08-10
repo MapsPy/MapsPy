@@ -59,6 +59,11 @@ class ProcessNodeHandler(object):
 			exc_str = traceback.format_exc()
 			return exc_str
 
+	@cherrypy.expose
+	def update_id(self, Id):
+		cherrypy.engine.publish('update_id', Id)
+		return 'Updated'
+
 class ProcessNodeJobsWebService(object):
 	'''
 	ProcessNode exposed /job_queue
@@ -72,7 +77,7 @@ class ProcessNodeJobsWebService(object):
 	# get list of jobs on this nodes queue
 	def GET(self, job_id=None):
 		result = None
-		if computer_name == None:
+		if job_id == None:
 			result = self.db.get_all_jobs()
 		else:
 			result = self.db.get_job(job_id)

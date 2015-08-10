@@ -107,6 +107,7 @@ class ProcessNode(object):
 		self.db_name = pnSettings[Settings.PROCESS_NODE_DATABASE_NAME]
 		self.db = DatabasePlugin(cherrypy.engine, SQLiteDB, self.db_name)
 		cherrypy.engine.subscribe("new_job", self.callback_new_job)
+		cherrypy.engine.subscribe("update_id", self.update_id)
 		self.create_directories()
 		self.running = True
 
@@ -129,6 +130,9 @@ class ProcessNode(object):
 		h.setLevel(logging.DEBUG)
 		h.setFormatter(cherrypy._cplogging.logfmt)
 		log.error_log.addHandler(h)
+
+	def update_id(self, new_id):
+		self.pn_info['Id'] = new_id
 
 	def run(self):
 		webapp = ProcessNodeHandler()
@@ -155,6 +159,11 @@ class ProcessNode(object):
 				else:
 					self.send_status_update()
 					#self.process_next_job()
+				if cherrypy.engine.state != cherrypy.engine.states.STARTED and self.running:
+					# if cherrypy engine stopped but this thread is still alive, restart it.
+					print 'CherryPy Engine state = ', cherrypy.engine.state
+					print 'Calling cherrypy.engine.start()'
+					cherrypy.engine.start()
 		except:
 			print 'run error'
 			traceback.print_exc(file=sys.stdout)
@@ -175,7 +184,7 @@ class ProcessNode(object):
 				self.db.update_job(job_dict)
 				self.send_job_update(job_dict)
 				self.send_status_update()
-				maps_set_str = os.path.join(str(job_dict['DataPath']),'maps_settings.txt')
+				maps_set_str = os.path.join(str(job_dict['DataPath']), 'maps_settings.txt')
 				f = open(maps_set_str, 'w')
 				f.write('	  This file will set some MAPS settings mostly to do with fitting' + '\n')
 				f.write('VERSION:' + str(job_dict['Version']).strip() + '\n')

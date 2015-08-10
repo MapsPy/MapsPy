@@ -959,7 +959,7 @@ def maps_batch(wdir='', a=1,b=0,c=0,d=0,e=0, cb_update_func=None):
 			'nnls': 0,
 			'detector_to_start_with': 0,
 			'xanes_scan': 0,
-			'dataset_files_to_proc': 'all',
+			'dataset_files_to_proc': ['all'],
 			'version': 0}
 
 	# Get info from maps_settings.txt
