@@ -392,8 +392,8 @@ def main(main_dict, force_fit=0, no_fit=False, cb_update_func=None):
 				jobs.append(p)
 				p.start()
 
-			for pp in range(no_files):
-				jobs[pp].join()
+			for proc in jobs:
+				proc.join()
 
 		else:
 			#  a single processor machine,	just use the single processor

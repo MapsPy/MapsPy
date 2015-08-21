@@ -777,37 +777,19 @@ def _option_b_(main_dict, maps_conf, maps_def, total_number_detectors, info_elem
 
 		if fitp != None:
 			avg_res_override_name = os.path.join(current_directory, 'average_resulting_maps_fit_parameters_override.txt')
-			old_override_name = os.path.join(current_directory, 'old_maps_fit_parameters_override.txt')
+			#old_override_name = os.path.join(current_directory, 'old_maps_fit_parameters_override.txt')
 			old_override_date_name = os.path.join(current_directory, 'old_' + strftime("%Y-%m-%d_%H-%M-%S", gmtime()) + '_maps_fit_parameters_override.txt')
-			old_override_suffix_date_name = os.path.join(current_directory, 'old_' + strftime("%Y-%m-%d_%H-%M-%S", gmtime()) + '_maps_fit_parameters_override.txt' + suffix)
-			maps_override_suffix_name = os.path.join(current_directory, 'maps_fit_parameters_override.txt' + suffix)
+			#old_override_suffix_date_name = os.path.join(current_directory, 'old_' + strftime("%Y-%m-%d_%H-%M-%S", gmtime()) + '_maps_fit_parameters_override.txt' + suffix)
+			#maps_override_suffix_name = os.path.join(current_directory, 'maps_fit_parameters_override.txt' + suffix)
 			maps_override_name = os.path.join(current_directory, 'maps_fit_parameters_override.txt')
-			#if os.path.isfile(avg_res_override_name):
-			#move AND rename the old AND new override files:
-			try:
-				if os.path.isfile(old_override_name):
-					print 'removing',old_override_name
-					os.remove(old_override_name)
-				if os.path.isfile(maps_override_suffix_name):
-					print 'renaming',maps_override_suffix_name, old_override_suffix_date_name
-					os.rename(maps_override_suffix_name, old_override_suffix_date_name)
-			except:
-				pass
 			print 'total_num detectors = ', total_number_detectors
-			if total_number_detectors <= 1:
-				try:
-					if os.path.isfile(maps_override_name):
-						print 'renaming', maps_override_name, 'to', old_override_date_name
-						os.rename(maps_override_name, old_override_date_name)
-				except:
-					print 'could not rename file', maps_override_name, 'to', old_override_date_name
 			try:
 				if os.path.isfile(maps_override_name):
-					print 'removing', maps_override_suffix_name
-					os.remove(maps_override_suffix_name)
+					print 'renaming', maps_override_name, 'to', old_override_date_name
+					os.rename(maps_override_name, old_override_date_name)
 				if os.path.isfile(avg_res_override_name):
-					print 'renaming', avg_res_override_name, 'to', maps_override_suffix_name
-					os.rename(avg_res_override_name, maps_override_suffix_name)
+					print 'renaming', avg_res_override_name, 'to', maps_override_name
+					os.rename(avg_res_override_name, maps_override_name)
 			except:
 				print 'error renaming average_resulting_maps_fit_parameters_override to maps_fit_parameters_override'
 				pass

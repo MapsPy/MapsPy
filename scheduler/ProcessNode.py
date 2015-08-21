@@ -59,6 +59,11 @@ STR_HEARTBEAT = 'Heartbeat'
 
 STR_JOB_LOG_DIR_NAME = 'job_logs'
 
+JOB_PROCESSING_ID = 1
+JOB_COMPLETED_ID = 2
+JOB_ERROR_ID = 10
+
+
 class ProcessNode(object):
 
 	def __init__(self, settings):
@@ -179,7 +184,7 @@ class ProcessNode(object):
 			try:
 				print 'processing job', job_dict['DataPath']
 				self.pn_info[STR_STATUS] = 'Processing'
-				job_dict['Status'] = 1 #1 = processing
+				job_dict['Status'] = JOB_PROCESSING_ID
 				#job_dict['StartProcWork'] = time.time()
 				self.db.update_job(job_dict)
 				self.send_job_update(job_dict)
@@ -222,7 +227,7 @@ class ProcessNode(object):
 				if proc_mask & 32 == 32:
 					key_f = 1
 				#os.chdir(job_dict['DataPath'])
-				log_name = 'Job_' + str(job_dict['Id']) + '_' + datetime.strftime(datetime.now(),"%y_%m_%d_%H_%M_%S") + '.log'
+				log_name = 'Job_' + str(job_dict['Id']) + '_' + datetime.strftime(datetime.now(), "%y_%m_%d_%H_%M_%S") + '.log'
 				job_dict['Log_Path'] = log_name
 				log_path = os.path.join(STR_JOB_LOG_DIR_NAME, log_name)
 				logfile = open(log_path,'wt')
@@ -230,12 +235,12 @@ class ProcessNode(object):
 				maps_batch(wdir=job_dict['DataPath'], a=key_a, b=key_b, c=key_c, d=key_d, e=key_e)
 				sys.stdout = saveout
 				logfile.close()
-				job_dict['Status'] = 2 #3 = completed
+				job_dict['Status'] = JOB_COMPLETED_ID
 			except:
 				print 'Error processing',job_dict['DataPath']
 				traceback.print_exc(file=sys.stdout)
 				sys.stdout = saveout
-				job_dict['Status'] = 10 #2 = error
+				job_dict['Status'] = JOB_ERROR_ID
 			self.db.update_job(job_dict)
 			self.send_job_update(job_dict)
 			self.send_status_update()

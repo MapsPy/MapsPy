@@ -1150,19 +1150,19 @@ class analyze:
 		tmp[wind] = 0.
 		fwhm = 2.35 * np.sqrt(tmp)
 
-		original_bcgrd = background.copy()
+		#original_bcgrd = background.copy()
 		
 		#import matplotlib.pyplot as plt 
 		#plt.plot(energy, background)
 		
 		#smooth the background
 		import scipy.signal
-		if keywords.spectral_binning > 0 :
+		if keywords.spectral_binning > 0:
 			s = scipy.signal.boxcar(3)
-		else :
+		else:
 			s = scipy.signal.boxcar(5)
 		A = s.sum()
-		background = scipy.signal.convolve(background,s,mode='same')/A
+		background = scipy.signal.convolve(background, s, mode='same') / A
 		
 		#Check smoothing
 		#plt.plot(energy, background)
@@ -1177,7 +1177,7 @@ class analyze:
 		if keywords.spectral_binning > 0:
 			window_p = window_p/2.
 		
-		background = np.log(np.log(background+1.)+1.)
+		background = np.log(np.log(background + 1.) + 1.)
 	
 		index = np.arange(np.float(n_background))
 		
