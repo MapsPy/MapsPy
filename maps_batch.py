@@ -700,39 +700,41 @@ def _option_b_(main_dict, maps_conf, maps_def, total_number_detectors, info_elem
 		# if b then lets load the 4
 		# largest img.at files, extract the spectra, and do the fits, then
 		# rename the average override file
-
-		main_dict['XRFmaps_dir'] = main_dict['img_dat_dir']
-		files = os.listdir(main_dict['XRFmaps_dir'])
 		imgdat_filenames = []
-		extension = '.h5' + suffix
-		for f in files:
-			if extension in f.lower():
-				imgdat_filenames.append(f)
-		imgdat_filenames.sort()
+		main_dict['XRFmaps_dir'] = main_dict['img_dat_dir']
+		if len(main_dict['dataset_files_to_proc']) < 1 or main_dict['dataset_files_to_proc'][0] == 'all':
+			files = os.listdir(main_dict['XRFmaps_dir'])
+			extension = '.h5' + suffix
+			for f in files:
+				if extension in f.lower():
+					imgdat_filenames.append(f)
+			imgdat_filenames.sort()
 
-		if len(imgdat_filenames) > 8:
-			imgdat_filesizes = np.zeros((len(imgdat_filenames)))
-			for ii in range(len(imgdat_filenames)):
-				fsize = os.path.getsize(os.path.join(main_dict['img_dat_dir'], imgdat_filenames[ii]))
-				imgdat_filesizes[ii] = fsize
-				#print imgdat_filenames[ii], imgdat_filesizes[ii]
-			sorted_index = np.argsort(np.array(imgdat_filesizes))
-			imgdat_filenames = [imgdat_filenames for (imgdat_filesizes, imgdat_filenames) in sorted(zip(imgdat_filesizes, imgdat_filenames))]
-			imgdat_filenames.reverse()
+			if len(imgdat_filenames) > 8:
+				imgdat_filesizes = np.zeros((len(imgdat_filenames)))
+				for ii in range(len(imgdat_filenames)):
+					fsize = os.path.getsize(os.path.join(main_dict['img_dat_dir'], imgdat_filenames[ii]))
+					imgdat_filesizes[ii] = fsize
+					#print imgdat_filenames[ii], imgdat_filesizes[ii]
+				sorted_index = np.argsort(np.array(imgdat_filesizes))
+				imgdat_filenames = [imgdat_filenames for (imgdat_filesizes, imgdat_filenames) in sorted(zip(imgdat_filesizes, imgdat_filenames))]
+				imgdat_filenames.reverse()
 
-			imgdat_filenames = imgdat_filenames[0:8]
+				imgdat_filenames = imgdat_filenames[0:8]
 
-		print '8 largest h5 files:', imgdat_filenames
+			print '8 largest h5 files:', imgdat_filenames
+		else:
+			imgdat_filenames = [mdafile.replace('.mda', '.h5') + suffix for mdafile in main_dict['dataset_files_to_proc']]
 
 		main_dict['XRFmaps_names'] = imgdat_filenames
-
+		print 'option B processing h5 files:', imgdat_filenames
 		main_dict['XRFmaps_id'] = 0
 
 		spectra_filenames = []
 		#Get integrated spectra from .h5 files and save them as text files
 		for ii in range(len(imgdat_filenames)):
 			sfile = os.path.join(main_dict['XRFmaps_dir'], imgdat_filenames[ii])
-			this_filename = 'intspec'+imgdat_filenames[ii]+'.txt'
+			this_filename = 'intspec'+imgdat_filenames[ii] + '.txt'
 			savefile = os.path.join(main_dict['output_dir'], this_filename)
 			if check_output_dirs(main_dict) == False:
 				return None

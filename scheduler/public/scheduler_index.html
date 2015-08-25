@@ -219,7 +219,8 @@
                         var node = $datasets.mda_files[i];
                         var $shortname = node.split("/");
                         var $total = $shortname.length;
-                        var $option = "<option value=\""+$datasets.mda_files[i]+"\">"+$shortname[$total-1]+"</option>";
+                        //var $option = "<option value=\""+$datasets.mda_files[i]+"\">"+$shortname[$total-1]+"</option>";
+                        var $option = "<option value=\""+$shortname[$total-1]+"\">"+$shortname[$total-1]+"</option>";
                         $("#datasets_list").append($option);
                     }
                 },
