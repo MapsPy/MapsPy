@@ -148,7 +148,10 @@
                     'NumThreads: '+d.NumThreads+'<br>'+
                     'Hostname: '+d.Hostname+'<br>'+
                     'Port: '+d.Port+'<br>'+
-                    'Heartbeat: '+d.Heartbeat;
+                    'Heartbeat: '+d.Heartbeat + '<br>'+
+                    'Process Cpu Percent: '+d.ProcessCpuPercent + '%<br>'+
+                    'Process Mem Percent: '+Math.floor(d.ProcessMemPercent * 100) / 100 + '%<br>'+
+                    'System Cpu Percent: '+d.SystemCpuPercent + '%';
         }
         
         //----------------------------------------------------------------------
@@ -368,7 +371,9 @@
             { "data": "ComputerName" },
             { "data": "Status" },
             { "data": "NumThreads" },
-            { "data": "Heartbeat" }
+            { "data": "Heartbeat" },
+            { "data": "ProcessCpuPercent" },
+            { "data": "ProcessMemPercent" }
             ],
             "order": [[1, 'asc']]
         });
@@ -401,6 +406,7 @@
         $('.overlay').hide();
         var $detailPnRows = [];
         var $detailJobRows = [];
+        var $detailPRJobRows = [];
 
         setInterval(function()
         {
@@ -451,11 +457,50 @@
         
         //----------------------------------------------------------------------
         
-        $('#process_node_table').on( 'click', 'tr td.details-control', function () 
+        $processing_table.on( 'click', 'tr td.details-control', function () 
+        {
+            var tr = $(this).closest('tr');
+            var row = $processing_table.row( tr );
+            var idx = $.inArray( tr.attr('id'), $detailPRJobRows );
+
+            if ( row.child.isShown() ) 
+            {
+                tr.removeClass( 'details' );
+                row.child.hide();
+
+                // Remove from the 'open' array
+                $detailPRJobRows.splice( idx, 1 );
+            }
+            else 
+            {
+                tr.addClass( 'details' );
+                row.child( format_job_details( row.data() ) ).show();
+
+                // Add to the 'open' array
+                if ( idx === -1 ) 
+                {
+                    $detailPRJobRows.push( tr.attr('id') );
+                }
+            }
+        });
+        
+        //----------------------------------------------------------------------
+ 
+        $processing_table.on( 'draw', function () 
+        {
+            $.each( $detailPRJobRows, function ( i, id ) 
+            {
+                $('#'+id+' td.details-control').trigger( 'click' );
+            });
+        });
+        
+        //----------------------------------------------------------------------
+        
+        $pn_table.on( 'click', 'tr td.details-control', function () 
         {
             var tr = $(this).closest('tr');
             var row = $pn_table.row( tr );
-            var idx = $.inArray( tr.attr('ComputerName'), $detailPnRows );
+            var idx = $.inArray( tr.attr('id'), $detailPnRows );
 
             if ( row.child.isShown() ) 
             {
@@ -477,7 +522,7 @@
                 }
             }
         });
-        
+
         //----------------------------------------------------------------------
 
         $pn_table.on( 'draw', function () 
@@ -487,7 +532,7 @@
                 $('#'+id+' td.details-control').trigger( 'click' );
             });
         });
-        
+
     });
     </script>
     <title> MapsPy Scheduler </title>
@@ -502,6 +547,8 @@
             <th>Status</th>
             <th>Max Threads</th>
             <th>Heartbeat</th>
+            <th>CPU %</th>
+            <th>Memory %</th>
            </tr>
          </thead>
         </table>
@@ -609,16 +656,14 @@
                 <input type="checkbox" id="option-xrf-bin">XRF Bin
                 <input type="checkbox" id="option-nnls">NNLS
                 <input type="checkbox" id="option-xanes">XANES Scan
-                <!-- future feature
                 <br>
                 Process Node:
                 <select id="proc_node_option">
                     <option value="any">Any
                 </select>
-                -->
+
 <!--
             write_hdf = 0
-            detector_to_start_with = 0
 -->
                <br><br>
                <button id="Btn-Submit-Job">Submit Job</button>

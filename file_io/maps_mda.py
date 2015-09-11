@@ -1300,14 +1300,15 @@ class mda:
 		
 		mdapath, mdafile = os.path.split(mdafilename)
 		header, extension = os.path.splitext(mdafile)
-
+		scan = None
+		invalid_file = 1
 		try:
-			scan = self.read_scan(mdafilename, extra_pvs = True)
+			scan = self.read_scan(mdafilename, extra_pvs=True)
 			invalid_file = 0
 		except:
 			invalid_file = 1
 
-		if scan == None or	invalid_file == 1:		
+		if scan == None or invalid_file == 1:
 			print 'not read a valid mda flyscan file, filename: ', mdafilename
 			#maps_change_xrf_resetvars, n_ev, n_rows, n_cols, n_energy, energy, energy_spec, scan_time_stamp, dataset_orig
 			return

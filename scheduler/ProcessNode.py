@@ -40,15 +40,19 @@ import Settings
 import requests
 import cherrypy
 import json
-import threading
+import time
 import traceback
 import logging
+import threading
+import signal
+import psutil
 from datetime import datetime
 from plugins.DatabasePlugin import DatabasePlugin
 from plugins.SQLiteDB import SQLiteDB
 from handlers.ProcessNodeHandlers import ProcessNodeHandler, ProcessNodeJobsWebService
 from maps_batch import maps_batch
-import signal
+
+
 
 STR_COMPUTER_NAME = 'ComputerName'
 STR_NUM_THREADS = 'NumThreads'
@@ -56,6 +60,9 @@ STR_HOSTNAME = 'Hostname'
 STR_PORT = 'Port'
 STR_STATUS = 'Status'
 STR_HEARTBEAT = 'Heartbeat'
+STR_PROC_CPU_PERC = 'ProcessCpuPercent'
+STR_PROC_MEM_PERC = 'ProcessMemPercent'
+STR_SYS_CPU_PERC = 'SystemCpuPercent'
 
 STR_JOB_LOG_DIR_NAME = 'job_logs'
 
@@ -77,7 +84,11 @@ class ProcessNode(object):
 					STR_HOSTNAME: serverSettings[Settings.SERVER_HOSTNAME],
 					STR_PORT: serverSettings[Settings.SERVER_PORT],
 					STR_STATUS: 'Bootup',
-					STR_HEARTBEAT: str(datetime.now()) }
+					STR_HEARTBEAT: str(datetime.now()),
+					STR_PROC_CPU_PERC: 0.0,
+					STR_PROC_MEM_PERC: 0.0,
+					STR_SYS_CPU_PERC: 0.0,
+					}
 		cherrypy.config.update({
 			'server.socket_host': serverSettings[Settings.SERVER_HOSTNAME],
 			'server.socket_port': int(serverSettings[Settings.SERVER_PORT]),
@@ -115,6 +126,8 @@ class ProcessNode(object):
 		cherrypy.engine.subscribe("update_id", self.update_id)
 		self.create_directories()
 		self.running = True
+		self.status_thread = None
+		self.this_process = psutil.Process(os.getpid())
 
 	def handle_sigint(self, sig, frame):
 		print 'handle_sigint'
@@ -154,6 +167,10 @@ class ProcessNode(object):
 		except:
 			print 'Error sending post'
 		self.pn_info[STR_STATUS] = 'Idle'
+		# start status thread
+		if self.status_thread is None:
+			self.status_thread = threading.Thread(target=self.status_thread_func)
+			self.status_thread.start()
 		self.new_job_event.set() # set it at start to check for unfinished jobs
 		try:
 			while self.running:
@@ -161,9 +178,9 @@ class ProcessNode(object):
 				if self.new_job_event.is_set():
 					self.new_job_event.clear()
 					self.process_next_job()
-				else:
-					self.send_status_update()
-					#self.process_next_job()
+				#else:
+				#	self.send_status_update()
+				#	#self.process_next_job()
 				if cherrypy.engine.state != cherrypy.engine.states.STARTED and self.running:
 					# if cherrypy engine stopped but this thread is still alive, restart it.
 					print 'CherryPy Engine state = ', cherrypy.engine.state
@@ -174,11 +191,34 @@ class ProcessNode(object):
 			traceback.print_exc(file=sys.stdout)
 			self.stop()
 
+	def update_proc_info(self):
+		self.pn_info[STR_STATUS]
+
+	# thread function for sending status during processing
+	def status_thread_func(self):
+		try:
+			print 'Started Status Thread'
+			while self.running:
+				self.pn_info[STR_PROC_CPU_PERC] = self.this_process.cpu_percent()
+				self.pn_info[STR_PROC_MEM_PERC] = self.this_process.memory_percent()
+				self.pn_info[STR_SYS_CPU_PERC] = psutil.cpu_percent()
+				for child in self.this_process.children():
+					self.pn_info[STR_PROC_CPU_PERC] += child.cpu_percent()
+					self.pn_info[STR_PROC_MEM_PERC] = child.memory_percent()
+				self.send_status_update()
+				self.new_job_event.wait(self.status_update_interval)
+				time.sleep(0.1)
+		except:
+			print 'status_thread_func error'
+			traceback.print_exc(file=sys.stdout)
+			#self.stop()
+		print 'Stopped Status Thread'
+
 	def process_next_job(self):
 		if self.running == False:
 			return
 		print 'checking for jobs to process'
-		job_list = self.db.get_all_unprocessed_jobs()
+		job_list = self.db.get_all_unprocessed_jobs(True)
 		saveout = sys.stdout
 		for job_dict in job_list:
 			try:
@@ -251,6 +291,9 @@ class ProcessNode(object):
 
 	def stop(self):
 		self.running = False
+		if self.status_thread is not None:
+			print 'Waiting for status thread to join'
+			self.status_thread.join()
 		self.new_job_event.set()
 		try:
 			self.pn_info[STR_STATUS] = 'Offline'

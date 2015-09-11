@@ -74,8 +74,8 @@ class DatabasePlugin(plugins.SimplePlugin):
 	def get_all_jobs(self):
 		return self.db.get_all_jobs()
 
-	def get_all_unprocessed_jobs(self):
-		return self.db.get_all_unprocessed_jobs()
+	def get_all_unprocessed_jobs(self, getProcessingAlso=False):
+		return self.db.get_all_unprocessed_jobs(getProcessingAlso)
 
 	def get_all_processing_jobs(self):
 		return self.db.get_all_processing_jobs()

@@ -734,7 +734,7 @@ def _option_b_(main_dict, maps_conf, maps_def, total_number_detectors, info_elem
 		#Get integrated spectra from .h5 files and save them as text files
 		for ii in range(len(imgdat_filenames)):
 			sfile = os.path.join(main_dict['XRFmaps_dir'], imgdat_filenames[ii])
-			this_filename = 'intspec'+imgdat_filenames[ii] + '.txt'
+			this_filename = 'intspec' + imgdat_filenames[ii] + '.txt'
 			savefile = os.path.join(main_dict['output_dir'], this_filename)
 			if check_output_dirs(main_dict) == False:
 				return None
