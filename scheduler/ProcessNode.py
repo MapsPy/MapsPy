@@ -120,6 +120,8 @@ class ProcessNode(object):
 		self.status_update_interval = 10
 		self.scheduler_host = serverSettings[Settings.SERVER_SCHEDULER_HOSTNAME]
 		self.scheduler_port = serverSettings[Settings.SERVER_SCHEDULER_PORT]
+		self.path_alias_dict = self.parse_aliases(pnSettings[Settings.PROCESS_NODE_PATH_ALIAS])
+		print 'alias paths ',self.path_alias_dict
 		self.session = requests.Session()
 		self.scheduler_pn_url = 'http://' + self.scheduler_host + ':' + self.scheduler_port + '/process_node'
 		self.scheduler_job_url = 'http://' + self.scheduler_host + ':' + self.scheduler_port + '/job'
@@ -217,6 +219,23 @@ class ProcessNode(object):
 			#self.stop()
 		print 'Stopped Status Thread'
 
+	def parse_aliases(self, alias_str):
+		all_aliases = alias_str.split(';')
+		alias_dict = dict()
+		for single_set in all_aliases:
+			split_single = single_set.split(',')
+			if len(split_single) > 1:
+				alias_dict[split_single[0]] = split_single[1]
+		return alias_dict
+
+	def check_for_alias(self, directory_str, alias_dict):
+		ret_str = directory_str
+		for key in alias_dict.iterkeys():
+			if directory_str.startswith(key):
+				ret_str = directory_str.replace(key, alias_dict[key])
+				break
+		return ret_str
+
 	def process_next_job(self):
 		if self.running == False:
 			return
@@ -225,6 +244,7 @@ class ProcessNode(object):
 		saveout = sys.stdout
 		for job_dict in job_list:
 			try:
+				job_dict['DataPath'] = self.check_for_alias(job_dict['DataPath'], self.path_alias_dict)
 				print 'processing job', job_dict['DataPath']
 				self.pn_info[STR_STATUS] = 'Processing'
 				job_dict['Status'] = JOB_PROCESSING_ID
