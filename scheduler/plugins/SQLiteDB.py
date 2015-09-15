@@ -50,6 +50,8 @@ UPDATE_PROCESS_NODE_BY_ID = 'UPDATE ProcessNodes SET ComputerName=:ComputerName 
 UPDATE_PROCESS_NODE_BY_NAME = 'UPDATE ProcessNodes SET NumThreads=:NumThreads, Hostname=:Hostname, Port=:Port, Status=:Status, Heartbeat=:Heartbeat, ProcessCpuPercent=:ProcessCpuPercent, ProcessMemPercent=:ProcessMemPercent, SystemCpuPercent=:SystemCpuPercent WHERE ComputerName=:ComputerName'
 UPDATE_JOB_BY_ID = 'UPDATE Jobs SET DataPath=:DataPath, ProcMask=:ProcMask, Version=:Version, DetectorElements=:DetectorElements, MaxFilesToProc=:MaxFilesToProc, MaxLinesToProc=:MaxLinesToProc, QuickAndDirty=:QuickAndDirty, XRF_Bin=:XRF_Bin, NNLS=:NNLS, XANES_Scan=:XANES_Scan, DetectorToStartWith=:DetectorToStartWith, BeamLine=:BeamLine, Standards=:Standards, DatasetFilesToProc=:DatasetFilesToProc, Priority=:Priority, Status=:Status, StartProcTime=:StartProcTime, FinishProcTime=:FinishProcTime, Log_Path=:Log_Path, Process_Node_Id=:Process_Node_Id WHERE Id=:Id'
 
+RESET_PN_STATUS = 'UPDATE ProcessNodes SET Status="Offline", ProcessCpuPercent=0.0, ProcessMemPercent=0.0 WHERE Id>0;'
+
 SELECT_ALL_PROCESS_NODES = 'SELECT Id, ComputerName, NumThreads, Hostname, Port, Status, Heartbeat, ProcessCpuPercent, ProcessMemPercent, SystemCpuPercent FROM ProcessNodes'
 SELECT_PROCESS_NODE_BY_NAME = 'SELECT Id, ComputerName, NumThreads, Hostname, Port, Status, Heartbeat, ProcessCpuPercent, ProcessMemPercent, SystemCpuPercent FROM ProcessNodes WHERE ComputerName=:ComputerName'
 SELECT_PROCESS_NODE_BY_ID = 'SELECT Id, ComputerName, NumThreads, Hostname, Port, Status, Heartbeat, ProcessCpuPercent, ProcessMemPercent, SystemCpuPercent FROM ProcessNodes WHERE Id=:Id'
@@ -60,6 +62,7 @@ SELECT_ALL_FINISHED_JOBS = SELECT_ALL_JOBS + ' WHERE Status>=2'
 SELECT_ALL_UNPROCESSED_JOBS_PN = SELECT_ALL_JOBS + ' WHERE Status<=1 ORDER BY Status ASC'
 SELECT_JOB_BY_ID = SELECT_ALL_JOBS + ' WHERE Id=:Id'
 SELECT_JOBS_BY_STATUS = SELECT_ALL_JOBS + ' WHERE Status=:Status ORDER BY Priority DESC'
+
 
 
 class SQLiteDB:
@@ -189,6 +192,12 @@ class SQLiteDB:
 
 	def save(self, entry):
 		print 'saving',entry
+
+	def reset_process_nodes_status(self):
+		con = sql.connect(self.uri)
+		cur = con.cursor()
+		cur.execute(RESET_PN_STATUS)
+		con.commit()
 
 if __name__ == '__main__':
 	import datetime

@@ -152,6 +152,7 @@ class Scheduler(object):
 	def run(self):
 		db.subscribe()
 		db.create_tables()
+		db.reset_process_nodes_status()
 		webapp = SchedulerHandler(db, self.all_settings)
 		webapp.process_node = SchedulerProcessNodeWebService(db)
 		webapp.job = SchedulerJobsWebService(db)

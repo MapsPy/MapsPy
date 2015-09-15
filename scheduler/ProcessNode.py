@@ -51,7 +51,7 @@ from plugins.DatabasePlugin import DatabasePlugin
 from plugins.SQLiteDB import SQLiteDB
 from handlers.ProcessNodeHandlers import ProcessNodeHandler, ProcessNodeJobsWebService
 from maps_batch import maps_batch
-
+import math
 
 
 STR_COMPUTER_NAME = 'ComputerName'
@@ -133,7 +133,7 @@ class ProcessNode(object):
 		self.this_process = psutil.Process(os.getpid())
 
 	def handle_sigint(self, sig, frame):
-		print 'handle_sigint'
+		print 'handle_sigint', sig, frame
 		self.stop()
 
 	def create_directories(self):
@@ -203,7 +203,7 @@ class ProcessNode(object):
 			print 'Started Status Thread'
 			while self.running:
 				self.pn_info[STR_PROC_CPU_PERC] = self.this_process.cpu_percent()
-				self.pn_info[STR_PROC_MEM_PERC] = self.this_process.memory_percent()
+				self.pn_info[STR_PROC_MEM_PERC] = math.floor(self.this_process.memory_percent() * 100) / 100
 				self.pn_info[STR_SYS_CPU_PERC] = psutil.cpu_percent()
 				for child in self.this_process.children():
 					self.pn_info[STR_PROC_CPU_PERC_CHILDREN] += [child.cpu_percent()]
