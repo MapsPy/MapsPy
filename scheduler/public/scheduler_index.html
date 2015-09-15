@@ -250,6 +250,7 @@
             var $nnls = get_check_value('#option-nnls');
             var $xanes = get_check_value('#option-xanes');
             var $dataset_filenames = 'all';
+            var $pn_id = $( "#proc_node_option option:selected" ).attr('value');
             if ( $("#chk_all_datasets")[0].checked === false )
             {
                 $dataset_filenames = $('#datasets_list').val().join();
@@ -285,7 +286,7 @@
                     'StartProcTime': 0,
                     'FinishProcTime': 0,
                     'Log_Path': '',
-                    'Process_Node_Id': -1,
+                    'Process_Node_Id': parseInt($pn_id, 10),
                     'DatasetFilesToProc': $dataset_filenames
                 }),
                 datatype: "json",
@@ -531,6 +532,16 @@
             {
                 $('#'+id+' td.details-control').trigger( 'click' );
             });
+            
+            var $node_list1 = $pn_table.data();
+            $node_list1.each( function (node)
+            {
+                if ( $("#proc_node_option option[value='"+node.Id+"']").length < 1 )
+                {
+                    $('#proc_node_option').append( $("<option></option>").attr('value',node.Id).text(node.ComputerName));
+                }
+            });
+            
         });
 
     });
@@ -659,7 +670,7 @@
                 <br>
                 Process Node:
                 <select id="proc_node_option">
-                    <option value="any">Any
+                    <option value="-1">Any
                 </select>
 
 <!--
