@@ -250,7 +250,6 @@ class analyze:
 		overwrite = 0
 		maps_overridefile = os.path.join(self.main_dict['master_dir'], 'maps_fit_parameters_override.txt')
 		maps_intermediate_solution_file = 'maps_intermediate_solution.tmp'
-		orig_mca_arr = 0
 
 		xmin = 0L
 		xmax = 0L
@@ -536,7 +535,7 @@ class analyze:
 				old_mca_arr = scan.mca_arr.copy()
 				scan.mca_arr = np.zeros((n_cols, n_rows, n_mca_channels))
 				scan.mca_arr[:, :, :] = old_mca_arr[:, :, :, this_detector]
-				old_mca_arr = 0
+				del old_mca_arr
 				mca_arr_dimensions = scan.mca_arr.shape
 
 		# IF quick_dirty is set, just sum up all detector elements and treat
@@ -553,7 +552,7 @@ class analyze:
 					for ii in range(old_mca_no_dets):
 						scan.mca_arr[:, :, :] = scan.mca_arr[:, :, :] + old_mca_arr[:, :, :, ii]
 		
-				old_mca_arr = 0
+				del old_mca_arr
 				mca_arr_dimensions = scan.mca_arr.shape
 
 		#dataset = np.zeros((n_cols, n_rows, make_maps_conf.n_used_chan, 3))
@@ -586,6 +585,7 @@ class analyze:
 				sortind = sortind[::-1]
 				max_chan_spec[kk, 1] = np.sum(temp[sortind[0:np.amin([11, sortind.size])]])
 				max_chan_spec[kk, 0] = np.amax(temp)
+				del temp
 		else:
 			for kk in range(n_mca_channels):
 				temp = scan.mca_arr[:, :, kk].flatten()
@@ -593,6 +593,7 @@ class analyze:
 				sortind = sortind[::-1]
 				max_chan_spec[kk, 1] = np.sum(temp[sortind[0:np.amin([11, sortind.size])]])
 				max_chan_spec[kk, 0] = np.amax(temp)
+				del temp
 		
 		temp = 0
 		raw_spec = scan.mca_arr.sum(axis=0)
@@ -661,13 +662,11 @@ class analyze:
 		if (beamline == 'DLS-I08'):
 			det_descr = []
 
-		det_name = []
-		d_det = []
 		dmaps_set = np.zeros((n_cols, n_rows, make_maps_conf.n_used_dmaps))
 
 		# generate direct maps, such as SR current, ICs, life time in subroutine
 		det_maps = maps_detector.detector_maps()
-		det_name, d_det, dmaps_set = det_maps.find_detector_name(det_descr, scan_date, scan.detector_arr, scan.detector_description_arr, 
+		dmaps_set = det_maps.find_detector_name(det_descr, scan_date, scan.detector_arr, scan.detector_description_arr,
 																 make_maps_conf, scan.x_coord_arr, scan.y_coord_arr, beamline,
 																 n_cols, n_rows, maps_overridefile)
 
@@ -1127,7 +1126,7 @@ class analyze:
 					data_lines = np.zeros((self.main_dict['max_spec_channels'],	n_rows, n_cols))
 					for i_fit in range(n_cols):
 						for jj in range(n_rows):
-							data_lines[0:scan.mca_arr[i_fit, jj, :].size, jj, i_fit] = scan.mca_arr[i_fit, jj, :]					 
+							data_lines[0:scan.mca_arr[i_fit, jj, :].size, jj, i_fit] = scan.mca_arr[i_fit, jj, :]
 		
 					output_dir = self.main_dict['output_dir']
 		
@@ -1179,12 +1178,14 @@ class analyze:
 						results_pool.append(pool.apply_async(fit_line_threaded, (i_fit, data_line, 
 										output_dir, n_rows, matrix, spectral_binning, elt_line, values_line, bkgnd_line, tfy_line, 
 										info_elements, fitp, old_fitp, fitp.add_pars, keywords, add_matrixfit_pars, xrf_bin, calib)) )
-
+					#print '------ Waiting for fitting to finish ------'
+					#del data_lines
+					pool.close()
 					results = []
 					for r in results_pool:
 						results.append(r.get())
 
-					pool.terminate()
+					#pool.terminate()
 					pool.join()
 
 					for iline in range(count):
@@ -1490,7 +1491,7 @@ class analyze:
 			print 'now trying to write HDF5 file', h5file	  
 			energy_channels = spectra[0].calib['off'] + spectra[0].calib['lin'] * np.arange((n_channels), dtype=np.float)	 
 			h5.write_hdf5(thisdata, h5file, scan.mca_arr, energy_channels, extra_pv = extra_pv, extra_pv_order = scan.extra_pv_key_list, update = True)
-
+		'''
 		#Generate average images
 		if (total_number_detectors > 1):
 			print ' we are now going to create the maps_generate_average...'
@@ -1498,7 +1499,7 @@ class analyze:
 				print 'now doing maps_generate_average_img_dat, total_number_detectors: ', total_number_detectors, '	this_detector: ', this_detector, ' this_file = ', mdafilename
 				energy_channels = spectra[0].calib['off'] + spectra[0].calib['lin'] * np.arange((n_channels), dtype=np.float)
 				self.generate_average_img_dat(total_number_detectors, make_maps_conf, energy_channels, this_file=mdafilename, extra_pv=extra_pv)
-
+		'''
 		return
 
 #----------------------------------------------------------------------   

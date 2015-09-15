@@ -61,6 +61,8 @@ STR_PORT = 'Port'
 STR_STATUS = 'Status'
 STR_HEARTBEAT = 'Heartbeat'
 STR_PROC_CPU_PERC = 'ProcessCpuPercent'
+STR_PROC_CPU_PERC_CHILDREN = 'ProcessCpuPercentChildren'
+STR_PROC_MEM_PERC_CHILDREN = 'ProcessMemPercentChildren'
 STR_PROC_MEM_PERC = 'ProcessMemPercent'
 STR_SYS_CPU_PERC = 'SystemCpuPercent'
 
@@ -88,7 +90,8 @@ class ProcessNode(object):
 					STR_PROC_CPU_PERC: 0.0,
 					STR_PROC_MEM_PERC: 0.0,
 					STR_SYS_CPU_PERC: 0.0,
-					}
+					STR_PROC_CPU_PERC_CHILDREN: []
+		}
 		cherrypy.config.update({
 			'server.socket_host': serverSettings[Settings.SERVER_HOSTNAME],
 			'server.socket_port': int(serverSettings[Settings.SERVER_PORT]),
@@ -203,8 +206,8 @@ class ProcessNode(object):
 				self.pn_info[STR_PROC_MEM_PERC] = self.this_process.memory_percent()
 				self.pn_info[STR_SYS_CPU_PERC] = psutil.cpu_percent()
 				for child in self.this_process.children():
-					self.pn_info[STR_PROC_CPU_PERC] += child.cpu_percent()
-					self.pn_info[STR_PROC_MEM_PERC] = child.memory_percent()
+					self.pn_info[STR_PROC_CPU_PERC_CHILDREN] += [child.cpu_percent()]
+					self.pn_info[STR_PROC_MEM_PERC_CHILDREN] += [child.memory_percent()]
 				self.send_status_update()
 				self.new_job_event.wait(self.status_update_interval)
 				time.sleep(0.1)

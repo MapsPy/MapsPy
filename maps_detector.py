@@ -506,7 +506,7 @@ class detector_maps:
 						make_maps_conf.dmaps[this_det].units = 'mm'
 				except:
 					print 'Warning could not read x_coord'
-	   
+
 			if 'y_coord' in make_maps_conf.dmaps[this_det].name:
 				try:
 					for mm in range(x_coord_arr.size) :
@@ -514,8 +514,5 @@ class detector_maps:
 						make_maps_conf.dmaps[this_det].units = 'mm'
 				except:
 					print 'Warning could not read y_coord'			 
-	   
-						
-		return det_name, d_det, dmaps_set
-			
-			
+
+		return dmaps_set

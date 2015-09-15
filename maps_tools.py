@@ -425,15 +425,13 @@ def maps_nnls_line(data_line, xsize, fitmatrix_reduced, n_mca_channels, elements
 				yG = np.dot((0.-these_counts),AG.T)
 
 			y[0,G_nn] = yG[0,:]			 
-		  
-		
+
 		#result = x_nn[0]
 	
 		for mm in range(len(elements_to_use)):				   
 			if element_lookup_in_reduced[mm] != -1 :
 				results_line[j_temp, mm] = x_nn[0, element_lookup_in_reduced[mm]]
-   
-	
+
 	return results_line
 
 

@@ -38,9 +38,9 @@ from file_util import open_file_with_retry, call_function_with_retry
 import string
 import h5py
 import os
-
+from multiprocessing import Array
 import numpy as np
-
+import ctypes
 #import scan_data
 
 #----------------------------------------------------------------------
@@ -161,7 +161,21 @@ class mda:
 	def __init__(self):
 		pass
 		#self.scan = scan_data.scan()
-	
+
+	def mp_array_to_np_array(self, x, y, sp, det):
+		n_size = 0
+		n_shape = (1,)
+		if det is None:
+			n_size = x * y * sp
+			n_shape = (x, y, sp)
+		else:
+			n_size = x * y * sp * det
+			n_shape = (x, y, sp, det)
+		#create multiprocess array, convert to numpy
+		arr = Array(ctypes.c_double, n_size)
+		np_arr = np.frombuffer(arr.get_obj())
+		np_arr.shape = n_shape
+		return np_arr
 #----------------------------------------------------------------------
 	def read_scan_info(self, filename):
 		
@@ -780,6 +794,8 @@ class mda:
 
 		scan_no_triggers = u.unpack_int()
 
+		scan_data = scan()
+
 		if verbose:
 			print 'Scan name: ', scan_name
 			print 'Scan time: ', scan_time
@@ -1185,9 +1201,11 @@ class mda:
 					else:
 						no_energy_channels = scan_npts
 					if scan_no_detectors > 1:
-						mca_arr = np.zeros((x_pixels, y_pixels, no_energy_channels, scan_no_detectors), dtype=np.float32)
+						scan_data.mca_arr = np.zeros((x_pixels, y_pixels, no_energy_channels, scan_no_detectors), dtype=np.float32)
+						#scan_data.mca_arr = self.mp_array_to_np_array(x_pixels, y_pixels, no_energy_channels, scan_no_detectors)
 					else:
-						mca_arr = np.zeros((x_pixels, y_pixels, no_energy_channels), dtype=np.float32)
+						scan_data.mca_arr = np.zeros((x_pixels, y_pixels, no_energy_channels), dtype=np.float32)
+						#scan_data.mca_arr = self.mp_array_to_np_array(x_pixels, y_pixels, no_energy_channels, None)
 						
 #				 #This is very slow to unpack so read directly 
 #				 # detectors
@@ -1209,9 +1227,9 @@ class mda:
 					buf = file.read(scan_npts * 4)
 					detector_array = struct.unpack('>' + str(scan_npts) + 'f', buf)
 					if scan_no_detectors > 1:
-						mca_arr[i_innermost_loop, i_outer_loop, :, j] = detector_array[:]
+						scan_data.mca_arr[i_innermost_loop, i_outer_loop, :, j] = detector_array[:]
 					else:
-						mca_arr[i_innermost_loop, i_outer_loop, :] = detector_array[:]
+						scan_data.mca_arr[i_innermost_loop, i_outer_loop, :] = detector_array[:]
 
 			two_d_time_stamp.append(temp_timestamp)
 
@@ -1264,8 +1282,6 @@ class mda:
 				
 				extra_pv_key_list.append(name)
 
-		scan_data = scan()
-
 		scan_data.scan_name = one_d_info[0]
 		scan_data.scan_time_stamp = one_d_info[1]
 		
@@ -1287,7 +1303,7 @@ class mda:
 		scan_data.detector_description_arr = detector_description_arr
 
 		#mca_arr = fltarr(x_pixels, y_pixels, no_energy_channels, info.no_detectors)
-		scan_data.mca_arr = mca_arr
+		#scan_data.mca_arr = mca_arr
 
 		if extra_pvs == True:
 			scan_data.extra_pv = extra_pv_dict
@@ -1418,7 +1434,7 @@ class mda:
 		new_detector_description_arr = ['dxpXMAP2xfm3:mca1.ELTM', 'dxpXMAP2xfm3:mca2.ELTM', 'dxpXMAP2xfm3:mca3.ELTM', 'dxpXMAP2xfm3:mca4.ELTM']
 		old_detector_description_arr = detector_description_arr
 		old_detector_arr = detector_arr
-		detector_description_arr = old_detector_description_arr+new_detector_description_arr
+		detector_description_arr = old_detector_description_arr + new_detector_description_arr
 		detector_arr = np.ones((x_pixels, y_pixels, len(detector_description_arr)))
 		detector_arr[:, :, 0:len(old_detector_description_arr)] = old_detector_arr[:, :, 0:len(old_detector_description_arr)]	 
 
@@ -1430,10 +1446,10 @@ class mda:
 			print 'Error: Could not open file: ', h5_file
 
 		gid = f['MAPS_RAW']
-		if this_detector == 0 : entryname = 'data_a'
-		if this_detector == 1 : entryname = 'data_b'
-		if this_detector == 2 : entryname = 'data_c'
-		if this_detector == 3 : entryname = 'data_d'
+		if this_detector == 0: entryname = 'data_a'
+		if this_detector == 1: entryname = 'data_b'
+		if this_detector == 2: entryname = 'data_c'
+		if this_detector == 3: entryname = 'data_d'
 		
 		dataset_id = gid[entryname]
 		data = dataset_id[...]
@@ -1465,15 +1481,16 @@ class mda:
 		this_x_pixels = np.amin([x_pixels, hdf_data_size[0]])
 		this_y_pixels = np.amin([y_pixels, hdf_data_size[1]])
 
-		#create mca_arr as int_arr to save memory. conversion int to flt will still take the combined memopry allocation FOR both,	but is probably a bit better than before
-		scan.mca_arr = np.zeros((x_pixels, y_pixels, 2000), dtype = np.int)## nxmx2000 array  ( 2000 energies)		   
+		# create mca_arr as int_arr to save memory. conversion int to flt will still take the combined memopry allocation FOR both,	but is probably a bit better than before
+		scan.mca_arr = np.zeros((x_pixels, y_pixels, 2000), dtype=np.int)## nxmx2000 array  ( 2000 energies)
+		#scan.mca_arr = self.mp_array_to_np_array(x_pixels, y_pixels, 2000, None)
 
 		for j_temp in range(20):
 			scan.mca_arr[0:this_x_pixels, 0:this_y_pixels, j_temp*100:(99+j_temp*100+1)] = data[0:this_x_pixels, 0:this_y_pixels, j_temp*100:(99+j_temp*100+1)]
-		data = 0
-		scan.mca_arr.astype(float)
+		del data
+		#scan.mca_arr = scan.mca_arr.astype(float)
 
-		'''
+		''' old ver
 		detector_arr[0:this_x_pixels, 0:this_y_pixels, len(detector_description_arr)-4] = livetime[0:this_x_pixels, 0:this_y_pixels, 0]
 		detector_arr[0:this_x_pixels, 0:this_y_pixels, len(detector_description_arr)-3] = livetime[0:this_x_pixels, 0:this_y_pixels, 1]
 		detector_arr[0:this_x_pixels, 0:this_y_pixels, len(detector_description_arr)-2] = livetime[0:this_x_pixels, 0:this_y_pixels, 2]
