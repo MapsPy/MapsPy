@@ -40,7 +40,6 @@ import Settings
 import requests
 import cherrypy
 import json
-import time
 import traceback
 import logging
 import threading
@@ -244,8 +243,8 @@ class ProcessNode(object):
 		saveout = sys.stdout
 		for job_dict in job_list:
 			try:
-				job_dict['DataPath'] = self.check_for_alias(job_dict['DataPath'], self.path_alias_dict)
-				print 'processing job', job_dict['DataPath']
+				alias_path = self.check_for_alias(job_dict['DataPath'], self.path_alias_dict)
+				print 'processing job', job_dict['DataPath'], 'alias path ', alias_path
 				self.pn_info[STR_STATUS] = 'Processing'
 				job_dict['Status'] = JOB_PROCESSING_ID
 				#job_dict['StartProcWork'] = time.time()
@@ -293,9 +292,9 @@ class ProcessNode(object):
 				log_name = 'Job_' + str(job_dict['Id']) + '_' + datetime.strftime(datetime.now(), "%y_%m_%d_%H_%M_%S") + '.log'
 				job_dict['Log_Path'] = log_name
 				log_path = os.path.join(STR_JOB_LOG_DIR_NAME, log_name)
-				logfile = open(log_path,'wt')
+				logfile = open(log_path, 'wt')
 				sys.stdout = logfile
-				maps_batch(wdir=job_dict['DataPath'], a=key_a, b=key_b, c=key_c, d=key_d, e=key_e)
+				maps_batch(wdir=alias_path, a=key_a, b=key_b, c=key_c, d=key_d, e=key_e)
 				sys.stdout = saveout
 				logfile.close()
 				job_dict['Status'] = JOB_COMPLETED_ID

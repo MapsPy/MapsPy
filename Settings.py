@@ -66,22 +66,22 @@ class SettingsIO:
 
 
 	def __get_sect_dict__(s, section):
-	    dict1 = {}
-	    options = s.config.options(section)
-	    for option in options:
-	        try:
-	            dict1[option] = s.config.get(section, option)
-	            if dict1[option] == -1:
-	                DebugPrint("skip: %s" % option)
-	        except:
-	            print("exception on %s!" % option)
-	            dict1[option] = None
-	    return dict1
+		dict1 = {}
+		options = s.config.options(section)
+		for option in options:
+			try:
+				dict1[option] = s.config.get(section, option)
+				if dict1[option] == -1:
+					print("skip: %s" % option)
+			except:
+				print("exception on %s!" % option)
+				dict1[option] = None
+		return dict1
 
 #test
 if __name__ == '__main__':
 	#test
-	s = Settings()
+	s = SettingsIO()
 	s.load('settings.ini')
 	print 'all sections',s.settingDicts.keys()
 	schedDict = s.getSetting('Scheduler')
