@@ -59,10 +59,10 @@ SELECT_ALL_JOBS = 'SELECT Id, DataPath, ProcMask, Version, DetectorElements, Max
 SELECT_ALL_UNPROCESSED_JOBS = SELECT_ALL_JOBS + ' WHERE Status=0'
 SELECT_ALL_PROCESSING_JOBS = SELECT_ALL_JOBS + ' WHERE Status=1'
 SELECT_ALL_FINISHED_JOBS = SELECT_ALL_JOBS + ' WHERE Status>=2'
-SELECT_ALL_UNPROCESSED_JOBS_PN = SELECT_ALL_JOBS + ' WHERE Status<=1 ORDER BY Status ASC'
+SELECT_ALL_UNPROCESSED_AND_PROCESSING_JOBS = SELECT_ALL_JOBS + ' WHERE Status<=1 ORDER BY Status DESC'
+SELECT_ALL_UNPROCESSED_JOBS_FOR_PN_ID = SELECT_ALL_JOBS + ' WHERE Status<=1 AND Process_Node_Id=:Process_Node_Id ORDER BY Priority ASC'
 SELECT_JOB_BY_ID = SELECT_ALL_JOBS + ' WHERE Id=:Id'
 SELECT_JOBS_BY_STATUS = SELECT_ALL_JOBS + ' WHERE Status=:Status ORDER BY Priority DESC'
-
 
 
 class SQLiteDB:
@@ -142,26 +142,32 @@ class SQLiteDB:
 			ret_list += [ {'DT_RowId':'row_'+str(node[0]), 'Id':node[0], 'ComputerName':node[1], 'NumThreads':node[2], 'Hostname':node[3], 'Port':node[4], 'Status': node[5], 'Heartbeat': node[6], 'ProcessCpuPercent':node[7], 'ProcessMemPercent':node[8], 'SystemCpuPercent':node[9] } ]
 		return ret_list
 
-	def _get_jobs_(self, sql_statement):
+	def _get_jobs_(self, sql_statement, opt_dict=None):
 		con = sql.connect(self.uri)
 		cur = con.cursor()
-		cur.execute(sql_statement)
+		if opt_dict is None:
+			cur.execute(sql_statement)
+		else:
+			cur.execute(sql_statement, opt_dict)
 		con.commit()
 		all_nodes = cur.fetchall()
 		ret_list = []
 		#SELECT_ALL_JOBS = 'SELECT Id, DataPath, ProcMask, Version, DetectorElements, MaxFilesToProc, MaxLinesToProc, QuickAndDirty, XRF_Bin, NNLS, XANES_Scan, DetectorToStartWith, BeamLine, Standards, DatasetFilesToProc, Status, StartProcTime, FinishProcTime FROM Jobs'
 		for node in all_nodes:
-			ret_list += [ {'DT_RowId':node[0],  'Id':node[0], 'DataPath':node[1], 'ProcMask': node[2], 'Version': node[3], 'DetectorElements':node[4], 'MaxFilesToProc':node[5], 'MaxLinesToProc':node[6], 'QuickAndDirty':node[7], 'XRF_Bin':node[8], 'NNLS':node[9], 'XANES_Scan':node[10], 'DetectorToStartWith':node[11], 'BeamLine':node[12], 'Standards':node[13], 'DatasetFilesToProc':node[14], 'Priority':node[15], 'Status':node[16], 'StartProcTime':node[17], 'FinishProcTime':node[18], 'Log_Path':node[19], 'Process_Node_Id':node[20]  } ]
+			ret_list += [ {'DT_RowId':node[0],  'Id':int(node[0]), 'DataPath':node[1], 'ProcMask': node[2], 'Version': node[3], 'DetectorElements':int(node[4]), 'MaxFilesToProc':int(node[5]), 'MaxLinesToProc':int(node[6]), 'QuickAndDirty':node[7], 'XRF_Bin':node[8], 'NNLS':node[9], 'XANES_Scan':node[10], 'DetectorToStartWith':int(node[11]), 'BeamLine':node[12], 'Standards':node[13], 'DatasetFilesToProc':node[14], 'Priority':int(node[15]), 'Status':int(node[16]), 'StartProcTime':node[17], 'FinishProcTime':node[18], 'Log_Path':node[19], 'Process_Node_Id':int(node[20])  } ]
 		return ret_list
 
 	def get_all_jobs(self):
 		return self._get_jobs_(SELECT_ALL_JOBS)
 
-	def get_all_unprocessed_jobs(self, getProcessingAlso=False):
-		if getProcessingAlso:
-			return self._get_jobs_(SELECT_ALL_UNPROCESSED_JOBS_PN)
-		else:
-			return self._get_jobs_(SELECT_ALL_UNPROCESSED_JOBS)
+	def get_all_unprocessed_jobs(self):
+		return self._get_jobs_(SELECT_ALL_UNPROCESSED_JOBS)
+
+	def get_all_unprocessed_jobs_for_pn_id(self, pn_id):
+		return self._get_jobs_(SELECT_ALL_UNPROCESSED_JOBS_FOR_PN_ID, {'Process_Node_Id': pn_id})
+
+	def get_all_unprocessed_and_processing_jobs(self):
+		return self._get_jobs_(SELECT_ALL_UNPROCESSED_AND_PROCESSING_JOBS)
 
 	def get_all_processing_jobs(self):
 		return self._get_jobs_(SELECT_ALL_PROCESSING_JOBS)
@@ -170,18 +176,16 @@ class SQLiteDB:
 		return self._get_jobs_(SELECT_ALL_FINISHED_JOBS)
 
 	def get_job(self, job_id):
-		con = sql.connect(self.uri)
-		cur = con.cursor()
-		cur.execute(SELECT_JOB_BY_ID, {'Id':job_id})
-		con.commit()
-		return cur.fetchone()
+		jobs = self._get_jobs_(SELECT_JOB_BY_ID, {'Id': int(job_id)})
+		if len(jobs) > 0:
+			return jobs[0]
+		return None
 
 	def get_jobs_by_status(self, status):
-		con = sql.connect(self.uri)
-		cur = con.cursor()
-		cur.execute(SELECT_JOBS_BY_STATUS, {'Status':status})
-		con.commit()
-		return cur.fetchall()
+		jobs = self._get_jobs_(SELECT_JOBS_BY_STATUS, {'Status':status})
+		if len(jobs) > 0:
+			return jobs[0]
+		return None
 
 	def update_job(self, job_dict):
 		print 'updating job', job_dict

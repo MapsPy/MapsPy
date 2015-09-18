@@ -71,13 +71,13 @@ class calibration:
 				standardinfo_dict[subline[0].strip().rstrip()] = subline[1].strip().rstrip()
 			line = standardInfoFile.readline()
 		#check that all keys exist
-		if standardinfo_dict.has_key('FILENAME') == False:
+		if not 'FILENAME' in standardinfo_dict:
 			print 'Warning: Could not find key FILENAME in maps_standardinfo.txt, returning'
 			return
-		if standardinfo_dict.has_key('ELEMENTS_IN_STANDARD') == False:
+		if not 'ELEMENTS_IN_STANDARD' in standardinfo_dict:
 			print 'Warning: Could not find key ELEMENTS_IN_STANDARD in maps_standardinfo.txt, returning'
 			return
-		if standardinfo_dict.has_key('WEIGHT') == False:
+		if not 'WEIGHT' in standardinfo_dict:
 			print 'Warning: Could not find key WEIGHT in maps_standardinfo.txt, returning'
 			return
 		print standardinfo_dict

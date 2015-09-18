@@ -90,7 +90,22 @@ class ProcessNodeJobsWebService(object):
 		rawbody = cherrypy.request.body.read(int(cl))
 		job = json.loads(rawbody)
 		if job != None:
-			self.db.insert_job_with_id(job)
+			try:
+				self.db.insert_job_with_id(job)
+			except:
+				myJob = self.db.get_job(job['Id'])
+				#print 'job to check', job['Status']
+				#print 'job2 to check', myJob['Status']
+				if not myJob == None:
+					if int(myJob['Status']) > int(job['Status']):
+						print 'sending updated status for job', myJob
+						cherrypy.engine.publish('send_job_update', myJob)
+					else:
+						print 'updating job', job
+						self.db.update_job(job)
+				else:
+					print '-updating job', job
+					self.db.update_job(job)
 			cherrypy.engine.publish("new_job", job)
 			return 'inserted job'
 		else:

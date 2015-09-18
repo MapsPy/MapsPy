@@ -408,6 +408,7 @@
         var $detailPnRows = [];
         var $detailJobRows = [];
         var $detailPRJobRows = [];
+        var $detailQuJobRows = [];
 
         setInterval(function()
         {
@@ -419,11 +420,42 @@
 	
         //----------------------------------------------------------------------
         
-        $('#table_finished_jobs').on( 'click', 'tr td.details-control', function () 
+        //$('#table_finished_jobs').on( 'click', 'tr td.details-control', function () 
+        $('.display_table').on( 'click', 'tr td.details-control', function () 
         {
             var tr = $(this).closest('tr');
-            var row = $finished_table.row( tr );
-            var idx = $.inArray( tr.attr('id'), $detailJobRows );
+            var detail_id = 0;
+            var closest_table = tr.closest('table');
+            var row;
+            var idx;
+            if (closest_table[0].id === 'process_node_table')
+            {
+                row = $pn_table.row( tr );
+                idx = $.inArray( tr.attr('id'), $detailPnRows );
+                detail_id = 1;
+            }
+            else if(closest_table[0].id === 'table_unprocessed_jobs')
+            {
+                row = $queued_table.row( tr );
+                idx = $.inArray( tr.attr('id'), $detailQuJobRows );
+                detail_id = 2;
+            }
+            else if(closest_table[0].id === 'table_processing_jobs')
+            {
+                row = $processing_table.row( tr );
+                idx = $.inArray( tr.attr('id'), $detailPRJobRows );
+                detail_id = 3;
+            }
+            else if(closest_table[0].id === 'table_finished_jobs')
+            {
+                row = $finished_table.row( tr );
+                idx = $.inArray( tr.attr('id'), $detailJobRows );
+                detail_id = 4;
+            }
+            else
+                return;
+            //var row = $finished_table.row( tr );
+            //var idx = $.inArray( tr.attr('id'), $detailJobRows );
 
             if ( row.child.isShown() ) 
             {
@@ -431,101 +463,41 @@
                 row.child.hide();
 
                 // Remove from the 'open' array
-                $detailJobRows.splice( idx, 1 );
+                //$detailJobRows.splice( idx, 1 );
+                if (detail_id === 1)
+                    $detailPnRows.splice( idx, 1 )
+                else if (detail_id === 2)
+                    $detailQuJobRows.splice( idx, 1 )
+                else if (detail_id === 3)
+                    $detailPRJobRows.splice( idx, 1 )
+                else if (detail_id === 4)
+                    $detailJobRows.splice( idx, 1 )
             }
             else 
             {
                 tr.addClass( 'details' );
-                row.child( format_job_details( row.data() ) ).show();
+                if (detail_id === 1)
+                    row.child( format_pn_details( row.data() ) ).show();
+                else
+                    row.child( format_job_details( row.data() ) ).show();
 
                 // Add to the 'open' array
                 if ( idx === -1 ) 
                 {
-                    $detailJobRows.push( tr.attr('id') );
+                    if (detail_id === 1)
+                        $detailPnRows.push( tr.attr('id') );
+                    else if (detail_id === 2)
+                        $detailQuJobRows.push( tr.attr('id') );
+                    else if (detail_id === 3)
+                        $detailPRJobRows.push( tr.attr('id') );
+                    else if (detail_id === 4)
+                        $detailJobRows.push( tr.attr('id') );
                 }
             }
         });
         
         //----------------------------------------------------------------------
  
-        $finished_table.on( 'draw', function () 
-        {
-            $.each( $detailJobRows, function ( i, id ) 
-            {
-                $('#'+id+' td.details-control').trigger( 'click' );
-            });
-        });
-        
-        //----------------------------------------------------------------------
-        
-        $processing_table.on( 'click', 'tr td.details-control', function () 
-        {
-            var tr = $(this).closest('tr');
-            var row = $processing_table.row( tr );
-            var idx = $.inArray( tr.attr('id'), $detailPRJobRows );
-
-            if ( row.child.isShown() ) 
-            {
-                tr.removeClass( 'details' );
-                row.child.hide();
-
-                // Remove from the 'open' array
-                $detailPRJobRows.splice( idx, 1 );
-            }
-            else 
-            {
-                tr.addClass( 'details' );
-                row.child( format_job_details( row.data() ) ).show();
-
-                // Add to the 'open' array
-                if ( idx === -1 ) 
-                {
-                    $detailPRJobRows.push( tr.attr('id') );
-                }
-            }
-        });
-        
-        //----------------------------------------------------------------------
- 
-        $processing_table.on( 'draw', function () 
-        {
-            $.each( $detailPRJobRows, function ( i, id ) 
-            {
-                $('#'+id+' td.details-control').trigger( 'click' );
-            });
-        });
-        
-        //----------------------------------------------------------------------
-        
-        $pn_table.on( 'click', 'tr td.details-control', function () 
-        {
-            var tr = $(this).closest('tr');
-            var row = $pn_table.row( tr );
-            var idx = $.inArray( tr.attr('id'), $detailPnRows );
-
-            if ( row.child.isShown() ) 
-            {
-                tr.removeClass( 'details' );
-                row.child.hide();
-
-                // Remove from the 'open' array
-                $detailPnRows.splice( idx, 1 );
-            }
-            else 
-            {
-                tr.addClass( 'details' );
-                row.child( format_pn_details( row.data() ) ).show();
-
-                // Add to the 'open' array
-                if ( idx === -1 ) 
-                {
-                    $detailPnRows.push( tr.attr('id') );
-                }
-            }
-        });
-
-        //----------------------------------------------------------------------
-
         $pn_table.on( 'draw', function () 
         {
             $.each( $detailPnRows, function ( i, id ) 
@@ -543,6 +515,38 @@
             });
             
         });
+ 
+         //----------------------------------------------------------------------
+         
+        $queued_table.on( 'draw', function () 
+        {
+            $.each( $detailQuJobRows, function ( i, id ) 
+            {
+                $('#'+id+' td.details-control').trigger( 'click' );
+            });
+        });
+ 
+         //----------------------------------------------------------------------
+ 
+        $processing_table.on( 'draw', function () 
+        {
+            $.each( $detailPRJobRows, function ( i, id ) 
+            {
+                $('#'+id+' td.details-control').trigger( 'click' );
+            });
+        });
+ 
+         //----------------------------------------------------------------------
+ 
+        $finished_table.on( 'draw', function () 
+        {
+            $.each( $detailJobRows, function ( i, id ) 
+            {
+                $('#'+id+' td.details-control').trigger( 'click' );
+            });
+        });
+        
+        //----------------------------------------------------------------------
 
     });
     </script>
@@ -550,7 +554,7 @@
   </head>
   <body>
     <div id="process_nodes_div">
-        <table id="process_node_table" class="display">
+        <table id="process_node_table" class="display_table">
          <thead>
            <tr>
             <th></th>
@@ -567,7 +571,7 @@
       <br>
       <br>
      <div id="jobs_div">
-    <table id="table_unprocessed_jobs" class="display">
+    <table id="table_unprocessed_jobs" class="display_table">
         <thead>
         <tr>
             <th></th>
@@ -579,7 +583,7 @@
         </thead>
     </table>
     <br>
-    <table id="table_processing_jobs" class="display">
+    <table id="table_processing_jobs" class="display_table">
         <thead>
         <tr>
             <th></th>
@@ -591,7 +595,7 @@
         </thead>
     </table>
     <br>
-    <table id="table_finished_jobs" class="display">
+    <table id="table_finished_jobs" class="display_table">
         <thead>
         <tr>  
             <th></th>

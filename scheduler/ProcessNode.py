@@ -127,7 +127,8 @@ class ProcessNode(object):
 		self.db_name = pnSettings[Settings.PROCESS_NODE_DATABASE_NAME]
 		self.db = DatabasePlugin(cherrypy.engine, SQLiteDB, self.db_name)
 		cherrypy.engine.subscribe("new_job", self.callback_new_job)
-		cherrypy.engine.subscribe("update_id", self.update_id)
+		cherrypy.engine.subscribe("update_id", self.callback_update_id)
+		cherrypy.engine.subscribe("send_job_update", self.callback_send_job_update)
 		self.create_directories()
 		self.running = True
 		self.status_thread = None
@@ -144,6 +145,9 @@ class ProcessNode(object):
 	def callback_new_job(self, val):
 		self.new_job_event.set()
 
+	def callback_send_job_update(self, val):
+		self.send_job_update(val)
+
 	def _setup_logging_(self, log, logtype, logname):
 		maxBytes = getattr(log, "rot_maxBytes", 20971520) # 20Mb
 		backupCount = getattr(log, "rot_backupCount", 10)
@@ -153,8 +157,8 @@ class ProcessNode(object):
 		h.setFormatter(cherrypy._cplogging.logfmt)
 		log.error_log.addHandler(h)
 
-	def update_id(self, new_id):
-		self.pn_info['Id'] = new_id
+	def callback_update_id(self, new_id):
+		self.pn_info['Id'] = int(new_id)
 
 	def run(self):
 		webapp = ProcessNodeHandler()
@@ -239,7 +243,7 @@ class ProcessNode(object):
 		if self.running == False:
 			return
 		print 'checking for jobs to process'
-		job_list = self.db.get_all_unprocessed_jobs(True)
+		job_list = self.db.get_all_unprocessed_and_processing_jobs()
 		saveout = sys.stdout
 		for job_dict in job_list:
 			try:
@@ -251,7 +255,7 @@ class ProcessNode(object):
 				self.db.update_job(job_dict)
 				self.send_job_update(job_dict)
 				self.send_status_update()
-				maps_set_str = os.path.join(str(job_dict['DataPath']), 'maps_settings.txt')
+				maps_set_str = os.path.join(str(alias_path), 'maps_settings.txt')
 				f = open(maps_set_str, 'w')
 				f.write('	  This file will set some MAPS settings mostly to do with fitting' + '\n')
 				f.write('VERSION:' + str(job_dict['Version']).strip() + '\n')

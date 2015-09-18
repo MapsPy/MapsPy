@@ -51,7 +51,7 @@ class SettingsIO:
 			s.settingDicts[sec] = s.__get_sect_dict__(sec)
 
 	def getSetting(s, section):
-		if s.settingDicts.has_key(section):
+		if section in s.settingDicts:
 			return s.settingDicts[section]
 		else:
 			return dict()
@@ -59,8 +59,8 @@ class SettingsIO:
 	def checkSectionKeys(s, section_name, keys):
 		for k in keys:
 			sect = s.getSetting(section_name)
-			if sect.has_key(k) == False:
-				print 'Could not find Key:',k,'in server settings'
+			if not k in sect:
+				print 'Could not find Key:', k, 'in server settings'
 				return False
 		return True
 

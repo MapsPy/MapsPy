@@ -88,7 +88,7 @@ class Scheduler(object):
 			self.job_lock.acquire(True)
 			p_node = None
 			if job['Process_Node_Id'] > -1:
-				p_node = db.get_process_node_by_id()
+				p_node = db.get_process_node_by_id(int(job['Process_Node_Id']))
 			else:
 				node_list = db.get_all_process_nodes()
 				print 'searching for idle node'
@@ -113,7 +113,7 @@ class Scheduler(object):
 		print 'callback', node['ComputerName']
 		try:
 			self.job_lock.acquire(True)
-			if node.has_key('Id') == False:
+			if not 'Id' in node:
 				print 'getting id for node', node
 				new_node = db.get_process_node_by_name(node['ComputerName'])
 				node['Id'] = new_node['Id']
@@ -123,7 +123,9 @@ class Scheduler(object):
 				r = s.post(url, data={'Id': node['Id']})
 				print 'update result', r.status_code, ':', r.text
 			if node['Status'] == 'Idle':
-				job_list = db.get_all_unprocessed_jobs()
+				job_list = db.get_all_unprocessed_jobs_for_pn_id(int(node['Id']))
+				if len(job_list) < 1:
+					job_list = db.get_all_unprocessed_jobs()
 				for job in job_list:
 					print 'checking job', job
 					if job['Process_Node_Id'] < 0 or job['Process_Node_Id'] == node['Id']:
