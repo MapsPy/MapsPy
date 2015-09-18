@@ -115,7 +115,15 @@ class ProcessNode(object):
 		}
 		self.new_job_event = threading.Event()
 		print 'Setup signal handler'
-		signal.signal(signal.SIGINT, self.handle_sigint)
+		if os.name == "nt":
+			try:
+				import win32api
+				win32api.SetConsoleCtrlHandler(self.win_handle_sigint, True)
+			except ImportError:
+				version = ".".join(map(str, sys.version_info[:2]))
+				raise Exception("pywin32 not installed for Python " + version)
+		else:
+			signal.signal(signal.SIGINT, self.unix_handle_sigint)
 		self.status_update_interval = 10
 		self.scheduler_host = serverSettings[Settings.SERVER_SCHEDULER_HOSTNAME]
 		self.scheduler_port = serverSettings[Settings.SERVER_SCHEDULER_PORT]
@@ -134,8 +142,12 @@ class ProcessNode(object):
 		self.status_thread = None
 		self.this_process = psutil.Process(os.getpid())
 
-	def handle_sigint(self, sig, frame):
-		print 'handle_sigint', sig, frame
+	def unix_handle_sigint(self, sig, frame):
+		print 'unix_handle_sigint', sig, frame
+		self.stop()
+
+	def win_handle_sigint(self, sig):
+		print 'win_handle_sigint', sig
 		self.stop()
 
 	def create_directories(self):
