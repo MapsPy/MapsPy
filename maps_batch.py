@@ -985,7 +985,7 @@ def maps_batch(wdir='', a=1,b=0,c=0,d=0,e=0, cb_update_func=None):
 				elif tag == 'STANDARD':
 					main_dict['standard_filenames'].append(str(value).strip())
 				elif tag == 'DatasetFilesToProc':
-					main_dict['dataset_files_to_proc'] = str(value).strip().split(',')
+					main_dict['dataset_files_to_proc'] = str(value).replace('\\', '/').strip().split(',')
 		f.close()
 
 	except:
