@@ -260,7 +260,8 @@ class ProcessNode(object):
 		for job_dict in job_list:
 			try:
 				alias_path = self.check_for_alias(job_dict['DataPath'], self.path_alias_dict)
-				print 'processing job', job_dict['DataPath'], 'alias path ', alias_path
+				alias_path = alias_path.replace('\\', '/')
+				print 'processing job:', job_dict['DataPath'], 'alias_path: ', alias_path
 				self.pn_info[STR_STATUS] = 'Processing'
 				job_dict['Status'] = JOB_PROCESSING_ID
 				#job_dict['StartProcWork'] = time.time()
