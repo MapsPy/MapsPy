@@ -303,6 +303,8 @@ class SchedulerJobsWebService(object):
 		cl = cherrypy.request.headers['Content-Length']
 		rawbody = cherrypy.request.body.read(int(cl))
 		job = json.loads(rawbody)
+		if 'DataPath' in job:
+			job['DataPath'] = job['DataPath'].replace('\\', '/')
 		job['Id'] = self.db.insert_job(job)
 		cherrypy.engine.publish("new_job", job)
 		return 'inserted job Id:'+str(job['Id'])
