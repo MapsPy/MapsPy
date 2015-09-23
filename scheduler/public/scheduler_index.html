@@ -220,7 +220,7 @@
                     for (i = 0; i < $datasets.mda_files.length; i++) 
                     { 
                         var node = $datasets.mda_files[i];
-                        node = node.replace("\\", "/");
+                        node = node.replace(/\\/g, "/");
                         var $shortname = node.split("/");
                         var $total = $shortname.length;
                         //var $option = "<option value=\""+$datasets.mda_files[i]+"\">"+$shortname[$total-1]+"</option>";

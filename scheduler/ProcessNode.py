@@ -89,7 +89,8 @@ class ProcessNode(object):
 					STR_PROC_CPU_PERC: 0.0,
 					STR_PROC_MEM_PERC: 0.0,
 					STR_SYS_CPU_PERC: 0.0,
-					STR_PROC_CPU_PERC_CHILDREN: []
+					STR_PROC_CPU_PERC_CHILDREN: [],
+					STR_PROC_MEM_PERC_CHILDREN: []
 		}
 		cherrypy.config.update({
 			'server.socket_host': serverSettings[Settings.SERVER_HOSTNAME],
