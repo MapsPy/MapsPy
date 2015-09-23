@@ -223,9 +223,9 @@ class ProcessNode(object):
 				self.pn_info[STR_PROC_CPU_PERC] = self.this_process.cpu_percent(10.0)
 				self.pn_info[STR_PROC_MEM_PERC] = math.floor(self.this_process.memory_percent() * 100) / 100
 				self.pn_info[STR_SYS_CPU_PERC] = psutil.cpu_percent()
-				for child in self.this_process.children():
-					self.pn_info[STR_PROC_CPU_PERC_CHILDREN] += [child.cpu_percent()]
-					self.pn_info[STR_PROC_MEM_PERC_CHILDREN] += [child.memory_percent()]
+				#for child in self.this_process.children():
+				#	self.pn_info[STR_PROC_CPU_PERC_CHILDREN] += [child.cpu_percent()]
+				#	self.pn_info[STR_PROC_MEM_PERC_CHILDREN] += [child.memory_percent()]
 				self.send_status_update()
 				#self.new_job_event.wait(self.status_update_interval)
 				#time.sleep(0.1)
