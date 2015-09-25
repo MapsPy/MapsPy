@@ -45,6 +45,7 @@ import logging
 import threading
 import signal
 import psutil
+import multiprocessing
 from datetime import datetime
 from plugins.DatabasePlugin import DatabasePlugin
 from plugins.SQLiteDB import SQLiteDB
@@ -115,6 +116,7 @@ class ProcessNode(object):
 			}
 		}
 		self.new_job_event = threading.Event()
+		self.status_event = threading.Event()
 		print 'Setup signal handler'
 		if os.name == "nt":
 			try:
@@ -207,6 +209,9 @@ class ProcessNode(object):
 					print 'CherryPy Engine state = ', cherrypy.engine.state
 					print 'Calling cherrypy.engine.start()'
 					cherrypy.engine.start()
+				if not self.status_thread.is_alive():
+					self.status_thread = threading.Thread(target=self.status_thread_func)
+					self.status_thread.start()
 		except:
 			print 'run error'
 			traceback.print_exc(file=sys.stdout)
@@ -220,15 +225,15 @@ class ProcessNode(object):
 		try:
 			print 'Started Status Thread'
 			while self.running:
-				self.pn_info[STR_PROC_CPU_PERC] = self.this_process.cpu_percent(10.0)
-				self.pn_info[STR_PROC_MEM_PERC] = math.floor(self.this_process.memory_percent() * 100) / 100
-				self.pn_info[STR_SYS_CPU_PERC] = psutil.cpu_percent()
-				#for child in self.this_process.children():
-				#	self.pn_info[STR_PROC_CPU_PERC_CHILDREN] += [child.cpu_percent()]
-				#	self.pn_info[STR_PROC_MEM_PERC_CHILDREN] += [child.memory_percent()]
-				self.send_status_update()
-				#self.new_job_event.wait(self.status_update_interval)
-				#time.sleep(0.1)
+				self.status_event.wait(self.status_update_interval)
+				if self.running:
+					self.pn_info[STR_PROC_CPU_PERC] = self.this_process.cpu_percent()
+					self.pn_info[STR_PROC_MEM_PERC] = math.floor(self.this_process.memory_percent() * 100) / 100
+					self.pn_info[STR_SYS_CPU_PERC] = psutil.cpu_percent()
+					#for child in self.this_process.children():
+					#	self.pn_info[STR_PROC_CPU_PERC_CHILDREN] += [child.cpu_percent()]
+					#	self.pn_info[STR_PROC_MEM_PERC_CHILDREN] += [child.memory_percent()]
+					self.send_status_update()
 		except:
 			print 'status_thread_func error'
 			traceback.print_exc(file=sys.stdout)
@@ -310,14 +315,21 @@ class ProcessNode(object):
 				log_name = 'Job_' + str(job_dict['Id']) + '_' + datetime.strftime(datetime.now(), "%y_%m_%d_%H_%M_%S") + '.log'
 				job_dict['Log_Path'] = log_name
 				log_path = os.path.join(STR_JOB_LOG_DIR_NAME, log_name)
-				logfile = open(log_path, 'wt')
-				sys.stdout = logfile
-				maps_batch(wdir=alias_path, a=key_a, b=key_b, c=key_c, d=key_d, e=key_e)
-				sys.stdout = saveout
-				logfile.close()
-				job_dict['Status'] = JOB_COMPLETED_ID
+				job_status = multiprocessing.Value('i', JOB_PROCESSING_ID)
+				proc = multiprocessing.Process(target=self.__proc_func__, args=(job_status, log_path, alias_path, key_a, key_b, key_c, key_d, key_e))
+				proc.start()
+				self.this_process = psutil.Process(proc.pid)
+				proc.join()
+				self.this_process = psutil.Process(os.getpid())
+				job_dict['Status'] = job_status.value
+				#logfile = open(log_path, 'wt')
+				#sys.stdout = logfile
+				#maps_batch(wdir=alias_path, a=key_a, b=key_b, c=key_c, d=key_d, e=key_e)
+				#sys.stdout = saveout
+				#logfile.close()
+				#job_dict['Status'] = JOB_COMPLETED_ID
 			except:
-				print 'Error processing',job_dict['DataPath']
+				print 'Error processing', job_dict['DataPath']
 				traceback.print_exc(file=sys.stdout)
 				sys.stdout = saveout
 				job_dict['Status'] = JOB_ERROR_ID
@@ -329,8 +341,24 @@ class ProcessNode(object):
 		self.pn_info[STR_STATUS] = 'Idle'
 		self.send_status_update()
 
+	def __proc_func__(self, job_status, log_name, alias_path, key_a, key_b, key_c, key_d, key_e):
+		saveout = sys.stdout
+		try:
+			logfile = open(log_name, 'wt')
+			sys.stdout = logfile
+			maps_batch(wdir=alias_path, a=key_a, b=key_b, c=key_c, d=key_d, e=key_e)
+			sys.stdout = saveout
+			logfile.close()
+			job_status.value = JOB_COMPLETED_ID
+		except:
+			print datetime.now(), 'Error processing', alias_path
+			traceback.print_exc(file=sys.stdout)
+			sys.stdout = saveout
+			job_status.value = JOB_ERROR_ID
+
 	def stop(self):
 		self.running = False
+		self.status_event.set()
 		if self.status_thread is not None:
 			print 'Waiting for status thread to join'
 			self.status_thread.join()
@@ -340,7 +368,7 @@ class ProcessNode(object):
 			self.send_status_update()
 			self.session.delete(self.scheduler_pn_url, data=json.dumps(self.pn_info))
 		except:
-			print 'stop error'
+			print datetime.now(), 'stop error'
 			traceback.print_exc(file=sys.stdout)
 		cherrypy.engine.exit()
 
@@ -349,7 +377,7 @@ class ProcessNode(object):
 			self.pn_info[STR_HEARTBEAT] = str(datetime.now())
 			self.session.put(self.scheduler_pn_url, data=json.dumps(self.pn_info))
 		except:
-			print 'Error sending status update'
+			print datetime.now(), 'Error sending status update'
 			#traceback.print_exc(file=sys.stdout)
 
 	def send_job_update(self, job_dict):
@@ -357,6 +385,6 @@ class ProcessNode(object):
 			self.session.put(self.scheduler_job_url, params=self.pn_info, data=json.dumps(job_dict))
 			print 'sent status'
 		except:
-			print 'Error sending job update'
+			print datetime.now(), 'Error sending job update'
 			#traceback.print_exc(file=sys.stdout)
 

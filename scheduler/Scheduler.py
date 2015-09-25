@@ -103,7 +103,7 @@ class Scheduler(object):
 				s = requests.Session()
 				r = s.post(url, data=json.dumps(job))
 				print 'result', r.status_code, ':', r.text
-				self.job_lock.release()
+			self.job_lock.release()
 		except:
 			self.job_lock.release()
 			exc_str = traceback.format_exc()
