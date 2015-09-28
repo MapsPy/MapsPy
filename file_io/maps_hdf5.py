@@ -33,7 +33,6 @@ SUCH DAMAGE.
 '''
 
 from __future__ import division
-import string 
 import os
 import numpy as np
 import h5py 
@@ -816,12 +815,12 @@ class h5:
 			#if drop_vtwo == 1 : wo = XRFmaps_info.dmaps_names.index('us_ic')
 			#if drop_vtwo == 2 : wo = XRFmaps_info.dmaps_names.index('SRcurrent')
 			ic_correction_factor = 1.		   
-			if (drop_vtwo == 0) and (XRFmaps_info.make_maps_conf.nbs32.ds_amp[2] > 0.) and \
-				(XRFmaps_info.ds_amp[2] > 0.) :
-				ic_correction_factor = XRFmaps_info.make_maps_conf.nbs32.ds_amp[2]/XRFmaps_info.ds_amp[2]
-			if (drop_vtwo == 1) and (XRFmaps_info.make_maps_conf.nbs32.us_amp[2] > 0.) and \
-				(XRFmaps_info.us_amp[2] > 0.) :
-				ic_correction_factor = XRFmaps_info.make_maps_conf.nbs32.us_amp[2]/XRFmaps_info.us_amp[2]
+			#if (drop_vtwo == 0) and (XRFmaps_info.make_maps_conf.nbs32.ds_amp[2] > 0.) and \
+			#	(XRFmaps_info.ds_amp[2] > 0.) :
+			#	ic_correction_factor = XRFmaps_info.make_maps_conf.nbs32.ds_amp[2]/XRFmaps_info.ds_amp[2]
+			#if (drop_vtwo == 1) and (XRFmaps_info.make_maps_conf.nbs32.us_amp[2] > 0.) and \
+			#	(XRFmaps_info.us_amp[2] > 0.) :
+			#	ic_correction_factor = XRFmaps_info.make_maps_conf.nbs32.us_amp[2]/XRFmaps_info.us_amp[2]
 			if len(wo[0]) > -1 : 
 				calib = XRFmaps_info.dmaps_set[:, :, wo].astype(float) 
 				calib = calib[:,:,0,0]

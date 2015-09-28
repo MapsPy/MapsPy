@@ -61,10 +61,10 @@ STR_PORT = 'Port'
 STR_STATUS = 'Status'
 STR_HEARTBEAT = 'Heartbeat'
 STR_PROC_CPU_PERC = 'ProcessCpuPercent'
-STR_PROC_CPU_PERC_CHILDREN = 'ProcessCpuPercentChildren'
-STR_PROC_MEM_PERC_CHILDREN = 'ProcessMemPercentChildren'
 STR_PROC_MEM_PERC = 'ProcessMemPercent'
 STR_SYS_CPU_PERC = 'SystemCpuPercent'
+STR_SYS_MEM_PERC = 'SystemMemPercent'
+STR_SYS_SWAP_PERC = 'SystemSwapPercent'
 
 STR_JOB_LOG_DIR_NAME = 'job_logs'
 
@@ -90,8 +90,8 @@ class ProcessNode(object):
 					STR_PROC_CPU_PERC: 0.0,
 					STR_PROC_MEM_PERC: 0.0,
 					STR_SYS_CPU_PERC: 0.0,
-					STR_PROC_CPU_PERC_CHILDREN: [],
-					STR_PROC_MEM_PERC_CHILDREN: []
+					STR_SYS_MEM_PERC: 0.0,
+					STR_SYS_SWAP_PERC: 0.0
 		}
 		cherrypy.config.update({
 			'server.socket_host': serverSettings[Settings.SERVER_HOSTNAME],
@@ -230,9 +230,8 @@ class ProcessNode(object):
 					self.pn_info[STR_PROC_CPU_PERC] = self.this_process.cpu_percent()
 					self.pn_info[STR_PROC_MEM_PERC] = math.floor(self.this_process.memory_percent() * 100) / 100
 					self.pn_info[STR_SYS_CPU_PERC] = psutil.cpu_percent()
-					#for child in self.this_process.children():
-					#	self.pn_info[STR_PROC_CPU_PERC_CHILDREN] += [child.cpu_percent()]
-					#	self.pn_info[STR_PROC_MEM_PERC_CHILDREN] += [child.memory_percent()]
+					self.pn_info[STR_SYS_MEM_PERC] = psutil.virtual_memory().percent
+					self.pn_info[STR_SYS_SWAP_PERC] = psutil.swap_memory().percent
 					self.send_status_update()
 		except:
 			print 'status_thread_func error'
@@ -365,6 +364,11 @@ class ProcessNode(object):
 		self.new_job_event.set()
 		try:
 			self.pn_info[STR_STATUS] = 'Offline'
+			self.pn_info[STR_PROC_CPU_PERC] = 0.0
+			self.pn_info[STR_PROC_MEM_PERC] = 0.0
+			self.pn_info[STR_SYS_CPU_PERC] = 0.0
+			self.pn_info[STR_SYS_MEM_PERC] = 0.0
+			self.pn_info[STR_SYS_SWAP_PERC] = 0.0
 			self.send_status_update()
 			self.session.delete(self.scheduler_pn_url, data=json.dumps(self.pn_info))
 		except:

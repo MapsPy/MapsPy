@@ -83,11 +83,6 @@ def main(main_dict, force_fit=0, no_fit=False, cb_update_func=None):
 		print 'cpu_count() = %d\n' % multiprocessing.cpu_count()
 		print 'max_no_processors_lines to fit lines ', max_no_processors_lines
 
-	# make sure the output directory exists, if not, create it. This is done in maps_batch
-	#test = check_output_dirs(main_dict)
-	# if output directory does NOT exists, and the creation failed, return
-	#if test == 0:
-	#	return
 	total_number_detectors = main_dict['total_number_detectors']
 	quick_dirty = main_dict['quick_dirty']
 	if total_number_detectors < 2:
@@ -306,50 +301,18 @@ def main(main_dict, force_fit=0, no_fit=False, cb_update_func=None):
 			# use it.
 			sol_intermediate = np.zeros((no_use_pars, main_dict['max_spec_channels']))
 
-		#Save intermediate solution to a file
+		# Save intermediate solution to a file
 		filepath = os.path.join(main_dict['output_dir'], maps_intermediate_solution_file) + suffix
 		outfile = open_file_with_retry(filepath, 'wb')
-		#outfile = open(filepath, 'wb')
+
 		np.savez(outfile, sol_intermediate = sol_intermediate, fitmatrix_reduced = fitmatrix_reduced)
 		outfile.close()
 
-#		  #Test reading pickle file
-#		  saveddata = np.load(filepath)
-#		  si = saveddata['sol_intermediate']
-#		  fm = saveddata['fitmatrix_reduced']
-#		  saveddata.close()
-
-		# Read NBS calibration
+		# Read calibration
 		#print 'Started reading in standards from:', main_dict['standard_filenames']
 		calibration = maps_calibration.calibration(main_dict, maps_conf)
-		'''
-		if len(standard_filenames) > 0:
-			NBS_calibration = calibration.read_nbs_calibration(standard_filenames[:],
-															   this_detector = this_detector,
-															   total_number_detectors = total_number_detectors,
-															   fitp=fitp,
-															   info_elements=info_elements)
 
-			no_nbs = 0
-			# Test whether nbs standards were found. If found, use those for final quantification (no_nbs
-			# not set) if nbs standards were not found, then use axo standard (no_nbs=1)
-			if (maps_conf.calibration.slope[0] == 0.0) and (maps_conf.calibration.offset[0] == 0.0) : no_nbs = 1
-
-
-			axo_calibration = calibration.read_axo_calibration(standard_filenames[:],
-															   maps_conf, this_detector = this_detector,
-															   total_number_detectors = total_number_detectors,
-															   no_nbs = no_nbs,
-															   fitmatrix_reduced = fitmatrix_reduced,
-															   fitp=fitp,
-															   info_elements=info_elements)
-		else:
-			#try generic standards file
-			if (maps_conf.calibration.slope[0] == 0.01) and (maps_conf.calibration.offset[0] == 0.0):
-				no_nbs = 1
-			print 'No standards specified in maps_settings.txt'
-		'''
-		#perform calibration
+		# perform calibration
 		no_nbs = 1
 		calibration.read_generic_calibration(this_detector=this_detector,
 											total_number_detectors=total_number_detectors,
@@ -360,40 +323,29 @@ def main(main_dict, force_fit=0, no_fit=False, cb_update_func=None):
 		no_files =len(filenames)
 
 		detector_number_arr = map(str, detector_number_arr)
-		count = len(filenames)
 
 		filepath = os.path.join(main_dict['output_dir'],'mapsprocessinfo_'+'.txt')
 		text_file = open_file_with_retry(filepath, 'w')
-		#text_file = open(filepath, "w")
 		text_file.write(time.strftime("%a, %d %b %Y %H:%M:%S"))
 		text_file.close()
 
 		seconds_start = time.time()
 
-		#make sure the output directory exists, if not, create it.
-		#test = check_output_dirs(main_dict)
-		# if output directory does NOT exists, and the creation failed, return
-		#if test == 0:
-		#	return
-
-		if (no_processors_to_use_files >= 2):
-			#Need to modify stout to flush prints
+		if no_processors_to_use_files >= 2:
+			# Need to modify stout to flush prints
 			print 'use multiple processors for multiple files'
-			jobs = []
-
+			pool = multiprocessing.Pool(no_processors_to_use_files)
 			for pp in range(no_files):
 				header, scan_ext= os.path.splitext(filenames[pp])
 				mdafilename = os.path.join(main_dict['mda_dir'], filenames[pp])
 				print 'Multiple processor file version: doing filen #: ', mdafilename, ' this detector:', this_detector, ' pp:', pp
 
-				p = multiprocessing.Process(target=mp_make_maps, args=(info_elements, main_dict, maps_conf, header, mdafilename,
-																		this_detector, use_fit, total_number_detectors,
-																		quick_dirty, main_dict['nnls'], main_dict['xrf_bin'], max_no_processors_lines))
-				jobs.append(p)
-				p.start()
-
-			for proc in jobs:
-				proc.join()
+				pool.apply_async(mp_make_maps, (info_elements, main_dict, maps_conf, header, mdafilename, this_detector,
+												use_fit, total_number_detectors, quick_dirty, main_dict['nnls'],
+												main_dict['xrf_bin'], max_no_processors_lines))
+			# close and join the pool
+			pool.close()
+			pool.join()
 
 		else:
 			#  a single processor machine,	just use the single processor
@@ -403,7 +355,7 @@ def main(main_dict, force_fit=0, no_fit=False, cb_update_func=None):
 				mdafilename = os.path.join(main_dict['mda_dir'], header + scan_ext)
 				print 'Single processor file version: doing filen #: ',  mdafilename, ' this detector', this_detector
 
-				#Routine with multiprocessing
+				# Routine with multiprocessing
 				#print 'this_detector, total_number_detectors', this_detector, total_number_detectors
 				makemaps.generate_img_dat_threaded(header, mdafilename, this_detector, total_number_detectors, quick_dirty, main_dict['nnls'], max_no_processors_lines, main_dict['xrf_bin'])
 

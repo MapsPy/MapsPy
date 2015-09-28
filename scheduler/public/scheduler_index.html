@@ -151,7 +151,10 @@
                     'Heartbeat: '+d.Heartbeat + '<br>'+
                     'Process Cpu Percent: '+d.ProcessCpuPercent + '%<br>'+
                     'Process Mem Percent: '+d.ProcessMemPercent + '%<br>'+
-                    'System Cpu Percent: '+d.SystemCpuPercent + '%';
+                    'System Cpu Percent: '+d.SystemCpuPercent + '%<br>'+
+                    'System Free Mem Percent: '+d.SystemMemPercent + '%<br>'+
+                    'System Free Swap Percent: '+d.SystemSwapPercent + '%';
+            ;
         }
         
         //----------------------------------------------------------------------
@@ -374,8 +377,9 @@
             { "data": "Status" },
             { "data": "NumThreads" },
             { "data": "Heartbeat" },
-            { "data": "ProcessCpuPercent" },
-            { "data": "ProcessMemPercent" }
+            { "data": "SystemCpuPercent" },
+            { "data": "SystemMemPercent" },
+            { "data": "SystemSwapPercent" }
             ],
             "order": [[1, 'asc']]
         });
@@ -563,8 +567,9 @@
             <th>Status</th>
             <th>Max Threads</th>
             <th>Heartbeat</th>
-            <th>CPU %</th>
-            <th>Memory %</th>
+            <th>System CPU %</th>
+            <th>System Free Memory %</th>
+            <th>System Free Swap %</th>
            </tr>
          </thead>
         </table>
