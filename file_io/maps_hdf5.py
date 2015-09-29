@@ -56,8 +56,7 @@ class h5:
 		entry_exists = 0
 		
 		verbose = 0
-		
-	  
+
 		# test whether a file with this filename already exists:
 		try:
 			# Open HDF5 file
@@ -128,7 +127,7 @@ class h5:
 		return
 	
 #-----------------------------------------------------------------------------	 
-	def write_hdf5(self, thisdata, filename, mca_arr, energy_channels, extra_pv = None, extra_pv_order = None, update = False):
+	def write_hdf5(self, thisdata, filename, mca_arr, energy_channels, extra_pv=None, extra_pv_order=None, update=False):
 
 
 		#set compression level where applicable:
@@ -158,7 +157,7 @@ class h5:
 		# choose an image / map as a chunk
 		dimensions = data.shape
 		chunk_dimensions = (1, dimensions[1], dimensions[2])
-		ds_data = mapsGrp.create_dataset(entryname, data = data, chunks=chunk_dimensions, compression='gzip', compression_opts=gzip)
+		ds_data = mapsGrp.create_dataset(entryname, data=data, chunks=chunk_dimensions, compression='gzip', compression_opts=gzip)
 		ds_data.attrs['comments'] = comment
 		#print 'total of data 0', np.sum(data)
 		
@@ -169,14 +168,13 @@ class h5:
 		data = np.transpose(thisdata.dataset_orig[:, :, :, 1])
 		dimensions = data.shape
 		chunk_dimensions = (1, dimensions[1], dimensions[2])
-		if np.sum(data) != 0. :
+		if np.sum(data) != 0.0:
 			contains_fitted_data = 1 
 		else:
 			contains_fitted_data = 0
 		if contains_fitted_data :
-			ds_data = mapsGrp.create_dataset(entryname, data = data, chunks=chunk_dimensions, compression='gzip', compression_opts=gzip)
+			ds_data = mapsGrp.create_dataset(entryname, data=data, chunks=chunk_dimensions, compression='gzip', compression_opts=gzip)
 			ds_data.attrs['comments'] = comment
-
 
 		if 'XRF_roi_plus' in mapsGrp:
 			del mapsGrp['XRF_roi_plus']			
@@ -190,97 +188,95 @@ class h5:
 		dimensions = data.shape
 		chunk_dimensions = (1, dimensions[1], dimensions[2])
 		if contains_roiplus_data :
-			ds_data = mapsGrp.create_dataset(entryname, data = data, chunks=chunk_dimensions, compression='gzip', compression_opts=gzip)
+			ds_data = mapsGrp.create_dataset(entryname, data=data, chunks=chunk_dimensions, compression='gzip', compression_opts=gzip)
 			ds_data.attrs['comments'] = comment
 		print 'total of data 2', np.sum(data)
-  
 
 		entryname = 'scalers'
 		comment = 'these are scaler information acquired during the scan'
 		data = np.transpose(thisdata.dmaps_set[:, :, :])
 		dimensions = data.shape
 		chunk_dimensions = (1, dimensions[1], dimensions[2])
-		ds_data = mapsGrp.create_dataset(entryname, data = data, chunks=chunk_dimensions, compression='gzip', compression_opts=gzip)
+		ds_data = mapsGrp.create_dataset(entryname, data=data, chunks=chunk_dimensions, compression='gzip', compression_opts=gzip)
 		ds_data.attrs['comments'] = comment
-		
-		
+
 		entryname = 'x_axis'
 		if entryname not in mapsGrp:
 			comment = 'stores the values of the primary fast axis positioner, typically sample x'
 			data = thisdata.x_coord_arr
-			ds_data = mapsGrp.create_dataset(entryname, data = data)
+			ds_data = mapsGrp.create_dataset(entryname, data=data)
 			ds_data.attrs['comments'] = comment
 
 		entryname = 'y_axis'
 		if entryname not in mapsGrp:
 			comment = 'stores the values of the slow axis positioner, typically sample y'
 			data = thisdata.y_coord_arr
-			ds_data = mapsGrp.create_dataset(entryname, data = data)
+			ds_data = mapsGrp.create_dataset(entryname, data=data)
 			ds_data.attrs['comments'] = comment
 
 		entryname = 'energy'
 		comment = 'stores the values of the energy axis'
 		data = thisdata.energy
-		ds_data = mapsGrp.create_dataset(entryname, data = data)
+		ds_data = mapsGrp.create_dataset(entryname, data=data)
 		ds_data.attrs['comments'] = comment
-  
+
 		# now write integrated spectrum as dataset
 		entryname = 'int_spec'
 		comment = 'spectrum integrated over the full dataset'
 		data = thisdata.energy_spec
-		ds_data = mapsGrp.create_dataset(entryname, data = data)
+		ds_data = mapsGrp.create_dataset(entryname, data=data)
 		ds_data.attrs['comments'] = comment
 
 		# now write max channel spectrum as dataset
 		entryname = 'max_chan_spec'
 		comment = 'several maximum channel spectra integrated over the full dataset'
 		data = np.transpose(thisdata.max_chan_spec)
-		ds_data = mapsGrp.create_dataset(entryname, data = data)
+		ds_data = mapsGrp.create_dataset(entryname, data=data)
 		ds_data.attrs['comments'] = comment
 
 		# now write quantification of roi dataset
 		entryname = 'XRF_roi_quant'
 		comment = 'quantification curve for the ROI based dataset'
 		data = np.transpose(thisdata.dataset_calibration[:, 0, :])
-		data = np.reshape(data, (data.shape[0],1,data.shape[1]))
-		ds_data = mapsGrp.create_dataset(entryname, data = data)
+		data = np.reshape(data, (data.shape[0], 1, data.shape[1]))
+		ds_data = mapsGrp.create_dataset(entryname, data=data)
 		ds_data.attrs['comments'] = comment
 
 		# now write quantification of fits dataset
 		entryname = 'XRF_fits_quant'
 		comment = 'quantification curve for the fits based dataset'
 		data = np.transpose(thisdata.dataset_calibration[:, 1, :])
-		data = np.reshape(data, (data.shape[0],1,data.shape[1]))
-		if contains_fitted_data :
-			ds_data = mapsGrp.create_dataset(entryname, data = data)
+		data = np.reshape(data, (data.shape[0], 1, data.shape[1]))
+		if contains_fitted_data:
+			ds_data = mapsGrp.create_dataset(entryname, data=data)
 			ds_data.attrs['comments'] = comment
 			
 		# now write quantification of ROI+ dataset
 		entryname = 'XRF_roi_plus_quant'
 		comment = 'quantification curve for the datasets based on ROI + definitions ( with background subtraction)'
 		data = np.transpose(thisdata.dataset_calibration[:, 2, :])
-		data = np.reshape(data, (data.shape[0],1,data.shape[1]))
-		if contains_roiplus_data :
-			ds_data = mapsGrp.create_dataset(entryname, data = data)
+		data = np.reshape(data, (data.shape[0], 1, data.shape[1]))
+		if contains_roiplus_data:
+			ds_data = mapsGrp.create_dataset(entryname, data=data)
 			ds_data.attrs['comments'] = comment
 
 		entryname = 'us_amp'
 		comment = 'sensitivity of the upstream amplifier'
 		data = thisdata.us_amp
-		ds_data = mapsGrp.create_dataset(entryname, data = data)
+		ds_data = mapsGrp.create_dataset(entryname, data=data)
 		ds_data.attrs['comments'] = comment
 
 		entryname = 'ds_amp'
 		comment = 'sensitivity of the downstream amplifier'
 		data = thisdata.ds_amp
-		ds_data = mapsGrp.create_dataset(entryname, data = data)
+		ds_data = mapsGrp.create_dataset(entryname, data=data)
 		ds_data.attrs['comments'] = comment
 
 		try:
 			entryname = 'energy_calib'
 			comment = 'energy calibration'
 			data = thisdata.energy_fit
-			ds_data = mapsGrp.create_dataset(entryname, data = data)
+			ds_data = mapsGrp.create_dataset(entryname, data=data)
 			ds_data.attrs['comments'] = comment
 		except:
 			print 'Error: HDF5: Could not write energy calibration'
@@ -288,14 +284,14 @@ class h5:
 		entryname = 'version'
 		comment = 'this is the version number of the file structure'
 		data = thisdata.version
-		ds_data = mapsGrp.create_dataset(entryname, data = data)
+		ds_data = mapsGrp.create_dataset(entryname, data=data)
 		ds_data.attrs['comments'] = comment
 
 		try:
 			entryname = 'scan_time_stamp'
 			comment = 'time the scan was acquired'
 			data = thisdata.scan_time_stamp
-			ds_data = mapsGrp.create_dataset(entryname, data = data)
+			ds_data = mapsGrp.create_dataset(entryname, data=data)
 			ds_data.attrs['comments'] = comment
 		except:
 			print 'HDF5: Could not write scan_time_stamp'
@@ -303,51 +299,50 @@ class h5:
 		entryname = 'write_date'
 		comment = 'time this analysis was carried out'
 		data = str(thisdata.write_date)
-		ds_data = mapsGrp.create_dataset(entryname, data = data)
+		ds_data = mapsGrp.create_dataset(entryname, data=data)
 		ds_data.attrs['comments'] = comment
-  
+
 		entryname = 'scaler_names'
 		comment = 'names of the scalers saved'
 		data = thisdata.dmaps_names
-		ds_data = mapsGrp.create_dataset(entryname, data = data)
+		ds_data = mapsGrp.create_dataset(entryname, data=data)
 		ds_data.attrs['comments'] = comment
 		
 		entryname = 'scaler_units'
 		comment = 'units of the scalers saved'
 		data = thisdata.dmaps_units
-		ds_data = mapsGrp.create_dataset(entryname, data = data)
+		ds_data = mapsGrp.create_dataset(entryname, data=data)
 		ds_data.attrs['comments'] = comment  
 
 		entryname = 'channel_names'
 		comment = 'names of the channels saved'
 		data = thisdata.chan_names
-		ds_data = mapsGrp.create_dataset(entryname, data = data)
+		ds_data = mapsGrp.create_dataset(entryname, data=data)
 		ds_data.attrs['comments'] = comment
-
 
 		entryname = 'channel_units'
 		comment = 'units of the channels saved'
 		data = thisdata.chan_units[:]
 		data = zip(*data)
-		ds_data = mapsGrp.create_dataset(entryname, data = data)
+		ds_data = mapsGrp.create_dataset(entryname, data=data)
 		ds_data.attrs['comments'] = comment
 
 		entryname = 'extra_strings'
 		comment = 'additional string values saved in the dataset'
 		data = thisdata.extra_str_arr
-		ds_data = mapsGrp.create_dataset(entryname, data = data)
+		ds_data = mapsGrp.create_dataset(entryname, data=data)
 		ds_data.attrs['comments'] = comment 
 
 		entryname = 'add_long'
 		comment = 'additional long values'
 		data = [thisdata.add_long['a'], thisdata.add_long['b'], thisdata.add_long['c'], thisdata.add_long['d'], thisdata.add_long['e']]
-		ds_data = mapsGrp.create_dataset(entryname, data = data)
+		ds_data = mapsGrp.create_dataset(entryname, data=data)
 		ds_data.attrs['comments'] = comment
 
 		entryname = 'add_float'
 		comment = 'additional float values'
 		data = [thisdata.add_float['a'], thisdata.add_float['b'], thisdata.add_float['c'], thisdata.add_float['d'], thisdata.add_float['e']]
-		ds_data = mapsGrp.create_dataset(entryname, data = data)
+		ds_data = mapsGrp.create_dataset(entryname, data=data)
 		ds_data.attrs['comments'] = comment  
 		
 		entryname = 'add_string'
@@ -355,7 +350,7 @@ class h5:
 		data = [thisdata.add_str['a'], thisdata.add_str['b'], thisdata.add_str['c'], thisdata.add_str['d'], thisdata.add_str['e'], 
 				thisdata.add_str['f'], thisdata.add_str['g'], thisdata.add_str['h'], thisdata.add_str['i'], thisdata.add_str['j'], 
 				thisdata.add_str['k'], thisdata.add_str['l'], thisdata.add_str['m'], thisdata.add_str['n'], thisdata.add_str['o']]
-		ds_data = mapsGrp.create_dataset(entryname, data = data)
+		ds_data = mapsGrp.create_dataset(entryname, data=data)
 		ds_data.attrs['comments'] = comment  
 		
 		if update == False: 
@@ -366,7 +361,7 @@ class h5:
 			data = np.transpose(mca_arr)
 			dimensions = data.shape
 			chunk_dimensions = (dimensions[0], 1, 1)
-			ds_data = mapsGrp.create_dataset(entryname, data = data, chunks=chunk_dimensions, compression='gzip', compression_opts=gzip)
+			ds_data = mapsGrp.create_dataset(entryname, data=data, chunks=chunk_dimensions, compression='gzip', compression_opts=gzip)
 			ds_data.attrs['comments'] = comment
 
 		# create a subgroup FOR make_maps_conf
@@ -378,37 +373,37 @@ class h5:
 		entryname = 'use_default_dirs'
 		comment = ''
 		data = thisdata.make_maps_conf.use_default_dirs
-		ds_data = mmcGrp.create_dataset(entryname, data = data)
+		ds_data = mmcGrp.create_dataset(entryname, data=data)
 		ds_data.attrs['comments'] = comment		   
 
 		entryname = 'use_beamline'
 		data = thisdata.make_maps_conf.use_beamline
-		ds_data = mmcGrp.create_dataset(entryname, data = data)
+		ds_data = mmcGrp.create_dataset(entryname, data=data)
 		ds_data.attrs['comments'] = comment 
 
 		entryname = 'version'
 		data = thisdata.make_maps_conf.version
-		ds_data = mmcGrp.create_dataset(entryname, data = data)
+		ds_data = mmcGrp.create_dataset(entryname, data=data)
 		ds_data.attrs['comments'] = comment 
 
 		entryname = 'use_det'
 		data = thisdata.make_maps_conf.use_det
-		ds_data = mmcGrp.create_dataset(entryname, data = data)
+		ds_data = mmcGrp.create_dataset(entryname, data=data)
 		ds_data.attrs['comments'] = comment  
-  
+
 		entryname = 'calibration_offset'
 		data = thisdata.make_maps_conf.calibration.offset
-		ds_data = mmcGrp.create_dataset(entryname, data = data)
+		ds_data = mmcGrp.create_dataset(entryname, data=data)
 		ds_data.attrs['comments'] = comment 
-  
+
 		entryname = 'calibration_slope'
 		data = thisdata.make_maps_conf.calibration.slope
-		ds_data = mmcGrp.create_dataset(entryname, data = data)
+		ds_data = mmcGrp.create_dataset(entryname, data=data)
 		ds_data.attrs['comments'] = comment 
-  
+
 		entryname = 'calibration_quad'
 		data = thisdata.make_maps_conf.calibration.quad
-		ds_data = mmcGrp.create_dataset(entryname, data = data)
+		ds_data = mmcGrp.create_dataset(entryname, data=data)
 		ds_data.attrs['comments'] = comment 
 		'''
 		if 'nbs1832' not in mmcGrp:
@@ -444,8 +439,6 @@ class h5:
 		entryname = 'ds_amp'
 		data = substructure.ds_amp
 		ds_data = nbs1832Grp.create_dataset(entryname, data = data)
-   
-   
 
 		if 'nbs1833' not in mmcGrp:
 			nbs1833Grp = mmcGrp.create_group('nbs1833')
@@ -482,7 +475,6 @@ class h5:
 		ds_data = nbs1833Grp.create_dataset(entryname, data = data)
 		'''
 
-
 		entryname = 'e_cal'
 		data = np.transpose(thisdata.make_maps_conf.e_cal)
 		ds_data = mmcGrp.create_dataset(entryname, data = data)  
@@ -514,7 +506,7 @@ class h5:
 					v = extra_pv[k]
 					data.append([k, str(v[2]), v[0], v[1]])
 			ds_data = mapsGrp.create_dataset(entryname, data = np.transpose(data))
- 
+
 			entryname = 'extra_pvs_as_csv'
 			comment = 'additional process variables saved in the original dataset, name and value fields reported as comma seperated values'
 			if extra_pv_order:
@@ -528,7 +520,6 @@ class h5:
 
 		f.close()
 		return
-
 
 #-----------------------------------------------------------------------------	 
 	def maps_change_xrf_read_hdf5(self, sfile, make_maps_conf):
@@ -567,7 +558,6 @@ class h5:
 		this_scalers = this_scalers.transpose()
 		dimensions = this_scalers.shape
 		n_used_dmaps = dimensions[2]
-
 		
 		entryname = 'energy'
 		this_energy, valid_read = self.read_hdf5_core(maps_group_id, entryname)
@@ -576,8 +566,7 @@ class h5:
 			return None, None, None, None, 0
 		dimensions = this_energy.shape
 		n_channels = dimensions[0]
-		
-		
+
 		# default, one for roi based , one for fitted images and one for sigma.
 		dataset_size = 3
 
@@ -592,8 +581,7 @@ class h5:
 													n_channels, n_channels, no_detectors, 
 													n_used_chan, n_used_dmaps, 
 													make_maps_conf, version = 9)  
-				
-				
+
 		XRFmaps_info.n_ev = n_channels
 		XRFmaps_info.n_energy = n_channels
 		XRFmaps_info.energy = this_energy
