@@ -72,6 +72,21 @@ JOB_PROCESSING_ID = 1
 JOB_COMPLETED_ID = 2
 JOB_ERROR_ID = 10
 
+# Function used to create a new process for jobs
+def new_process_func(job_status, log_name, alias_path, key_a, key_b, key_c, key_d, key_e):
+	saveout = sys.stdout
+	try:
+		logfile = open(log_name, 'wt')
+		sys.stdout = logfile
+		maps_batch(wdir=alias_path, a=key_a, b=key_b, c=key_c, d=key_d, e=key_e)
+		sys.stdout = saveout
+		logfile.close()
+		job_status.value = JOB_COMPLETED_ID
+	except:
+		print datetime.now(), 'Error processing', alias_path
+		traceback.print_exc(file=sys.stdout)
+		sys.stdout = saveout
+		job_status.value = JOB_ERROR_ID
 
 class ProcessNode(object):
 
@@ -315,7 +330,7 @@ class ProcessNode(object):
 				job_dict['Log_Path'] = log_name
 				log_path = os.path.join(STR_JOB_LOG_DIR_NAME, log_name)
 				job_status = multiprocessing.Value('i', JOB_PROCESSING_ID)
-				proc = multiprocessing.Process(target=self.__proc_func__, args=(job_status, log_path, alias_path, key_a, key_b, key_c, key_d, key_e))
+				proc = multiprocessing.Process(target=new_process_func, args=(job_status, log_path, alias_path, key_a, key_b, key_c, key_d, key_e))
 				proc.start()
 				self.this_process = psutil.Process(proc.pid)
 				proc.join()
@@ -339,21 +354,6 @@ class ProcessNode(object):
 		print 'Finished Processing, going to Idle'
 		self.pn_info[STR_STATUS] = 'Idle'
 		self.send_status_update()
-
-	def __proc_func__(self, job_status, log_name, alias_path, key_a, key_b, key_c, key_d, key_e):
-		saveout = sys.stdout
-		try:
-			logfile = open(log_name, 'wt')
-			sys.stdout = logfile
-			maps_batch(wdir=alias_path, a=key_a, b=key_b, c=key_c, d=key_d, e=key_e)
-			sys.stdout = saveout
-			logfile.close()
-			job_status.value = JOB_COMPLETED_ID
-		except:
-			print datetime.now(), 'Error processing', alias_path
-			traceback.print_exc(file=sys.stdout)
-			sys.stdout = saveout
-			job_status.value = JOB_ERROR_ID
 
 	def stop(self):
 		self.running = False
