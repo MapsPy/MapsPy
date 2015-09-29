@@ -1528,38 +1528,27 @@ class analyze:
 
 		main_XRFmaps_names = imgdat_filenames
 
-		for n_filenumber in range (no_files): 
+		for n_filenumber in range(no_files):
 			# is the avergae .dat file older than the dat0 file ? if so, generate a
 			# new avg file, otherwise skip it.
-		
-			sFile_zero = os.path.join(self.main_dict['XRFmaps_dir'], imgdat_filenames[n_filenumber]+'.h5'+str(0))
-			sFile_avg = os.path.join(self.main_dict['XRFmaps_dir'], imgdat_filenames[n_filenumber]+'.h5')
-			#res_zero = os.stat(sFile_zero)
 			
-			#This is to check if the .h5 is there. Skipping because will save new one 
-			#			 res_avg = os.stat(sFile_avg)
-			#			 if res_avg[ST_MTIME] > res_zero[ST_MTIME] :
-			#				 if res_avg[ST_CTIME] != 0. :
-			#					 #need to also test that file exists, ie, time > 0
-			##				print, ' skipping ', sFile_zero
-			##				print, 'because the average file is younger'
-			#					 continue
-
 			added_number_detectors = 0
 			for this_detector_element in range(total_number_detectors):
 				sfile = os.path.join(self.main_dict['XRFmaps_dir'], imgdat_filenames[n_filenumber] + '.h5' + str(this_detector_element).strip())
 				#print sfile 
 				n_ev, n_rows, n_cols, n_energy, energy, energy_spec, scan_time_stamp, dataset_orig = self.change_xrf_resetvars()
-				temp = max([sfile.split('/'), sfile.split('\\')])
-				if temp == -1:
-					temp = 0
+				#temp = max([sfile.split('/'), sfile.split('\\')])
+				#if temp == -1:
+				#	temp = 0
 
 				if not os.path.isfile(sfile) :
 					print 'WARNING: did not find :', sfile, ' skipping to next'
 					continue
 
 				XRFmaps_info, n_cols, n_rows, n_channels, valid_read = h5p.maps_change_xrf_read_hdf5(sfile, make_maps_conf)
-
+				if valid_read == 0:
+					print 'Error calling h5p.maps_change_xrf_read_hdf5(', sfile, make_maps_conf, ')'
+					return
 				f = call_function_with_retry(h5py.File, 5, 0.1, 1.1, (sfile, 'r'))
 				if f is None:
 					print 'Error opening file ', sfile
@@ -1583,6 +1572,9 @@ class analyze:
 				if added_number_detectors == 0:
 
 					avg_XRFmaps_info, n_cols, n_rows, n_channels, valid_read = h5p.maps_change_xrf_read_hdf5(sfile, make_maps_conf)
+					if valid_read == 0:
+						print 'Error calling h5p.maps_change_xrf_read_hdf5(', sfile, make_maps_conf, ')'
+						return
 					avg_mca_arr = mca_arr.copy()
 
 				elif added_number_detectors >= 1:

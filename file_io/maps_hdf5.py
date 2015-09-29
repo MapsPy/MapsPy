@@ -537,33 +537,33 @@ class h5:
 
 		f = call_function_with_retry(h5py.File, 5, 0.1, 1.1, (sfile, 'r'))
 		if f == None:
-			print 'Error could not open file ',filename
-			return
-		#f = h5py.File(sfile, 'r') 
-				
+			print 'Error could not open file ', sfile
+			return None, None, None, None, 0
+
 		if 'MAPS' not in f:
 			print 'error, hdf5 file does not contain the required MAPS group. I am aborting this action'
-			return 
+			return None, None, None, None, 0
 
 		maps_group_id = f['MAPS']
-		   
-		   
+
 		entryname = 'XRF_roi'
 		this_xrfdata, valid_read = self.read_hdf5_core(maps_group_id, entryname)
-		if valid_read == 0 : return 
+		if valid_read == 0:
+			print 'error, reading', entryname
+			return None, None, None, None, 0
 		this_xrfdata = np.transpose(this_xrfdata)
 		dimensions = this_xrfdata.shape
-
 
 		# if this is a 2D (x, y) scan dimensions should be 3  
 		n_cols = dimensions[0]
 		n_rows = dimensions[1]
 		n_used_chan = dimensions[2]
-		   
-		   
+
 		entryname = 'scalers'
 		this_scalers, valid_read = self.read_hdf5_core(maps_group_id, entryname)
-		if valid_read == 0 : return 
+		if valid_read == 0:
+			print 'error, reading', entryname
+			return None, None, None, None, 0
 		this_scalers = this_scalers.transpose()
 		dimensions = this_scalers.shape
 		n_used_dmaps = dimensions[2]
@@ -571,14 +571,16 @@ class h5:
 		
 		entryname = 'energy'
 		this_energy, valid_read = self.read_hdf5_core(maps_group_id, entryname)
-		if valid_read == 0 : return 
+		if valid_read == 0:
+			print 'error, reading', entryname
+			return None, None, None, None, 0
 		dimensions = this_energy.shape
 		n_channels = dimensions[0]
 		
 		
 		# default, one for roi based , one for fitted images and one for sigma.
 		dataset_size = 3
-  
+
 		# any current maps version deal with multiple detectors in creating
 		# different files, one for each detector, and at the end one
 		# average  
@@ -586,8 +588,7 @@ class h5:
 		
 		version = 9
 		
-		   
-		XRFmaps_info = maps_def.define_xrfmaps_info(n_cols, n_rows, dataset_size, 
+		XRFmaps_info = maps_def.define_xrfmaps_info(n_cols, n_rows, dataset_size,
 													n_channels, n_channels, no_detectors, 
 													n_used_chan, n_used_dmaps, 
 													make_maps_conf, version = 9)  
@@ -603,112 +604,107 @@ class h5:
 		for i in range(n_used_chan):
 			XRFmaps_info.dataset_orig[:, :, i, 0] = this_xrfdata[:,:,i]
 		this_xrfdata = 0
-		
 
-		
-		entryname = 'scan_time_stamp'
-		this_data, valid_read = self.read_hdf5_core(maps_group_id, entryname) 
-		if valid_read : XRFmaps_info.scan_time_stamp = this_data
+		this_data, valid_read = self.read_hdf5_core(maps_group_id, 'scan_time_stamp')
+		if valid_read:
+			XRFmaps_info.scan_time_stamp = this_data
 
-		entryname = 'write_date'
-		this_data, valid_read = self.read_hdf5_core(maps_group_id, entryname)
-		if valid_read : XRFmaps_info.write_date = this_data
+		this_data, valid_read = self.read_hdf5_core(maps_group_id, 'write_date')
+		if valid_read:
+			XRFmaps_info.write_date = this_data
 
-		entryname = 'x_axis'
-		this_data, valid_read = self.read_hdf5_core(maps_group_id, entryname)
-		if valid_read : XRFmaps_info.x_coord_arr = this_data
+		this_data, valid_read = self.read_hdf5_core(maps_group_id, 'x_axis')
+		if valid_read:
+			XRFmaps_info.x_coord_arr = this_data
 
-		entryname = 'y_axis'
-		this_data, valid_read = self.read_hdf5_core(maps_group_id, entryname)
-		if valid_read : XRFmaps_info.y_coord_arr = this_data
+		this_data, valid_read = self.read_hdf5_core(maps_group_id, 'y_axis')
+		if valid_read:
+			XRFmaps_info.y_coord_arr = this_data
 
-		entryname = 'scaler_names'
-		this_data, valid_read = self.read_hdf5_core(maps_group_id, entryname)
-		if valid_read : XRFmaps_info.dmaps_names = this_data
-		
-		entryname = 'scaler_units'
-		this_data, valid_read = self.read_hdf5_core(maps_group_id, entryname)
-		if valid_read : XRFmaps_info.dmaps_units = this_data
+		this_data, valid_read = self.read_hdf5_core(maps_group_id, 'scaler_names')
+		if valid_read:
+			XRFmaps_info.dmaps_names = this_data
 
-		entryname = 'channel_names'
-		this_data, valid_read = self.read_hdf5_core(maps_group_id, entryname)
-		if valid_read : XRFmaps_info.chan_names = this_data
-		
-		entryname = 'channel_units'
-		this_data, valid_read = self.read_hdf5_core(maps_group_id, entryname)
-		if valid_read : XRFmaps_info.chan_units = zip(*this_data)
+		this_data, valid_read = self.read_hdf5_core(maps_group_id, 'scaler_units')
+		if valid_read:
+			XRFmaps_info.dmaps_units = this_data
 
-		entryname = 'XRF_fits'
-		this_data, valid_read = self.read_hdf5_core(maps_group_id, entryname)
+		this_data, valid_read = self.read_hdf5_core(maps_group_id, 'channel_names')
+		if valid_read:
+			XRFmaps_info.chan_names = this_data
+
+		this_data, valid_read = self.read_hdf5_core(maps_group_id, 'channel_units')
+		if valid_read:
+			XRFmaps_info.chan_units = zip(*this_data)
+
+		this_data, valid_read = self.read_hdf5_core(maps_group_id, 'XRF_fits')
 		this_data = np.transpose(this_data)
-		if valid_read : 
-			for i in range(n_used_chan): XRFmaps_info.dataset_orig[:, :, i, 1] = this_data[:,:,i]
+		if valid_read:
+			for i in range(n_used_chan):
+				XRFmaps_info.dataset_orig[:, :, i, 1] = this_data[:, :, i]
 
-		entryname = 'XRF_sigma'
-		this_data, valid_read = self.read_hdf5_core(maps_group_id, entryname)
+		this_data, valid_read = self.read_hdf5_core(maps_group_id, 'XRF_sigma')
 		this_data = np.transpose(this_data)
-		if valid_read : 
-			for i in range(n_used_chan): XRFmaps_info.dataset_orig[:, :, i, 2] = this_data[:,:,i]
+		if valid_read:
+			for i in range(n_used_chan):
+				XRFmaps_info.dataset_orig[:, :, i, 2] = this_data[:, :, i]
 
-		entryname = 'XRF_roi_plus'
-		this_data, valid_read = self.read_hdf5_core(maps_group_id, entryname)
+		this_data, valid_read = self.read_hdf5_core(maps_group_id, 'XRF_roi_plus')
 		this_data = np.transpose(this_data)
-		if valid_read :  
-			for i in range(n_used_chan): XRFmaps_info.dataset_orig[:, :, i, 2] = this_data[:, :, i]
+		if valid_read:
+			for i in range(n_used_chan):
+				XRFmaps_info.dataset_orig[:, :, i, 2] = this_data[:, :, i]
 			XRFmaps_info.dataset_names[2] = 'XRF_roi+'
-		 
-		entryname = 'XRF_roi_quant'
-		this_data, valid_read = self.read_hdf5_core(maps_group_id, entryname)
+
+		this_data, valid_read = self.read_hdf5_core(maps_group_id, 'XRF_roi_quant')
 		this_data = np.transpose(this_data)
-		if valid_read : XRFmaps_info.dataset_calibration[:, 0, :] = this_data[:, 0, :]
+		if valid_read:
+			XRFmaps_info.dataset_calibration[:, 0, :] = this_data[:, 0, :]
 
-		entryname = 'XRF_roi_plus_quant'
-		this_data, valid_read = self.read_hdf5_core(maps_group_id, entryname)
+		this_data, valid_read = self.read_hdf5_core(maps_group_id, 'XRF_roi_plus_quant')
 		this_data = np.transpose(this_data)
-		if valid_read : XRFmaps_info.dataset_calibration[:, 2, :] = this_data[:, 0, :]
+		if valid_read:
+			XRFmaps_info.dataset_calibration[:, 2, :] = this_data[:, 0, :]
 
-		entryname = 'XRF_fits_quant'
-		this_data, valid_read = self.read_hdf5_core(maps_group_id, entryname)
+		this_data, valid_read = self.read_hdf5_core(maps_group_id, 'XRF_fits_quant')
 		this_data = np.transpose(this_data)
-		if valid_read : XRFmaps_info.dataset_calibration[:, 1, :] = this_data[:, 0, :]
+		if valid_read:
+			XRFmaps_info.dataset_calibration[:, 1, :] = this_data[:, 0, :]
 
-		entryname = 'energy'
-		this_data, valid_read = self.read_hdf5_core(maps_group_id, entryname)
-		if valid_read : XRFmaps_info.energy_spec = this_data
+		this_data, valid_read = self.read_hdf5_core(maps_group_id, 'energy')
+		if valid_read:
+			XRFmaps_info.energy_spec = this_data
 
-		entryname = 'int_spec'
-		this_data, valid_read = self.read_hdf5_core(maps_group_id, entryname)
-		if valid_read : XRFmaps_info.energy_spec = this_data
+		this_data, valid_read = self.read_hdf5_core(maps_group_id, 'int_spec')
+		if valid_read:
+			XRFmaps_info.energy_spec = this_data
 
-		entryname = 'energy_calib'
-		this_data, valid_read = self.read_hdf5_core(maps_group_id, entryname)
-		if valid_read : XRFmaps_info.energy_fit = this_data
-		
-		
-		entryname = 'max_chan_spec'
-		this_data, valid_read = self.read_hdf5_core(maps_group_id, entryname)
+		this_data, valid_read = self.read_hdf5_core(maps_group_id, 'energy_calib')
+		if valid_read:
+			XRFmaps_info.energy_fit = this_data
+
+		this_data, valid_read = self.read_hdf5_core(maps_group_id, 'max_chan_spec')
 		this_data = np.transpose(this_data)
-		if valid_read : XRFmaps_info.max_chan_spec = this_data
+		if valid_read:
+			XRFmaps_info.max_chan_spec = this_data
 
-		entryname = 'us_amp'
-		this_data, valid_read = self.read_hdf5_core(maps_group_id, entryname)
-		if valid_read : XRFmaps_info.us_amp = this_data
+		this_data, valid_read = self.read_hdf5_core(maps_group_id, 'us_amp')
+		if valid_read:
+			XRFmaps_info.us_amp = this_data
 
-		entryname = 'ds_amp'
-		this_data, valid_read = self.read_hdf5_core(maps_group_id, entryname)
-		if valid_read : XRFmaps_info.ds_amp = this_data
-		
+		this_data, valid_read = self.read_hdf5_core(maps_group_id, 'ds_amp')
+		if valid_read:
+			XRFmaps_info.ds_amp = this_data
 
-		entryname = 'extra_strings'
-		this_data, valid_read = self.read_hdf5_core(maps_group_id, entryname)
-		if valid_read : XRFmaps_info.extra_str_arr = this_data		 
-
+		this_data, valid_read = self.read_hdf5_core(maps_group_id, 'extra_strings')
+		if valid_read:
+			XRFmaps_info.extra_str_arr = this_data
 
 		XRFmaps_info.img_type = 7
 		
-		f.close()	 
+		f.close()
 		
-		return	XRFmaps_info, n_cols, n_rows, n_channels, valid_read
+		return XRFmaps_info, n_cols, n_rows, n_channels, valid_read
 		
 			
 #-----------------------------------------------------------------------------	 
@@ -739,11 +735,9 @@ class h5:
 		maps_def = maps_definitions.maps_definitions()
 		maps_conf = maps_def.set_maps_definitions('2-ID-E', info_elements)
 
-
 		XRFmaps_info, n_cols, n_rows, n_channels, valid_read = self.maps_change_xrf_read_hdf5(filename, maps_conf)
 		
 		return XRFmaps_info, valid_read
-	
 
 #-----------------------------------------------------------------------------	 
 	def add_exchange(self, main, make_maps_conf):
@@ -764,13 +758,14 @@ class h5:
 		current_directory = main['master_dir']
 	
 		for n_filenumber in range(no_files):
-		 
-			sFile = os.path.join(main['XRFmaps_dir'],imgdat_filenames[n_filenumber])
+			sFile = os.path.join(main['XRFmaps_dir'], imgdat_filenames[n_filenumber])
 			
 			print 'Adding exchange to ', sFile
 		
 			XRFmaps_info, n_cols, n_rows, n_channels, valid_read = self.maps_change_xrf_read_hdf5(sFile, make_maps_conf)
-		
+			if valid_read == 0:
+				print 'Error calling h5p.maps_change_xrf_read_hdf5(', sFile, make_maps_conf, ')'
+				return
 
 			f = call_function_with_retry(h5py.File, 5, 0.1, 1.1, (sFile, 'a'))
 			#f = h5py.File(sFile, 'a')
@@ -788,27 +783,27 @@ class h5:
 				excGrp = f['exchange']
 					
 			entryname = 'images'
-			comment = 'these are elemental maps'
-			 
+			#comment = 'these are elemental maps'
+
 			drop_val = 1
 			data = XRFmaps_info.dataset_orig[:, :, :, drop_val]
 			comment = 'these are elemental maps based on per pixel fitting'
-			if np.sum(data) == 0. : 
+			if np.sum(data) == 0.0:
 				drop_val = 2
 				data = XRFmaps_info.dataset_orig[:, :, :, drop_val]
 				comment = 'these are elemental maps based on roi plus'
-			  
-			if np.sum(data) == 0. : 
+
+			if np.sum(data) == 0.0:
 				drop_val = 0
 				data = XRFmaps_info.dataset_orig[:, :, :, drop_val]
 				comment = 'these are elemental maps based on rois'
-			 
+
 			dataset = XRFmaps_info.dataset
 			dataset[:, :, 0:XRFmaps_info.n_used_dmaps] = XRFmaps_info.dmaps_set[:, :, :]
 			dataset[:, :, XRFmaps_info.n_used_dmaps:XRFmaps_info.n_used_dmaps+XRFmaps_info.n_used_chan] = data[:, :, :]
 		
 			drop_vtwo = 0  # for now just use ds ic for normalization
-			if drop_vtwo == 0 : 
+			if drop_vtwo == 0:
 				wo = []
 				if 'ds_ic' in XRFmaps_info.dmaps_names: 
 					wo = np.where(XRFmaps_info.dmaps_names == 'ds_ic')
@@ -823,17 +818,15 @@ class h5:
 			#	ic_correction_factor = XRFmaps_info.make_maps_conf.nbs32.us_amp[2]/XRFmaps_info.us_amp[2]
 			if len(wo[0]) > -1 : 
 				calib = XRFmaps_info.dmaps_set[:, :, wo].astype(float) 
-				calib = calib[:,:,0,0]
-				for k in range(XRFmaps_info.n_used_dmaps, XRFmaps_info.n_used_dmaps+XRFmaps_info.n_used_chan): 
-					calib_factor = float(XRFmaps_info.dataset_calibration[k-XRFmaps_info.n_used_dmaps, drop_val, 2-drop_vtwo] )
-					if calib_factor > 0 :
-						dataset[:, :, k] =	dataset[:, :, k] / calib_factor / calib 
+				calib = calib[:, :, 0, 0]
+				for k in range(XRFmaps_info.n_used_dmaps, XRFmaps_info.n_used_dmaps + XRFmaps_info.n_used_chan):
+					calib_factor = float(XRFmaps_info.dataset_calibration[k - XRFmaps_info.n_used_dmaps, drop_val, 2-drop_vtwo])
+					if calib_factor > 0:
+						dataset[:, :, k] = dataset[:, :, k] / calib_factor / calib
 					else:
-						dataset[:, :, k] =	dataset[:, :, k] / calib * np.mean(calib)
+						dataset[:, :, k] = dataset[:, :, k] / calib * np.mean(calib)
 					dataset[:, :, k] = dataset[:, :, k] * ic_correction_factor
- 
 
-		
 			data = np.transpose(dataset)
 			dimensions = data.shape
 			chunk_dimensions = (1, dimensions[1], dimensions[2])
@@ -844,17 +837,16 @@ class h5:
 			else:
 				dataset_id = excGrp[entryname]
 				dataset_id[...] = data
-		 
-			units = ['-' for x in range(XRFmaps_info.n_used_dmaps+XRFmaps_info.n_used_chan)]
-			print 'len units  =',len(units)
-			units[0:XRFmaps_info.n_used_dmaps] = XRFmaps_info.dmaps_units[:]
-			units[XRFmaps_info.n_used_dmaps:XRFmaps_info.n_used_dmaps+XRFmaps_info.n_used_chan] =  XRFmaps_info.chan_units[: 2-drop_vtwo] 
 
-			names = ['' for x in range(XRFmaps_info.n_used_dmaps+XRFmaps_info.n_used_chan)]
+			units = ['-' for x in range(XRFmaps_info.n_used_dmaps+XRFmaps_info.n_used_chan)]
+			print 'len units  =', len(units)
+			units[0:XRFmaps_info.n_used_dmaps] = XRFmaps_info.dmaps_units[:]
+			units[XRFmaps_info.n_used_dmaps:XRFmaps_info.n_used_dmaps + XRFmaps_info.n_used_chan] = XRFmaps_info.chan_units[: 2-drop_vtwo]
+
+			names = ['' for x in range(XRFmaps_info.n_used_dmaps + XRFmaps_info.n_used_chan)]
 			names[0:XRFmaps_info.n_used_dmaps] = XRFmaps_info.dmaps_names[:]
-			names[XRFmaps_info.n_used_dmaps:XRFmaps_info.n_used_dmaps+XRFmaps_info.n_used_chan] = XRFmaps_info.chan_names[:]
-		 
-					 
+			names[XRFmaps_info.n_used_dmaps:XRFmaps_info.n_used_dmaps + XRFmaps_info.n_used_chan] = XRFmaps_info.chan_names[:]
+
 			entryname = 'x_axis'
 			comment = 'stores the values of the primary fast axis positioner, typically sample x'
 			data = XRFmaps_info.x_coord_arr
@@ -869,46 +861,42 @@ class h5:
 			comment = 'stores the values of the slow axis positioner, typically sample y'
 			data = XRFmaps_info.y_coord_arr
 			if entryname not in excGrp:
-				ds_data = excGrp.create_dataset(entryname, data = data)
+				ds_data = excGrp.create_dataset(entryname, data=data)
 				ds_data.attrs['comments'] = comment
 			else:
 				dataset_id = excGrp[entryname]
 				dataset_id[...] = data
-		 
+
 			entryname = 'images_names'
 			comment = 'names of the xrf and scaler images'
 			data = names
 			if entryname not in excGrp:
-				ds_data = excGrp.create_dataset(entryname, data = data)
+				ds_data = excGrp.create_dataset(entryname, data=data)
 				ds_data.attrs['comments'] = comment
 			else:
 				dataset_id = excGrp[entryname]
 				dataset_id[...] = data
-				
-						 
+
 			entryname = 'images_units'
 			comment = 'units of the xrf and scaler images'
 			data = units
 			if entryname not in excGrp:
-				ds_data = excGrp.create_dataset(entryname, data = data)
+				ds_data = excGrp.create_dataset(entryname, data=data)
 				ds_data.attrs['comments'] = comment
 			else:
 				dataset_id = excGrp[entryname]
 				if (len(data),) == dataset_id.shape:
 					dataset_id[...] = data		   
 				else:
-					print 'Error: could not update ', dataset_id.name,' dataset shapes are different! dataset(',dataset_id.shape,') : data(',len(data),')'
+					print 'Error: could not update ', dataset_id.name, ' dataset shapes are different! dataset(', dataset_id.shape, ') : data(', len(data), ')'
 
-		 
 			f.close()
 			time.sleep(1.0)
 
-	
 		print '---------------------'
 		print 'done adding exchange information'
 		print '---------------------'
 		print ' '
-
 
 #-----------------------------------------------------------------------------	 
 	def read_scan(self, filename):
@@ -926,10 +914,10 @@ class h5:
 			return 
 
 		maps_group_id = f['MAPS']
-		   
-		entryname = 'mca_arr'
-		this_data, valid_read = self.read_hdf5_core(maps_group_id, entryname)
-		if valid_read : mca_arr = this_data			  
+
+		this_data, valid_read = self.read_hdf5_core(maps_group_id, 'mca_arr')
+		if valid_read:
+			mca_arr = this_data
 
 		mca_arr = mca_arr.T
 		dimensions = mca_arr.shape
@@ -938,37 +926,29 @@ class h5:
 		x_pixels = dimensions[0]
 		y_pixels = dimensions[1]
 		n_used_chan = dimensions[2]
-		
-			   
-		entryname = 'x_axis'
-		this_data, valid_read = self.read_hdf5_core(maps_group_id, entryname)
-		if valid_read : 
+
+		this_data, valid_read = self.read_hdf5_core(maps_group_id, 'x_axis')
+		if valid_read:
 			x_coord_arr = this_data
 			if len(x_coord_arr.shape) == 2:
-				scan_data.x_coord_arr = x_coord_arr[:,0]
+				scan_data.x_coord_arr = x_coord_arr[:, 0]
 			else:
 				scan_data.x_coord_arr = np.array(x_coord_arr)
-			
-		entryname = 'y_axis'
-		this_data, valid_read = self.read_hdf5_core(maps_group_id, entryname)
-		if valid_read : 
+
+		this_data, valid_read = self.read_hdf5_core(maps_group_id, 'y_axis')
+		if valid_read:
 			y_coord_arr = this_data
 			if len(y_coord_arr.shape) == 2:
-				scan_data.y_coord_arr = y_coord_arr[0,:]
+				scan_data.y_coord_arr = y_coord_arr[0, :]
 			else:
 				scan_data.y_coord_arr = np.array(y_coord_arr)	  
 		
 		f.close()
 
-
-
-		
-		scan_data.scan_name =  ''
-		scan_data.scan_time_stamp =  ''
+		scan_data.scan_name = ''
+		scan_data.scan_time_stamp = ''
 		
 		scan_data.y_pixels = y_pixels
-
-		
 
 		# create mca calib description array
 		#scan_data.mca_calib_description_arr = mca_calib_description_arr 
@@ -976,19 +956,14 @@ class h5:
 		# create mca calibration array
 		#scan_data.mca_calib_arr = mca_calib_arr
 		
-		
 		scan_data.x_pixels = x_pixels
 
-		
-		
 		#detector_arr = fltarr(x_pixels, y_pixels, info.no_detectors)
 		#scan_data.detector_arr = detector_arr
 		
 		#scan_data.detector_description_arr = detector_description_arr
-		   
-		
+
 		#mca_arr = fltarr(x_pixels, y_pixels, no_energy_channels, info.no_detectors)
 		scan_data.mca_arr = mca_arr
 		
 		return scan_data
-		
