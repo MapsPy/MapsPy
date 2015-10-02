@@ -233,7 +233,7 @@ class analyze:
 	def generate_img_dat_threaded(self, header, mdafilename, this_detector, 
 								total_number_detectors, quick_dirty, nnls,
 								no_processors_to_use,
-								xrf_bin, xrf_bin_ext = '', xanes_scan = 0):
+								xrf_bin, xrf_bin_ext='', xanes_scan = 0):
 		
 		info_elements = self.info_elements
 		beamline = self.beamline
@@ -276,12 +276,12 @@ class analyze:
 		self.version = make_maps_conf.version
 		extra_pv = 0
 		
-		if (beamline == 'Bio-CAT'):
+		if beamline == 'Bio-CAT':
 			print 'beamline: ', beamline 
 			print 'cannot read biocat scans'
 			return
 		
-		if (beamline == 'GSE-CARS'):
+		if beamline == 'GSE-CARS':
 			print 'beamline: ', beamline 
 			print 'cannot read GSE-CARS scans'
 			return
@@ -291,8 +291,11 @@ class analyze:
 			# read scan info
 			mda = maps_mda.mda()
 			info = mda.read_scan_info(mdafilename)
+			if info == None:
+				print 'Warning: skipping file : ', mdafilename, ' , due to maps_scan_info error'
+				return
 
-			if np.amin(info.spectrum) == -1 :
+			if np.amin(info.spectrum) == -1:
 				print 'skipping file : ', mdafilename, ' , due to maps_scan_info error'
 				return
 
@@ -314,6 +317,11 @@ class analyze:
 
 			test_netcdf = 0
 			ncfile = os.path.join(self.main_dict['master_dir'], 'flyXRF.h5', header + '_2xfm3__0.h5')
+			if os.path.isfile(ncfile):
+				test_netcdf = 1
+
+			# 8bm fly scan
+			ncfile = os.path.join(self.main_dict['master_dir'], 'flyXRF.h5', header + '_dxpXMAPDP3_0.h5')
 			if os.path.isfile(ncfile):
 				test_netcdf = 1
 
@@ -345,7 +353,7 @@ class analyze:
 
 			if (info.rank == 2) and (np.sum(info.spectrum) == 0 and (test_textfile == 0) and (test_netcdf == 0)):
 				print 'This is a fly scan, without XRF - returning.'
-				#maps_core_generate_fly_dat, header, mdafilename, output_dir, info_file
+				# maps_core_generate_fly_dat, header, mdafilename, output_dir, info_file
 				return
 
 			elif (info.rank == 2) and (np.sum(info.spectrum) == 0 and (test_textfile > 0)):
@@ -382,7 +390,7 @@ class analyze:
 				print 'trying to do the combined file'
 
 				scan = mda.read_combined_flyscan(self.main_dict['master_dir'], mdafilename, this_detector)
-					
+
 				netcdf_fly_scan = 1 
 				
 			elif xanes == 1:
@@ -391,9 +399,9 @@ class analyze:
 			
 			else:
 
-				#Read mda scan:
+				# Read mda scan:
 				print 'Reading scan from ', mdafilename
-				scan = mda.read_scan(mdafilename, extra_pvs = True)
+				scan = mda.read_scan(mdafilename, extra_pvs=True)
 				
 				print 'Finished reading scan from ', mdafilename
 
@@ -414,36 +422,32 @@ class analyze:
 
 		extra_pv = scan.extra_pv
 
-		#Get scan date
-		scan_date = datetime.date(0001,01,01)
-		month_list = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 
-					  'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
+		# Get scan date
+		scan_date = datetime.date(0001, 01, 01)
+		month_list = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
 		if scan.scan_time_stamp != '':
 			monthstr = scan.scan_time_stamp[0:3].lower()
-			month = month_list.index(monthstr)+1
+			month = month_list.index(monthstr) + 1
 			day = int(scan.scan_time_stamp[4:6])
 			year = int(scan.scan_time_stamp[8:12])
-			scan_date = datetime.date(year,month,day)
+			scan_date = datetime.date(year, month, day)
 
 		# Read in detector calibration
-		detector = maps_detector.detector_calibration()
-		dc = detector.get_detector_calibration(make_maps_conf, beamline, info_elements, scan, maps_overridefile)
+		maps_detector.get_detector_calibration(make_maps_conf, beamline, info_elements, scan, maps_overridefile)
 		
 		amp = np.zeros((8, 3), dtype=np.float)
 		
 		if scan.mca_calib_description_arr:
 			for i in range(8):
-				mca_calib = [self.crate, ':A', str(i+1), 'sens_num.VAL']
+				mca_calib = [self.crate, ':A', str(i + 1), 'sens_num.VAL']
 				mca_calib = string.join(mca_calib, '')
 				if mca_calib in scan.mca_calib_description_arr:
-					amp[i, 0] = float(scan.mca_calib_arr[
-									scan.mca_calib_description_arr.index(mca_calib)])
+					amp[i, 0] = float(scan.mca_calib_arr[scan.mca_calib_description_arr.index(mca_calib)])
 				
-				mca_calib = [self.crate, ':A', str(i+1), 'sens_unit.VAL']
+				mca_calib = [self.crate, ':A', str(i + 1), 'sens_unit.VAL']
 				mca_calib = string.join(mca_calib, '')
 				if mca_calib in scan.mca_calib_description_arr:
-					amp[i, 1] = float(scan.mca_calib_arr[
-									scan.mca_calib_description_arr.index(mca_calib)])
+					amp[i, 1] = float(scan.mca_calib_arr[scan.mca_calib_description_arr.index(mca_calib)])
 
 		# if all amp values are 0, it is likely, amps were not found. then try this
 		# could not find amplifier sensitivity in data file. will try to look up
@@ -451,10 +455,6 @@ class analyze:
 		if amp.sum() == 0.0:
 			try:
 				f = open_file_with_retry(maps_overridefile, 'rt')
-				US_AMP_SENS_NUM = 0
-				US_AMP_SENS_UNIT = 0
-				DS_AMP_SENS_NUM = 0
-				DS_AMP_SENS_UNIT = 0				
 				
 				for line in f:
 					if ':' in line : 
@@ -479,19 +479,19 @@ class analyze:
 				print 'Warning: amp[] is 0 - could not read override file'
 
 		for i in range(8):
-			if amp[i, 0] == 0. : amp[i, 2] = 1.
-			if amp[i, 0] == 1. : amp[i, 2] = 2.
-			if amp[i, 0] == 2. : amp[i, 2] = 5.
-			if amp[i, 0] == 3. : amp[i, 2] = 10.
-			if amp[i, 0] == 4. : amp[i, 2] = 20.
-			if amp[i, 0] == 5. : amp[i, 2] = 50.
-			if amp[i, 0] == 6. : amp[i, 2] = 100.
-			if amp[i, 0] == 7. : amp[i, 2] = 200.
-			if amp[i, 0] == 8. : amp[i, 2] = 500.
-			if amp[i, 1] == 0. : amp[i, 2] = amp[i, 2] / 1000.0		 # pA/V
-			if amp[i, 1] == 1. : amp[i, 2] = amp[i, 2]				 # nA/V
-			if amp[i, 1] == 2. : amp[i, 2] = amp[i, 2] * 1000.0		 #uA/V
-			if amp[i, 1] == 3. : amp[i, 2] = amp[i, 2] * 1000.0 * 1000.0 #mA/V
+			if amp[i, 0] == 0.0: amp[i, 2] = 1.
+			if amp[i, 0] == 1.0: amp[i, 2] = 2.
+			if amp[i, 0] == 2.0: amp[i, 2] = 5.
+			if amp[i, 0] == 3.0: amp[i, 2] = 10.
+			if amp[i, 0] == 4.0: amp[i, 2] = 20.
+			if amp[i, 0] == 5.0: amp[i, 2] = 50.
+			if amp[i, 0] == 6.0: amp[i, 2] = 100.
+			if amp[i, 0] == 7.0: amp[i, 2] = 200.
+			if amp[i, 0] == 8.0: amp[i, 2] = 500.
+			if amp[i, 1] == 0.0: amp[i, 2] = amp[i, 2] / 1000.0		 # pA/V
+			if amp[i, 1] == 1.0: amp[i, 2] = amp[i, 2]				 # nA/V
+			if amp[i, 1] == 2.0: amp[i, 2] = amp[i, 2] * 1000.0		 #uA/V
+			if amp[i, 1] == 3.0: amp[i, 2] = amp[i, 2] * 1000.0 * 1000.0 #mA/V
 
 		us_amp = np.zeros(3) 
 		ds_amp = np.zeros(3)
@@ -644,7 +644,7 @@ class analyze:
 			det_descr = ['srcurrent', 'us_ic', 'ds_ic', 'dpc1_ic', 'dpc2_ic', 
 						'cfg_1', 'cfg_2', 'cfg_3', 'cfg_4', 'cfg_5', 'cfg_6', 'cfg_7', 'cfg_8',
 						'ELT1', 'ERT1', 'ELT2', 'ERT2', 'ELT3', 'ERT3']
-			if scan_date > datetime.date(2007, 9, 01) :
+			if scan_date > datetime.date(2007, 9, 01):
 				det_descr = ['srcurrent', 'us_ic', 'ds_ic', 'dpc1_ic', 'dpc2_ic', 
 							'cfg_1', 'cfg_2', 'cfg_3', 'cfg_4', 'cfg_5', 'cfg_6', 'cfg_7', 'cfg_8',
 							'cfg_9', 'ELT1', 'ERT1', 'ELT2', 'ERT2', 'ELT3', 'ERT3', 'ICR1', 'OCR1']
@@ -665,8 +665,7 @@ class analyze:
 		dmaps_set = np.zeros((n_cols, n_rows, make_maps_conf.n_used_dmaps))
 
 		# generate direct maps, such as SR current, ICs, life time in subroutine
-		det_maps = maps_detector.detector_maps()
-		dmaps_set = det_maps.find_detector_name(det_descr, scan_date, scan.detector_arr, scan.detector_description_arr,
+		dmaps_set = maps_detector.find_detector_name(det_descr, scan_date, scan.detector_arr, scan.detector_description_arr,
 																 make_maps_conf, scan.x_coord_arr, scan.y_coord_arr, beamline,
 																 n_cols, n_rows, maps_overridefile)
 
@@ -793,7 +792,8 @@ class analyze:
 						for ii_temp in range(left_roi + 1, right_roi + 1):
 							these_counts = these_counts + scan.mca_arr[:, :, ii_temp, kk]
 
-				if len(these_counts.shape) >= 3 : these_counts = these_counts.sum(axis=2)
+				if len(these_counts.shape) >= 3:
+					these_counts = these_counts.sum(axis=2)
 				these_counts = these_counts / elt_arr
 				counts = counts + these_counts
 
@@ -821,7 +821,7 @@ class analyze:
 		n_pars = fitp.g.n_fitp
 		parinfo_value = np.zeros((n_pars)) 
 		parinfo_fixed = np.zeros((n_pars), dtype=np.int)  
-		parinfo_limited = np.zeros((n_pars, 2), dtype = np.int)
+		parinfo_limited = np.zeros((n_pars, 2), dtype=np.int)
 		parinfo_limits = np.zeros((n_pars, 2)) 
 		parinfo_relstep = np.zeros((n_pars)) 
 		parinfo_mpmaxstep = np.zeros((n_pars)) 
@@ -867,7 +867,7 @@ class analyze:
 		sol_intermediate = np.zeros((no_use_pars, self.main_dict['max_spec_channels']))
 		fitmatrix_reduced = np.zeros((self.main_dict['max_spec_channels'], no_use_pars))
 		
-		#Read in intermediate solution
+		# Read in intermediate solution
 		filepath = os.path.join(self.main_dict['output_dir'], maps_intermediate_solution_file) + suffix
 		#saveddatafile = np.load(filepath)
 		saveddatafile = call_function_with_retry(np.load, 5, 0.1, 1.1, (filepath,))
@@ -893,19 +893,19 @@ class analyze:
 		element_lookup_in_reduced = np.zeros((len(elements_to_use)), dtype=int)
 		element_lookup_in_reduced[:] = -1
 		j_temp = 0
-		for i_temp in range(len((elements_to_use))):
-			if make_maps_conf.chan[elements_to_use[i_temp]].name in fitp.s.name[min(fitp.keywords.kele_pos)+which_elements_to_fit] :
+		for i_temp in range(len(elements_to_use)):
+			if make_maps_conf.chan[elements_to_use[i_temp]].name in fitp.s.name[min(fitp.keywords.kele_pos) + which_elements_to_fit]:
 				wo_temp = np.where(fitp.s.name[np.amin(fitp.keywords.kele_pos)+which_elements_to_fit] == make_maps_conf.chan[elements_to_use[i_temp]].name)
 				element_lookup_in_reduced[i_temp] = wo_temp[0]
-			if 's_i' == make_maps_conf.chan[elements_to_use[i_temp]].name :
-				element_lookup_in_reduced[i_temp] = len(wo_use_this_par)+1
+			if 's_i' == make_maps_conf.chan[elements_to_use[i_temp]].name:
+				element_lookup_in_reduced[i_temp] = len(wo_use_this_par) + 1
 
-			if 's_e' == make_maps_conf.chan[elements_to_use[i_temp]].name :
-				element_lookup_in_reduced[i_temp] = len(wo_use_this_par)+0
+			if 's_e' == make_maps_conf.chan[elements_to_use[i_temp]].name:
+				element_lookup_in_reduced[i_temp] = len(wo_use_this_par) + 0
 
 		print 'c', tm.time()
 
-		if nnls == 0 :	
+		if nnls == 0:
 			for i_temp in range(n_cols):
 				for j_temp in range(n_rows):
 					these_counts = np.zeros((len(x)))
@@ -916,7 +916,7 @@ class analyze:
 					solution = np.dot(sol_intermediate[:, 0:len(x)], these_counts)
 					solution = solution/elt_arr[i_temp, j_temp]		   
 					for mm in range(len(elements_to_use)):
-						if element_lookup_in_reduced[mm] != -1 :
+						if element_lookup_in_reduced[mm] != -1:
 							thisdata.dataset_orig[i_temp, j_temp, mm, 2] = solution[element_lookup_in_reduced[mm]]
 
 		if nnls > 0:
@@ -934,11 +934,11 @@ class analyze:
 					for jj in range(n_rows):
 						data_lines[0:scan.mca_arr[i_fit, jj, :].size, jj, i_fit] = scan.mca_arr[i_fit, jj, :]					 
 
-					#Single processor version for debugging 
-					#				  for i_fit in range(count):
-					#					  print 'Doing line ', i_fit, ' of ', count
-					#					  results_line = maps_tools.maps_nnls_line(data_lines[:, :, i_fit], n_channels, fitmatrix_reduced, n_mca_channels,
-					#															   elements_to_use, element_lookup_in_reduced, n_rows)
+					# Single processor version for debugging
+					#  for i_fit in range(count):
+					#	  print 'Doing line ', i_fit, ' of ', count
+					#	  results_line = maps_tools.maps_nnls_line(data_lines[:, :, i_fit], n_channels, fitmatrix_reduced, n_mca_channels,
+					#											   elements_to_use, element_lookup_in_reduced, n_rows)
 
 				results_pool = [pool.apply_async(maps_tools.maps_nnls_line, (data_lines[:, :, i_fit], n_channels, fitmatrix_reduced, n_mca_channels, 
 												elements_to_use, element_lookup_in_reduced, n_rows)) for i_fit in range(count)]
@@ -1112,7 +1112,7 @@ class analyze:
 				old_fitp = fp.define_fitp(beamline, info_elements)
 				old_fitp.s.val[:]=fitp.s.val[:]
 
-				if (no_processors_to_use > 1) :
+				if no_processors_to_use > 1:
 					print 'Multi-threaded fitting started'
 					print 'no_processors_to_use = ', no_processors_to_use
 					print 'cpu_count() = %d\n' % multiprocessing.cpu_count()
@@ -1130,31 +1130,31 @@ class analyze:
 		
 					output_dir = self.main_dict['output_dir']
 		
-					#					  #Single processor version for debugging
-					#					  for i_fit in range(count):
-					#						  data_line = data_lines[:, :, i_fit]
-					#						  print 'fitting row number ', i_fit, ' of ', count-1
-					#						  elt_line[:] = elt1_arr[i_fit, :]
+					# #Single processor version for debugging
+					# for i_fit in range(count):
+					# 	data_line = data_lines[:, :, i_fit]
+					# 	print 'fitting row number ', i_fit, ' of ', count-1
+					# 	elt_line[:] = elt1_arr[i_fit, :]
 					#
-					#						  for jj in range(n_rows):
-					#							  fitted_temp[xmin:xmax+1, kk] = fitted_temp[xmin:xmax+1, kk] + fitted_line[xmin:xmax+1, jj]
-					#							  Ka_temp[xmin:xmax+1, kk] = Ka_temp[xmin:xmax+1, kk] + ka_line[xmin:xmax+1, jj]
-					#							  l_temp[xmin:xmax+1, kk] = l_temp[xmin:xmax+1, kk] + l_line[xmin:xmax+1, jj]
-					#							  bkground_temp[xmin:xmax+1, kk] = bkground_temp[xmin:xmax+1, kk] + bkground_line[xmin:xmax+1, jj]
-					#							  raw_temp[:, kk] = raw_temp[:, kk] + data_line[:, jj]
+					# for jj in range(n_rows):
+					# 	fitted_temp[xmin:xmax+1, kk] = fitted_temp[xmin:xmax+1, kk] + fitted_line[xmin:xmax+1, jj]
+					# 	Ka_temp[xmin:xmax+1, kk] = Ka_temp[xmin:xmax+1, kk] + ka_line[xmin:xmax+1, jj]
+					# 	l_temp[xmin:xmax+1, kk] = l_temp[xmin:xmax+1, kk] + l_line[xmin:xmax+1, jj]
+					# 	bkground_temp[xmin:xmax+1, kk] = bkground_temp[xmin:xmax+1, kk] + bkground_line[xmin:xmax+1, jj]
+					# 	raw_temp[:, kk] = raw_temp[:, kk] + data_line[:, jj]
 					#
 					#
-					#						  fitted_line, ka_line, l_line, bkground_line,	values_line, bkgnd_line, tfy_line, xmin, xmax = fit.fit_line(data_line,
-					#											  output_dir, n_rows, matrix, spectral_binning, elt_line, values_line, bkgnd_line, tfy_line,
-					#											  info_elements, fitp, fitp.add_pars, keywords, add_matrixfit_pars, xrf_bin, calib )
+					# fitted_line, ka_line, l_line, bkground_line,	values_line, bkgnd_line, tfy_line, xmin, xmax = fit.fit_line(data_line,
+					# output_dir, n_rows, matrix, spectral_binning, elt_line, values_line, bkgnd_line, tfy_line,
+					# info_elements, fitp, fitp.add_pars, keywords, add_matrixfit_pars, xrf_bin, calib )
 
 					print 'Started fitting'
 					sys.stdout.flush()
 
 					results_pool = []
-					#					  start = 29
-					#					  count = 4
-					#					  for i_fit in range(start,33):
+					# start = 29
+					# count = 4
+					# for i_fit in range(start,33):
 					start = 0
 					for i_fit in range(count):
 						data_line = data_lines[:, :, i_fit]
@@ -1222,13 +1222,13 @@ class analyze:
 
 					print 'after', thisdata.energy_fit[0, kk] 
 
-					#						  import matplotlib.pyplot as plt
-					#						  plt.plot(x,test)
-					#						  #plt.plot(x,y)
-					#						  #plt.semilogy(x,y+0.1)
-					#						  #plt.show()
-					#						  #plt.semilogy(x,fit+0.1)
-					#						  plt.show()
+					# import matplotlib.pyplot as plt
+					# plt.plot(x,test)
+					# #plt.plot(x,y)
+					# #plt.semilogy(x,y+0.1)
+					# #plt.show()
+					# #plt.semilogy(x,fit+0.1)
+					# plt.show()
 
 				else:
 					#count = 4
@@ -1486,11 +1486,11 @@ class analyze:
 		for j in range(5) :
 			thisdata.max_chan_spec[0:len(max_chan_spec[:, 0]), j] = max_chan_spec[:, j]
 
-		if xanes == 0 :
-			h5file =  os.path.join(self.main_dict['img_dat_dir'], header+xrf_bin_ext+'.h5'+suffix)
+		if xanes == 0:
+			h5file = os.path.join(self.main_dict['img_dat_dir'], header + xrf_bin_ext + '.h5' + suffix)
 			print 'now trying to write HDF5 file', h5file	  
 			energy_channels = spectra[0].calib['off'] + spectra[0].calib['lin'] * np.arange((n_channels), dtype=np.float)	 
-			h5.write_hdf5(thisdata, h5file, scan.mca_arr, energy_channels, extra_pv = extra_pv, extra_pv_order = scan.extra_pv_key_list, update = True)
+			h5.write_hdf5(thisdata, h5file, scan.mca_arr, energy_channels, extra_pv=extra_pv, extra_pv_order=scan.extra_pv_key_list, update=True)
 		'''
 		#Generate average images
 		if (total_number_detectors > 1):
@@ -1806,8 +1806,8 @@ class analyze:
 			if (png > 0) or (ps > 0):
 				if png > 0:
 					axes.text(0.97, -0.23, 'mapspy', color=foreground_color, transform=axes.transAxes)
-					if (png == 1) or (png == 2) :  
-						image_filename = filename+'.png'
+					if (png == 1) or (png == 2):
+						image_filename = filename + '.png'
 						print 'saving ', os.path.join(self.main_dict['output_dir'], image_filename)
 						fig.savefig(os.path.join(self.main_dict['output_dir'], image_filename), dpi=dpi, facecolor=background_color, edgecolor=None)
 

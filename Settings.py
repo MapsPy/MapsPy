@@ -10,8 +10,12 @@ SERVER_HOSTNAME             = 'hostname'
 SERVER_PORT                 = 'port'
 SERVER_SCHEDULER_HOSTNAME   = 'scheduler_hostname'
 SERVER_SCHEDULER_PORT       = 'scheduler_port'
-SERVER_KEYS = [SERVER_ROLE, SERVER_HOSTNAME, SERVER_PORT]
-
+SERVER_SMTP_ADDRESS			= 'smtp_address'
+SERVER_FROM_ADDRESS			= 'from_address'
+SERVER_MAIL_USERNAME		= 'mail_username'
+SERVER_MAIL_PASSWORD		= 'mail_password'
+SERVER_KEYS = [SERVER_ROLE, SERVER_HOSTNAME, SERVER_PORT, SERVER_SMTP_ADDRESS, SERVER_FROM_ADDRESS,
+				SERVER_MAIL_USERNAME, SERVER_MAIL_PASSWORD]
 
 '''PROCESS NODE Keys'''
 SECTION_PROCESS_NODE        = 'Process_Node'
@@ -30,7 +34,8 @@ MONITOR_DONE_PATH           = 'done_path'
 MONITOR_COMPUTER_NAME       = 'computer_name'
 MONITOR_DIR_ALIAS           = 'dir_alias'
 MONITOR_CHECK_INTERVAL      = 'check_interval'
-MONITOR_KEYS = [MONITOR_JOBS_PATH, MONITOR_PROCESSING_PATH, MONITOR_FINISHED_INFO_PATH, MONITOR_DONE_PATH, MONITOR_COMPUTER_NAME, MONITOR_DIR_ALIAS, MONITOR_CHECK_INTERVAL]
+MONITOR_KEYS = [MONITOR_JOBS_PATH, MONITOR_PROCESSING_PATH, MONITOR_FINISHED_INFO_PATH, MONITOR_DONE_PATH,
+				MONITOR_COMPUTER_NAME, MONITOR_DIR_ALIAS, MONITOR_CHECK_INTERVAL]
 
 SECTION_JOB_DIR_ROOTS = 'JobDirRoots'
 
@@ -39,38 +44,39 @@ SECTIONS = [SECTION_SERVER, SECTION_PROCESS_NODE, SECTION_MONITOR]
 
 
 '''CLASSES'''
+
+
 class SettingsIO:
-	def __init__(s):
-		s.config = ConfigParser.ConfigParser()
-		s.settingDicts = dict()
+	def __init__(self):
+		self.config = ConfigParser.ConfigParser()
+		self.settingDicts = dict()
 
-	def load(s, filename):
+	def load(self, filename):
 		print 'Settings loading file:', filename
-		s.config.read(filename)
-		for sec in s.config.sections():
-			s.settingDicts[sec] = s.__get_sect_dict__(sec)
+		self.config.read(filename)
+		for sec in self.config.sections():
+			self.settingDicts[sec] = self.__get_sect_dict__(sec)
 
-	def getSetting(s, section):
-		if section in s.settingDicts:
-			return s.settingDicts[section]
+	def getSetting(self, section):
+		if section in self.settingDicts:
+			return self.settingDicts[section]
 		else:
 			return dict()
 
-	def checkSectionKeys(s, section_name, keys):
+	def checkSectionKeys(self, section_name, keys):
 		for k in keys:
-			sect = s.getSetting(section_name)
+			sect = self.getSetting(section_name)
 			if not k in sect:
 				print 'Could not find Key:', k, 'in server settings'
 				return False
 		return True
 
-
-	def __get_sect_dict__(s, section):
+	def __get_sect_dict__(self, section):
 		dict1 = {}
-		options = s.config.options(section)
+		options = self.config.options(section)
 		for option in options:
 			try:
-				dict1[option] = s.config.get(section, option)
+				dict1[option] = self.config.get(section, option)
 				if dict1[option] == -1:
 					print("skip: %s" % option)
 			except:
@@ -78,9 +84,8 @@ class SettingsIO:
 				dict1[option] = None
 		return dict1
 
-#test
 if __name__ == '__main__':
-	#test
+	# test
 	s = SettingsIO()
 	s.load('settings.ini')
 	print 'all sections',s.settingDicts.keys()

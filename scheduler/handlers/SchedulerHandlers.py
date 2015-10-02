@@ -190,7 +190,6 @@ class SchedulerHandler(object):
 		data_dict = dict()
 		img_path = os.path.join(job_path, 'output_old/*.png')
 		txt_path = os.path.join(job_path, 'output_old/*.txt')
-		#print img_path
 		data_dict['images'] = glob.glob(img_path)
 		data_dict['txt'] = glob.glob(txt_path)
 		jenc = json.JSONEncoder()
@@ -221,18 +220,18 @@ class SchedulerHandler(object):
 	@cherrypy.expose
 	def get_spectrum_image(self, path):
 		encoded_string = ''
-		path = path.replace('..','')
+		path = path.replace('..', '')
 		if self.check_path(path) == True:
 			with open(path, "rb") as image_file:
 				encoded_string = base64.b64encode(image_file.read())
-			retstr = '<img alt="My Image" src="data:image/png;base64,'+ encoded_string + '" />'
+			retstr = '<img alt="My Image" src="data:image/png;base64,' + encoded_string + '" />'
 			return retstr
 		else:
 			return "Error: file not file "+path
 
 	@cherrypy.expose
 	def get_spectrum_txt(self, path):
-		path = path.replace('..','')
+		path = path.replace('..', '')
 		if self.check_path(path) == True:
 			retstr = '<!DOCTYPE html><html><head></head><body><pre>'
 			with open(path, "rt") as txt_file:
@@ -241,7 +240,7 @@ class SchedulerHandler(object):
 			retstr += '</pre></body></html>'
 			return retstr
 		else:
-			return "Error: file not file "+path
+			return "Error: file not file " + path
 
 	@cherrypy.expose
 	def get_all_unprocessed_jobs(self, *args, **kwargs):
@@ -287,7 +286,7 @@ class SchedulerJobsWebService(object):
 
 	@cherrypy.tools.accept(media='text/plain')
 	#@cherrypy.tools.json_out()
-	#return list of jobs in queue
+	# return list of jobs in queue
 	def GET(self, *args, **kwargs):
 		data_dict = dict()
 		data_dict['draw'] = 1
@@ -298,7 +297,7 @@ class SchedulerJobsWebService(object):
 		jenc = json.JSONEncoder()
 		return jenc.encode(data_dict)
 
-	#submit job to queue
+	# submit job to queue
 	def POST(self):
 		cl = cherrypy.request.headers['Content-Length']
 		rawbody = cherrypy.request.body.read(int(cl))
@@ -307,20 +306,22 @@ class SchedulerJobsWebService(object):
 			job['DataPath'] = job['DataPath'].replace('\\', '/')
 		job['Id'] = self.db.insert_job(job)
 		cherrypy.engine.publish("new_job", job)
-		return 'inserted job Id:'+str(job['Id'])
+		return 'inserted job Id:' + str(job['Id'])
 
-	#change job properties (priority, ect...)
+	# change job properties (priority, ect...)
 	def PUT(self, *args, **kwargs):
 		cl = cherrypy.request.headers['Content-Length']
 		rawbody = cherrypy.request.body.read(int(cl))
 		job = json.loads(rawbody)
 		self.db.update_job(job)
-		#cherrypy.engine.publish("new_job", job)
-		return 'updated job Id:'+str(job['Id'])
+		cherrypy.engine.publish("update_job", job)
+		return 'updated job Id:' + str(job['Id'])
 
-	#delete job from queue
+	# delete job from queue
 	def DELETE(self):
-		#cherrypy.session.pop('mystring', None)
+		#cl = cherrypy.request.headers['Content-Length']
+		#rawbody = cherrypy.request.body.read(int(cl))
+		#job = json.loads(rawbody)
 		pass
 
 
@@ -330,12 +331,13 @@ class SchedulerProcessNodeWebService(object):
 	class for adding, updating, or removing process nodes
 	'''
 	exposed = True
+
 	def __init__(self, db):
 		self.db = db
 
 	@cherrypy.tools.accept(media='text/plain')
 	#@cherrypy.tools.json_out()
-	#get list of computer nodes
+	# get list of computer nodes
 	def GET(self, *args, **kwargs):
 		data_dict = dict()
 		data_dict['draw'] = 1
@@ -348,7 +350,7 @@ class SchedulerProcessNodeWebService(object):
 		jenc = json.JSONEncoder()
 		return jenc.encode(data_dict)
 
-	#add process node
+	# add process node
 	def POST(self):
 		cl = cherrypy.request.headers['Content-Length']
 		rawbody = cherrypy.request.body.read(int(cl))
@@ -357,7 +359,7 @@ class SchedulerProcessNodeWebService(object):
 		cherrypy.engine.publish('new_process_node_update', proc_node)
 		return 'inserted process node'
 
-	#change process node status
+	# change process node status
 	def PUT(self):
 		cl = cherrypy.request.headers['Content-Length']
 		rawbody = cherrypy.request.body.read(int(cl))
@@ -367,9 +369,7 @@ class SchedulerProcessNodeWebService(object):
 		cherrypy.engine.publish('process_node_update', proc_node)
 		return 'updated process node'
 
-	#computer node went offline, remove from list
+	# computer node went offline, remove from list
 	def DELETE(self):
 		#cherrypy.session.pop('mystring', None)
 		pass
-
-

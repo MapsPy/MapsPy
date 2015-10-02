@@ -1153,15 +1153,15 @@ class calibration:
 		line = 'desc, name, Z, for_SRCurrent_norm, for_US_IC_norm, for_DS_IC_norm' + desc3 + ', measured_counts, error_bar'
 		if make_maps_conf.version >= 8:
 			line = line + ', measured_nb1832, measured_nb1833'
-		print>>file_ptr,  line.strip()
+		print>>file_ptr, line.strip()
 		for ii in range(make_maps_conf.n_chan):
 			line = 'calib_curve_' + desc2 + ',' + make_maps_conf.chan[ii].name + ', '
-			line = line+str(make_maps_conf.chan[ii].z)+', '
+			line = line + str(make_maps_conf.chan[ii].z) + ', '
 			for jj in range(5):
-				line = line+str(make_maps_conf.e_cal[ii, index, jj]) + ', '
+				line = line + str(make_maps_conf.e_cal[ii, index, jj]) + ', '
 			if make_maps_conf.version >= 8:
 				for jj in range(5, 7):
-					line = line+str(make_maps_conf.e_cal[ii, index, jj]) + ', '
+					line = line + str(make_maps_conf.e_cal[ii, index, jj]) + ', '
 			print>>file_ptr, line.strip()
 
 	# -----------------------------------------------------------------------------

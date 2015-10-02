@@ -36,20 +36,18 @@ import os
 import multiprocessing
 import numpy as np
 import time
-
 import maps_generate_img_dat
 import maps_definitions
 import maps_elements
-
-
-import maps_detector
 import maps_fit_parameters
 import maps_analyze
 import maps_calibration
 from file_io.file_util import open_file_with_retry
 
 # ------------------------------------------------------------------------------------------------
-def mp_make_maps(info_elements, main, maps_conf, header, mdafilename, this_detector, use_fit, total_number_detectors, 
+
+
+def mp_make_maps(info_elements, main, maps_conf, header, mdafilename, this_detector, use_fit, total_number_detectors,
 				quick_dirty, nnls, xrf_bin, max_no_processors_lines):
 
 	makemaps = maps_generate_img_dat.analyze(info_elements, main, maps_conf, use_fit=use_fit)
@@ -59,6 +57,8 @@ def mp_make_maps(info_elements, main, maps_conf, header, mdafilename, this_detec
 	return
 
 # ------------------------------------------------------------------------------------------------
+
+
 def main(main_dict, force_fit=0, no_fit=False, cb_update_func=None):
 	verbose = True
 
@@ -138,8 +138,7 @@ def main(main_dict, force_fit=0, no_fit=False, cb_update_func=None):
 	suffix = ''
 	for this_detector in range(main_dict['detector_to_start_with'], total_number_detectors):
 		# Look for override files in main.master_dir
-		if (total_number_detectors > 1):
-			overide_files_found = 0
+		if total_number_detectors > 1:
 			suffix = str(this_detector)
 			print 'suff=', suffix
 			maps_overridefile = os.path.join(main_dict['master_dir'], 'maps_fit_parameters_override.txt') + suffix
@@ -150,7 +149,7 @@ def main(main_dict, force_fit=0, no_fit=False, cb_update_func=None):
 				else:
 					print maps_overridefile, ' exists.'
 					f.close()
-			except :
+			except:
 				# if i cannot find an override file specific per detector, assuming
 				# there is a single overall file.
 				maps_overridefile = os.path.join(main_dict['master_dir'], 'maps_fit_parameters_override.txt')
@@ -161,7 +160,6 @@ def main(main_dict, force_fit=0, no_fit=False, cb_update_func=None):
 		# content with overlap removal
 		print 'now using matrix math for analysis; calculate intermediate solution for speed now'
 		kk = 0
-		#reuse_fitp = 0
 
 		temp_elementsuse = []
 		for item in maps_conf.chan: temp_elementsuse.append(item.use)
@@ -264,7 +262,7 @@ def main(main_dict, force_fit=0, no_fit=False, cb_update_func=None):
 
 		fitmatrix = fit.generate_fitmatrix(fitp, x, parinfo_value)
 
-		wo_use_this_par = (np.nonzero(fitp.keywords.use_this_par[0:(np.max(fitp.keywords.mele_pos)-np.min(fitp.keywords.kele_pos)+1)] == 1))[0]
+		wo_use_this_par = (np.nonzero(fitp.keywords.use_this_par[0:(np.max(fitp.keywords.mele_pos) - np.min(fitp.keywords.kele_pos) + 1)] == 1))[0]
 
 		no_use_pars = wo_use_this_par.size + 2
 		fitmatrix_reduced = np.zeros((x.size, no_use_pars))
@@ -274,25 +272,25 @@ def main(main_dict, force_fit=0, no_fit=False, cb_update_func=None):
 		mm = wo_use_this_par.size - 1
 		fitmatrix_reduced[:, mm] = fitmatrix[:, np.max(fitp.keywords.mele_pos) - np.min(fitp.keywords.kele_pos) + 1] # elastic scatter
 		mm = mm + 1
-		fitmatrix_reduced[:, mm] = fitmatrix[:, np.max(fitp.keywords.mele_pos) - np.min(fitp.keywords.kele_pos) + 2]	# inelastic scatter
+		fitmatrix_reduced[:, mm] = fitmatrix[:, np.max(fitp.keywords.mele_pos) - np.min(fitp.keywords.kele_pos) + 2] # inelastic scatter
 
 		if main_dict['nnls'] == 0:
 			print 'Calculating nnls. Start time: ', time.time()
 			# Compute the singular value decomposition of A:
-			#SVDC, fitmatrix_reduced, W, U, V, /double
+			# SVDC, fitmatrix_reduced, W, U, V, /double
 			U, w, V = np.linalg.svd(fitmatrix_reduced, full_matrices=False)
-			#Create a diagonal array WP of reciprocal singular values from the
-			#output vector W. To avoid overflow errors when the reciprocal values
-			#are calculated, only elements with absolute values greater than or
-			#equal to 1.0 to 10-5 are reciprocated.
+			# Create a diagonal array WP of reciprocal singular values from the
+			# output vector W. To avoid overflow errors when the reciprocal values
+			# are calculated, only elements with absolute values greater than or
+			# equal to 1.0 to 10-5 are reciprocated.
 			wp = np.zeros((no_use_pars,no_use_pars))
 			for kk_temp in range(no_use_pars):
 				if np.abs(w[kk_temp]) > 1.0e-5:
 					wp[kk_temp, kk_temp] = 1.0 / w[kk_temp]
-				#We can now express the solution to the linear system as a
-				#array-vector product. (See Section 2.6 of Numerical Recipes for
-				#a derivation of this formula.)
-				#solution = V ## WP ## TRANSPOSE(U) ## B
+				# We can now express the solution to the linear system as a
+				# array-vector product. (See Section 2.6 of Numerical Recipes for
+				# a derivation of this formula.)
+				# solution = V ## WP ## TRANSPOSE(U) ## B
 
 			sol_intermediate = np.dot(np.dot(V.T, wp), U.T)
 			print 'SVD finished. Time: ', time.time()
@@ -305,7 +303,7 @@ def main(main_dict, force_fit=0, no_fit=False, cb_update_func=None):
 		filepath = os.path.join(main_dict['output_dir'], maps_intermediate_solution_file) + suffix
 		outfile = open_file_with_retry(filepath, 'wb')
 
-		np.savez(outfile, sol_intermediate = sol_intermediate, fitmatrix_reduced = fitmatrix_reduced)
+		np.savez(outfile, sol_intermediate=sol_intermediate, fitmatrix_reduced=fitmatrix_reduced)
 		outfile.close()
 
 		# Read calibration
@@ -320,11 +318,11 @@ def main(main_dict, force_fit=0, no_fit=False, cb_update_func=None):
 											fitp=fitp,
 											info_elements=info_elements)
 
-		no_files =len(filenames)
+		no_files = len(filenames)
 
 		detector_number_arr = map(str, detector_number_arr)
 
-		filepath = os.path.join(main_dict['output_dir'],'mapsprocessinfo_'+'.txt')
+		filepath = os.path.join(main_dict['output_dir'], 'mapsprocessinfo_' + '.txt')
 		text_file = open_file_with_retry(filepath, 'w')
 		text_file.write(time.strftime("%a, %d %b %Y %H:%M:%S"))
 		text_file.close()
@@ -336,7 +334,7 @@ def main(main_dict, force_fit=0, no_fit=False, cb_update_func=None):
 			print 'use multiple processors for multiple files'
 			pool = multiprocessing.Pool(no_processors_to_use_files)
 			for pp in range(no_files):
-				header, scan_ext= os.path.splitext(filenames[pp])
+				header, scan_ext = os.path.splitext(filenames[pp])
 				mdafilename = os.path.join(main_dict['mda_dir'], filenames[pp])
 				print 'Multiple processor file version: doing filen #: ', mdafilename, ' this detector:', this_detector, ' pp:', pp
 
@@ -349,11 +347,11 @@ def main(main_dict, force_fit=0, no_fit=False, cb_update_func=None):
 
 		else:
 			#  a single processor machine,	just use the single processor
-			makemaps = maps_generate_img_dat.analyze(info_elements, main_dict, maps_conf, beamline = main_dict['beamline'], use_fit = use_fit)
+			makemaps = maps_generate_img_dat.analyze(info_elements, main_dict, maps_conf, beamline=main_dict['beamline'], use_fit=use_fit)
 			for pp in range(no_files):
-				header, scan_ext= os.path.splitext(filenames[pp])
+				header, scan_ext = os.path.splitext(filenames[pp])
 				mdafilename = os.path.join(main_dict['mda_dir'], header + scan_ext)
-				print 'Single processor file version: doing filen #: ',  mdafilename, ' this detector', this_detector
+				print 'Single processor file version: doing filen #: ', mdafilename, ' this detector', this_detector
 
 				# Routine with multiprocessing
 				#print 'this_detector, total_number_detectors', this_detector, total_number_detectors

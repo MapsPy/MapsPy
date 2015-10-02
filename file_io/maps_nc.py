@@ -76,11 +76,13 @@ class nc:
 		binning = 0
 
 		mda = maps_mda.mda()
-		scan = mda.read_scan(filename, threeD_only = threeD_only, invalid_file = invalid_file, extra_pvs = True)
+		scan = mda.read_scan(filename, threeD_only=threeD_only, invalid_file=invalid_file, extra_pvs=True)
+		if scan == None:
+			return None
 
 		invalid_file = invalid_file[0]
 
-		det_time = scan.detector_arr[:, :, 0]/25000000.
+		det_time = scan.detector_arr[:, :, 0] / 25000000.
 		det_des = '2xfm:mcs:mca1.VAL'
 		if det_des in scan.detector_description_arr:
 			#Does this have to be here? Not in IDL. 
@@ -172,7 +174,7 @@ class nc:
 
 		if invalid_file > 0:		
 			print 'not a valid mda flyscan file, error number: ', str(invalid_file), '	filename: ', filename
-			return
+			return None
 
 		n_ev = 0
 		n_rows = scan.y_pixels

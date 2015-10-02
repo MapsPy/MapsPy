@@ -52,25 +52,8 @@ from plugins.SQLiteDB import SQLiteDB
 from handlers.ProcessNodeHandlers import ProcessNodeHandler, ProcessNodeJobsWebService
 from maps_batch import maps_batch
 import math
+import Constants
 
-
-STR_COMPUTER_NAME = 'ComputerName'
-STR_NUM_THREADS = 'NumThreads'
-STR_HOSTNAME = 'Hostname'
-STR_PORT = 'Port'
-STR_STATUS = 'Status'
-STR_HEARTBEAT = 'Heartbeat'
-STR_PROC_CPU_PERC = 'ProcessCpuPercent'
-STR_PROC_MEM_PERC = 'ProcessMemPercent'
-STR_SYS_CPU_PERC = 'SystemCpuPercent'
-STR_SYS_MEM_PERC = 'SystemMemPercent'
-STR_SYS_SWAP_PERC = 'SystemSwapPercent'
-
-STR_JOB_LOG_DIR_NAME = 'job_logs'
-
-JOB_PROCESSING_ID = 1
-JOB_COMPLETED_ID = 2
-JOB_ERROR_ID = 10
 
 # Function used to create a new process for jobs
 def new_process_func(job_status, log_name, alias_path, key_a, key_b, key_c, key_d, key_e):
@@ -81,12 +64,13 @@ def new_process_func(job_status, log_name, alias_path, key_a, key_b, key_c, key_
 		maps_batch(wdir=alias_path, a=key_a, b=key_b, c=key_c, d=key_d, e=key_e)
 		sys.stdout = saveout
 		logfile.close()
-		job_status.value = JOB_COMPLETED_ID
+		job_status.value = Constants.JOB_STATUS_COMPLETED
 	except:
 		print datetime.now(), 'Error processing', alias_path
 		traceback.print_exc(file=sys.stdout)
 		sys.stdout = saveout
-		job_status.value = JOB_ERROR_ID
+		job_status.value = Constants.JOB_STATUS_GENERAL_ERROR
+
 
 class ProcessNode(object):
 
@@ -94,19 +78,19 @@ class ProcessNode(object):
 		self.settings = settings
 		serverSettings = settings.getSetting(Settings.SECTION_SERVER)
 		pnSettings = settings.getSetting(Settings.SECTION_PROCESS_NODE)
-		print serverSettings
-		print pnSettings
-		self.pn_info = {STR_COMPUTER_NAME: pnSettings[Settings.PROCESS_NODE_NAME],
-					STR_NUM_THREADS: pnSettings[Settings.PROCESS_NODE_THREADS],
-					STR_HOSTNAME: serverSettings[Settings.SERVER_HOSTNAME],
-					STR_PORT: serverSettings[Settings.SERVER_PORT],
-					STR_STATUS: 'Bootup',
-					STR_HEARTBEAT: str(datetime.now()),
-					STR_PROC_CPU_PERC: 0.0,
-					STR_PROC_MEM_PERC: 0.0,
-					STR_SYS_CPU_PERC: 0.0,
-					STR_SYS_MEM_PERC: 0.0,
-					STR_SYS_SWAP_PERC: 0.0
+		print datetime.now(), serverSettings
+		print datetime.now(), pnSettings
+		self.pn_info = {Constants.PROCESS_NODE_COMPUTERNAME: pnSettings[Settings.PROCESS_NODE_NAME],
+					Constants.PROCESS_NODE_NUM_THREADS: pnSettings[Settings.PROCESS_NODE_THREADS],
+					Constants.PROCESS_NODE_HOSTNAME: serverSettings[Settings.SERVER_HOSTNAME],
+					Constants.PROCESS_NODE_PORT: serverSettings[Settings.SERVER_PORT],
+					Constants.PROCESS_NODE_STATUS: Constants.PROCESS_NODE_STATUS_BOOT_UP,
+					Constants.PROCESS_NODE_HEARTBEAT: str(datetime.now()),
+					Constants.PROCESS_NODE_PROCESS_CPU_PERCENT: 0.0,
+					Constants.PROCESS_NODE_PROCESS_MEM_PERCENT: 0.0,
+					Constants.PROCESS_NODE_SYSTEM_CPU_PERCENT: 0.0,
+					Constants.PROCESS_NODE_SYSTEM_MEM_PERCENT: 0.0,
+					Constants.PROCESS_NODE_SYSTEM_SWAP_PERCENT: 0.0
 		}
 		cherrypy.config.update({
 			'server.socket_host': serverSettings[Settings.SERVER_HOSTNAME],
@@ -132,7 +116,7 @@ class ProcessNode(object):
 		}
 		self.new_job_event = threading.Event()
 		self.status_event = threading.Event()
-		print 'Setup signal handler'
+		print datetime.now(), 'Setup signal handler'
 		if os.name == "nt":
 			try:
 				import win32api
@@ -146,7 +130,7 @@ class ProcessNode(object):
 		self.scheduler_host = serverSettings[Settings.SERVER_SCHEDULER_HOSTNAME]
 		self.scheduler_port = serverSettings[Settings.SERVER_SCHEDULER_PORT]
 		self.path_alias_dict = self.parse_aliases(pnSettings[Settings.PROCESS_NODE_PATH_ALIAS])
-		print 'alias paths ',self.path_alias_dict
+		print datetime.now(), 'alias paths ',self.path_alias_dict
 		self.session = requests.Session()
 		self.scheduler_pn_url = 'http://' + self.scheduler_host + ':' + self.scheduler_port + '/process_node'
 		self.scheduler_job_url = 'http://' + self.scheduler_host + ':' + self.scheduler_port + '/job'
@@ -154,6 +138,7 @@ class ProcessNode(object):
 		self.db = DatabasePlugin(cherrypy.engine, SQLiteDB, self.db_name)
 		cherrypy.engine.subscribe("new_job", self.callback_new_job)
 		cherrypy.engine.subscribe("update_id", self.callback_update_id)
+		cherrypy.engine.subscribe("delete_job", self.callback_delete_job)
 		cherrypy.engine.subscribe("send_job_update", self.callback_send_job_update)
 		self.create_directories()
 		self.running = True
@@ -161,16 +146,16 @@ class ProcessNode(object):
 		self.this_process = psutil.Process(os.getpid())
 
 	def unix_handle_sigint(self, sig, frame):
-		print 'unix_handle_sigint', sig, frame
+		print datetime.now(), 'unix_handle_sigint', sig, frame
 		self.stop()
 
 	def win_handle_sigint(self, sig):
-		print 'win_handle_sigint', sig
+		print datetime.now(), 'win_handle_sigint', sig
 		self.stop()
 
 	def create_directories(self):
-		if not os.path.exists(STR_JOB_LOG_DIR_NAME):
-			os.makedirs(STR_JOB_LOG_DIR_NAME)
+		if not os.path.exists(Constants.STR_JOB_LOG_DIR_NAME):
+			os.makedirs(Constants.STR_JOB_LOG_DIR_NAME)
 
 	def callback_new_job(self, val):
 		self.new_job_event.set()
@@ -188,7 +173,10 @@ class ProcessNode(object):
 		log.error_log.addHandler(h)
 
 	def callback_update_id(self, new_id):
-		self.pn_info['Id'] = int(new_id)
+		self.pn_info[Constants.PROCESS_NODE_ID] = int(new_id)
+
+	def callback_delete_job(self, job):
+		pass
 
 	def run(self):
 		webapp = ProcessNodeHandler()
@@ -196,15 +184,15 @@ class ProcessNode(object):
 		self.db.create_tables()
 		webapp.job_queue = ProcessNodeJobsWebService(self.db)
 		app = cherrypy.tree.mount(webapp, '/', self.conf)
-		self._setup_logging_(app.log, "rot_error_file", "logs/" + self.pn_info[STR_COMPUTER_NAME] + "_error.log")
-		self._setup_logging_(app.log, "rot_access_file", "logs/" + self.pn_info[STR_COMPUTER_NAME] + "_access.log")
+		self._setup_logging_(app.log, "rot_error_file", "logs/" + self.pn_info[Constants.PROCESS_NODE_COMPUTERNAME] + "_error.log")
+		self._setup_logging_(app.log, "rot_access_file", "logs/" + self.pn_info[Constants.PROCESS_NODE_COMPUTERNAME] + "_access.log")
 		cherrypy.engine.start()
 		try:
-			print 'posting to scheduler', self.scheduler_pn_url
+			print datetime.now(), 'posting to scheduler', self.scheduler_pn_url
 			self.session.post(self.scheduler_pn_url, data=json.dumps(self.pn_info))
 		except:
-			print 'Error sending post'
-		self.pn_info[STR_STATUS] = 'Idle'
+			print datetime.now(), 'Error sending post'
+		self.pn_info[Constants.PROCESS_NODE_STATUS] = Constants.PROCESS_NODE_STATUS_IDLE
 		# start status thread
 		if self.status_thread is None:
 			self.status_thread = threading.Thread(target=self.status_thread_func)
@@ -221,38 +209,38 @@ class ProcessNode(object):
 				#	#self.process_next_job()
 				if cherrypy.engine.state != cherrypy.engine.states.STARTED and self.running:
 					# if cherrypy engine stopped but this thread is still alive, restart it.
-					print 'CherryPy Engine state = ', cherrypy.engine.state
-					print 'Calling cherrypy.engine.start()'
+					print datetime.now(), 'CherryPy Engine state = ', cherrypy.engine.state
+					print datetime.now(), 'Calling cherrypy.engine.start()'
 					cherrypy.engine.start()
 				if not self.status_thread.is_alive():
 					self.status_thread = threading.Thread(target=self.status_thread_func)
 					self.status_thread.start()
 		except:
-			print 'run error'
+			print datetime.now(), 'run error'
 			traceback.print_exc(file=sys.stdout)
 			self.stop()
 
 	def update_proc_info(self):
-		self.pn_info[STR_STATUS]
+		self.pn_info[Constants.PROCESS_NODE_STATUS]
 
 	# thread function for sending status during processing
 	def status_thread_func(self):
 		try:
-			print 'Started Status Thread'
+			print datetime.now(), 'Started Status Thread'
 			while self.running:
 				self.status_event.wait(self.status_update_interval)
 				if self.running:
-					self.pn_info[STR_PROC_CPU_PERC] = self.this_process.cpu_percent()
-					self.pn_info[STR_PROC_MEM_PERC] = math.floor(self.this_process.memory_percent() * 100) / 100
-					self.pn_info[STR_SYS_CPU_PERC] = psutil.cpu_percent()
-					self.pn_info[STR_SYS_MEM_PERC] = psutil.virtual_memory().percent
-					self.pn_info[STR_SYS_SWAP_PERC] = psutil.swap_memory().percent
+					self.pn_info[Constants.PROCESS_NODE_PROCESS_CPU_PERCENT] = self.this_process.cpu_percent()
+					self.pn_info[Constants.PROCESS_NODE_PROCESS_MEM_PERCENT] = math.floor(self.this_process.memory_percent() * 100) / 100
+					self.pn_info[Constants.PROCESS_NODE_SYSTEM_CPU_PERCENT] = psutil.cpu_percent()
+					self.pn_info[Constants.PROCESS_NODE_SYSTEM_MEM_PERCENT] = psutil.virtual_memory().percent
+					self.pn_info[Constants.PROCESS_NODE_SYSTEM_SWAP_PERCENT] = psutil.swap_memory().percent
 					self.send_status_update()
 		except:
-			print 'status_thread_func error'
+			print datetime.now(), 'status_thread_func error'
 			traceback.print_exc(file=sys.stdout)
 			#self.stop()
-		print 'Stopped Status Thread'
+		print datetime.now(), 'Stopped Status Thread'
 
 	def parse_aliases(self, alias_str):
 		all_aliases = alias_str.split(';')
@@ -274,39 +262,39 @@ class ProcessNode(object):
 	def process_next_job(self):
 		if self.running == False:
 			return
-		print 'checking for jobs to process'
+		print datetime.now(), 'checking for jobs to process'
 		job_list = self.db.get_all_unprocessed_and_processing_jobs()
 		saveout = sys.stdout
 		for job_dict in job_list:
 			try:
-				alias_path = self.check_for_alias(job_dict['DataPath'], self.path_alias_dict)
+				alias_path = self.check_for_alias(job_dict[Constants.JOB_DATA_PATH], self.path_alias_dict)
 				alias_path = alias_path.replace('\\', '/')
-				print 'processing job:', job_dict['DataPath'], 'alias_path: ', alias_path
-				self.pn_info[STR_STATUS] = 'Processing'
-				job_dict['Status'] = JOB_PROCESSING_ID
-				#job_dict['StartProcWork'] = time.time()
+				print datetime.now(), 'processing job:', job_dict[Constants.JOB_DATA_PATH], 'alias_path: ', alias_path
+				self.pn_info[Constants.PROCESS_NODE_STATUS] = Constants.PROCESS_NODE_STATUS_PROCESSING
+				job_dict[Constants.JOB_STATUS] = Constants.JOB_STATUS_PROCESSING
+				#job_dict[Constants.JOB_START_PROC_TIME] = datetime.now()
 				self.db.update_job(job_dict)
 				self.send_job_update(job_dict)
 				self.send_status_update()
 				maps_set_str = os.path.join(str(alias_path), 'maps_settings.txt')
 				f = open(maps_set_str, 'w')
 				f.write('	  This file will set some MAPS settings mostly to do with fitting' + '\n')
-				f.write('VERSION:' + str(job_dict['Version']).strip() + '\n')
-				f.write('DETECTOR_ELEMENTS:' + str(job_dict['DetectorElements']).strip() + '\n')
-				f.write('MAX_NUMBER_OF_FILES_TO_PROCESS:' + str(job_dict['MaxFilesToProc']).strip() + '\n')
-				f.write('MAX_NUMBER_OF_LINES_TO_PROCESS:' + str(job_dict['MaxLinesToProc']).strip() + '\n')
-				f.write('QUICK_DIRTY:' + str(job_dict['QuickAndDirty']).strip() + '\n')
-				f.write('XRF_BIN:' + str(job_dict['XRF_Bin']).strip() + '\n')
-				f.write('NNLS:' + str(job_dict['NNLS']).strip() + '\n')
-				f.write('XANES_SCAN:' + str(job_dict['XANES_Scan']).strip() + '\n')
-				f.write('DETECTOR_TO_START_WITH:' + str(job_dict['DetectorToStartWith']).strip() + '\n')
-				f.write('BEAMLINE:' + str(job_dict['BeamLine']).strip() + '\n')
-				f.write('DatasetFilesToProc:' + str(job_dict['DatasetFilesToProc']).strip() + '\n')
-				standard_filenames = job_dict['Standards'].split(';')
+				f.write('VERSION:' + str(job_dict[Constants.JOB_VERSION]).strip() + '\n')
+				f.write('DETECTOR_ELEMENTS:' + str(job_dict[Constants.JOB_DETECTOR_ELEMENTS]).strip() + '\n')
+				f.write('MAX_NUMBER_OF_FILES_TO_PROCESS:' + str(job_dict[Constants.JOB_MAX_FILES_TO_PROC]).strip() + '\n')
+				f.write('MAX_NUMBER_OF_LINES_TO_PROCESS:' + str(job_dict[Constants.JOB_MAX_LINES_TO_PROC]).strip() + '\n')
+				f.write('QUICK_DIRTY:' + str(job_dict[Constants.JOB_QUICK_AND_DIRTY]).strip() + '\n')
+				f.write('XRF_BIN:' + str(job_dict[Constants.JOB_XRF_BIN]).strip() + '\n')
+				f.write('NNLS:' + str(job_dict[Constants.JOB_NNLS]).strip() + '\n')
+				f.write('XANES_SCAN:' + str(job_dict[Constants.JOB_XANES_SCAN]).strip() + '\n')
+				f.write('DETECTOR_TO_START_WITH:' + str(job_dict[Constants.JOB_DETECTOR_TO_START_WITH]).strip() + '\n')
+				f.write('BEAMLINE:' + str(job_dict[Constants.JOB_BEAM_LINE]).strip() + '\n')
+				f.write('DatasetFilesToProc:' + str(job_dict[Constants.JOB_DATASET_FILES_TO_PROC]).strip() + '\n')
+				standard_filenames = job_dict[Constants.JOB_STANDARDS].split(';')
 				for item in standard_filenames:
 					f.write('STANDARD:' + item.strip() + '\n')
 				f.close()
-				proc_mask = int(job_dict['ProcMask'])
+				proc_mask = int(job_dict[Constants.JOB_PROC_MASK])
 				key_a = 0
 				key_b = 0
 				key_c = 0
@@ -325,50 +313,45 @@ class ProcessNode(object):
 					key_e = 1
 				if proc_mask & 32 == 32:
 					key_f = 1
-				#os.chdir(job_dict['DataPath'])
-				log_name = 'Job_' + str(job_dict['Id']) + '_' + datetime.strftime(datetime.now(), "%y_%m_%d_%H_%M_%S") + '.log'
-				job_dict['Log_Path'] = log_name
-				log_path = os.path.join(STR_JOB_LOG_DIR_NAME, log_name)
-				job_status = multiprocessing.Value('i', JOB_PROCESSING_ID)
+				#os.chdir(job_dict[Constants.JOB_DATA_PATH])
+				log_name = 'Job_' + str(job_dict[Constants.JOB_ID]) + '_' + datetime.strftime(datetime.now(), "%y_%m_%d_%H_%M_%S") + '.log'
+				job_dict[Constants.JOB_LOG_PATH] = log_name
+				log_path = os.path.join(Constants.STR_JOB_LOG_DIR_NAME, log_name)
+				job_status = multiprocessing.Value('i', Constants.JOB_STATUS_PROCESSING)
 				proc = multiprocessing.Process(target=new_process_func, args=(job_status, log_path, alias_path, key_a, key_b, key_c, key_d, key_e))
 				proc.start()
 				self.this_process = psutil.Process(proc.pid)
 				proc.join()
 				self.this_process = psutil.Process(os.getpid())
-				job_dict['Status'] = job_status.value
-				#logfile = open(log_path, 'wt')
-				#sys.stdout = logfile
-				#maps_batch(wdir=alias_path, a=key_a, b=key_b, c=key_c, d=key_d, e=key_e)
-				#sys.stdout = saveout
-				#logfile.close()
-				#job_dict['Status'] = JOB_COMPLETED_ID
+				#job_dict[Constants.JOB_FINISH_PROC_TIME] = datetime.now()
+				job_dict[Constants.JOB_STATUS] = job_status.value
 			except:
-				print 'Error processing', job_dict['DataPath']
+				print 'Error processing', job_dict[Constants.JOB_DATA_PATH]
 				traceback.print_exc(file=sys.stdout)
 				sys.stdout = saveout
-				job_dict['Status'] = JOB_ERROR_ID
+				job_dict[Constants.JOB_STATUS] = Constants.JOB_STATUS_GENERAL_ERROR
 			self.db.update_job(job_dict)
 			self.send_job_update(job_dict)
 			self.send_status_update()
-			print 'done processing job', job_dict['DataPath']
-		print 'Finished Processing, going to Idle'
-		self.pn_info[STR_STATUS] = 'Idle'
+			print datetime.now(), 'done processing job', job_dict[Constants.JOB_DATA_PATH]
+		print datetime.now(), 'Finished Processing, going to Idle'
+		self.pn_info[Constants.PROCESS_NODE_STATUS] = Constants.PROCESS_NODE_STATUS_IDLE
 		self.send_status_update()
 
 	def stop(self):
 		self.running = False
 		self.status_event.set()
 		if self.status_thread is not None:
-			print 'Waiting for status thread to join'
+			print datetime.now(), 'Waiting for status thread to join'
 			self.status_thread.join()
 		self.new_job_event.set()
 		try:
-			self.pn_info[STR_STATUS] = 'Offline'
-			self.pn_info[STR_PROC_CPU_PERC] = 0.0
-			self.pn_info[STR_PROC_MEM_PERC] = 0.0
-			self.pn_info[STR_SYS_CPU_PERC] = 0.0
-			self.pn_info[STR_SYS_MEM_PERC] = 0.0
-			self.pn_info[STR_SYS_SWAP_PERC] = 0.0
+			self.pn_info[Constants.PROCESS_NODE_STATUS] = Constants.PROCESS_NODE_STATUS_OFFLINE
+			self.pn_info[Constants.PROCESS_NODE_PROCESS_CPU_PERCENT] = 0.0
+			self.pn_info[Constants.PROCESS_NODE_PROCESS_MEM_PERCENT] = 0.0
+			self.pn_info[Constants.PROCESS_NODE_SYSTEM_CPU_PERCENT] = 0.0
+			self.pn_info[Constants.PROCESS_NODE_SYSTEM_MEM_PERCENT] = 0.0
+			self.pn_info[Constants.PROCESS_NODE_SYSTEM_SWAP_PERCENT] = 0.0
 			self.send_status_update()
 			self.session.delete(self.scheduler_pn_url, data=json.dumps(self.pn_info))
 		except:
@@ -378,7 +361,7 @@ class ProcessNode(object):
 
 	def send_status_update(self):
 		try:
-			self.pn_info[STR_HEARTBEAT] = str(datetime.now())
+			self.pn_info[Constants.PROCESS_NODE_HEARTBEAT] = str(datetime.now())
 			self.session.put(self.scheduler_pn_url, data=json.dumps(self.pn_info))
 		except:
 			print datetime.now(), 'Error sending status update'

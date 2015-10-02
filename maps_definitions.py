@@ -403,7 +403,7 @@ class maps_definitions:
 				if count == 100:
 					break
 
-				# -----------------------------------------------------------------------------
+	# -----------------------------------------------------------------------------
 
 	def define_spectra(self, max_spec_channels, max_spectra, max_ICs, mode='spec_tool'):
 
@@ -412,6 +412,7 @@ class maps_definitions:
 		return spectra
 
 	# -----------------------------------------------------------------------------
+
 	def push_spectrum(self, filename, spectra,
 					  append='',
 					  n_channels=0,
@@ -579,6 +580,3 @@ class maps_definitions:
 						spectra[j].used_chan = 0L
 
 		return
-		 
-				
-			

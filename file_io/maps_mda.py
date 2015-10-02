@@ -41,7 +41,7 @@ import os
 from multiprocessing import Array
 import numpy as np
 import ctypes
-#import scan_data
+import glob
 
 #----------------------------------------------------------------------
 class scanPositioner:
@@ -183,7 +183,7 @@ class mda:
 		
 		data_file = open_file_with_retry(str(filename), 'rb')
 		if data_file is None:
-			return -1
+			return None
 		
 		if verbose:
 			print 'File: ', filename
@@ -208,11 +208,11 @@ class mda:
 		scan_info.rank = rank
 		scan_info.dims = dimensions
 		
-		scan_info.spectrum = [-1]*rank
-		scan_info.no_positioners = [-1]*rank
-		scan_info.no_detectors = [-1]*rank
-		scan_info.no_triggers = [-1]*rank
-		scan_info.time = ['']*rank
+		scan_info.spectrum = [-1] * rank
+		scan_info.no_positioners = [-1] * rank
+		scan_info.no_detectors = [-1] * rank
+		scan_info.no_triggers = [-1] * rank
+		scan_info.time = [''] * rank
 
 		if verbose:
 			print 'Version: ', version
@@ -222,14 +222,13 @@ class mda:
 			print 'Scan is Regular:', isRegular
 			print 'Pointer to extra pvs:', extra_pv_ptr
 
-		remaining_ranks = np.arange(1, rank+1)
+		remaining_ranks = np.arange(1, rank + 1)
 		
 		i_pointer = 0l
 		ptr = np.array([])
 		
 		while remaining_ranks[0] != -1:
-			#pointer points to position of scan
-			#read the scan header
+			# pointer points to position of scan read the scan header
 			
 			buf = data_file.read(10000) # enough to read scan header
 			u = Unpacker(buf)
@@ -243,8 +242,7 @@ class mda:
 				print 'Scan npts:', scan_npts
 				print 'Scan cpt: ', scan_cpt	
 
-			#if the rank of this scan is *new* store the into and read on
-			# otherwise just skip to the next scan
+			# if the rank of this scan is *new* store the into and read on otherwise just skip to the next scan
 			rank_i = (remaining_ranks == scan_rank).nonzero()
 			rank_i = rank_i[0]
 						
@@ -252,8 +250,7 @@ class mda:
 				if verbose:
 					print 'NEW scan type found: ', scan_rank
 				
-				# read the ptr to the sub-scans of this scan, and 
-				#introduce it to the ptr array
+				# read the ptr to the sub-scans of this scan, and introduce it to the ptr array
 				if scan_rank > 1:
 					tmp_ptr = u.unpack_farray(scan_npts, u.unpack_int)
 
@@ -309,11 +306,11 @@ class mda:
 						print 'Not a MCA scan'
 					scan_spectrum = 0
 					
-				scan_info.no_positioners[rank-scan_rank] = scan_no_positioners
-				scan_info.no_detectors[rank-scan_rank] = scan_no_detectors
-				scan_info.no_triggers[rank-scan_rank] = scan_no_triggers
-				scan_info.time[rank-scan_rank] = scan_time
-				scan_info.spectrum[rank-scan_rank] = scan_spectrum
+				scan_info.no_positioners[rank - scan_rank] = scan_no_positioners
+				scan_info.no_detectors[rank - scan_rank] = scan_no_detectors
+				scan_info.no_triggers[rank - scan_rank] = scan_no_triggers
+				scan_info.time[rank - scan_rank] = scan_time
+				scan_info.spectrum[rank - scan_rank] = scan_spectrum
 					
 				if len(remaining_ranks) > 1:
 					indx = np.where(remaining_ranks != scan_rank)
@@ -323,10 +320,10 @@ class mda:
 						print 'All ranks located.'
 					break
 
-			#move the file pointer to the next position if it exists
-			if i_pointer < ptr.size-1:
+			# move the file pointer to the next position if it exists
+			if i_pointer < ptr.size - 1:
 				data_file.seek(ptr[i_pointer], 0)
-				i_pointer = i_pointer+1
+				i_pointer = i_pointer + 1
 			else:
 				break
 
@@ -457,8 +454,7 @@ class mda:
 		u = Unpacker(buf)
 		for j in range(scan.no_positioners):
 			if v:
-				print "read %d pts for pos. %d at buf loc %x" % (scan.npts,
-																   j, u.get_position())
+				print "read %d pts for pos. %d at buf loc %x" % (scan.npts, j, u.get_position())
 			scan.p[j].data = u.unpack_farray(scan.npts, u.unpack_double)	
 			if v:
 				print "scan.p[%d].data = %s" % (j, `scan.p[j].data`)
@@ -474,7 +470,7 @@ class mda:
 
 		return scan
 
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 	def read_mda(self, filename):
 
 		verbose = False
@@ -483,7 +479,7 @@ class mda:
 		''' Create a structure to contain the file info, piece by piece    
 			1 corresponds to innermost loop, 2 to the next outer loop, 3 typically to the
 			outermost loop '''
-		if scan_info.rank >= 4: 
+		if scan_info == None or scan_info.rank >= 4:
 			print 'This file has too deep dimensions, I cannot read it and will skip'
 			return -1
 
@@ -510,10 +506,10 @@ class mda:
 
 		for i in range(rank):
 			dim.append(scanData())
-			dim[i].dim = i+1
-			dim[i].rank = rank-i
+			dim[i].dim = i + 1
+			dim[i].rank = rank - i
 
-		#read the first 1D scan 
+		# read the first 1D scan
 		s0 = self.read_scan_data(file)
 		dim[0].npts = s0.npts
 		dim[0].curr_pt = s0.curr_pt
@@ -703,9 +699,7 @@ class mda:
 #		 print "	  readback_unit - engineering units associated with this positioner"
 #		 print "	  readback_name - name of EPICS PV (e.g., 'xxx:m1.VAL')"
 
-						  
-
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 	def read_scan(self, filename, threeD_only=1, invalid_file=[0], extra_pvs=False, save_ram=0):
 		
 		verbose = False
@@ -730,7 +724,7 @@ class mda:
 	
 		file = open_file_with_retry(str(filename), 'rb')
 		if file == None:
-			return -1
+			return None
 
 		buf = file.read(100)		# to read header for scan of up to 5 dimensions
 		u = Unpacker(buf)
@@ -766,18 +760,20 @@ class mda:
 			print 'scan_npts: ', scan_npts
 			print 'scan_cpt:	', scan_cpt
 			
-		if scan_rank > 2048 : return
+		if scan_rank > 2048:
+			return None
 		
 		if scan_cpt <= 0 :
 			print 'error: scan_cpt = ', scan_cpt
 			invalid_file[0] = 2
-			return
+			return None
 		
 		#outer_pointer_lower_scans = np.array((scan_header.npts) , dtype =np.int32) # points set in scan
 		#readu, lun, outer_pointer_lower_scans
 		outer_pointer_lower_scans = u.unpack_farray(scan_npts, u.unpack_int) # points set in scan
 	
-		if verbose: print 'outer_pointer_lower_scans = ', outer_pointer_lower_scans
+		if verbose:
+			print 'outer_pointer_lower_scans = ', outer_pointer_lower_scans
 		outer_pointer_lower_scans = np.array(outer_pointer_lower_scans)
 		outer_pointer_lower_scans = outer_pointer_lower_scans[np.nonzero(outer_pointer_lower_scans)]
 		
@@ -879,20 +875,19 @@ class mda:
 		buf = file.read(scan_no_positioners * scan_npts * 8)
 		u = Unpacker(buf)
 		for j in range(scan_no_positioners):
-			if verbose: print "read %d pts for pos. %d at buf loc %x" % (scan_npts,
-																   j, u.get_position())
+			if verbose: print "read %d pts for pos. %d at buf loc %x" % (scan_npts, j, u.get_position())
 			readback_array = u.unpack_farray(scan_npts, u.unpack_double)	
-			if verbose: print "readback_array = ",	readback_array
+			if verbose: print "readback_array = ", readback_array
 			
-			if j == 0 : 
+			if j == 0:
 				readback_array = np.array(readback_array)
 				y_coord_arr = readback_array.copy()
-			if y_coord_arr.size != y_pixels :
+			if y_coord_arr.size != y_pixels:
 				# remove those y positions that are incorrect for aborted scans
-				if y_pixels < 3 :
+				if y_pixels < 3:
 					invalid_file[0] = 2
 					print 'scanned y_pixels less than 3 in an aborted array'
-					return 
+					return None
 
 				y_coord_arr = y_coord_arr[0:y_pixels]
 				y_coord_arr[y_pixels-1] = y_coord_arr[y_pixels-2] + (y_coord_arr[y_pixels-2] - y_coord_arr[y_pixels-3])
@@ -915,9 +910,9 @@ class mda:
 		
 		for i_outer_loop in range(len(outer_pointer_lower_scans)):
 			verbose = 0
-			if outer_pointer_lower_scans[i_outer_loop] == 0 :
+			if outer_pointer_lower_scans[i_outer_loop] == 0:
 				print 'skipping rest of scan, because outer_pointer_lower_scans(i_outer_loop) EQ 0 '
-				print 'current y position: ', i_outer_loop,  ' of total ', len(outer_pointer_lower_scans)-1
+				print 'current y position: ', i_outer_loop, ' of total ', len(outer_pointer_lower_scans) - 1
 				continue
 			
 			file.seek(outer_pointer_lower_scans[i_outer_loop])
@@ -933,26 +928,27 @@ class mda:
 				print 'scan_npts: ', scan_npts
 				print 'scan_cpt:	', scan_cpt
 			
-			if scan_rank > 2048 : return
+			if scan_rank > 2048:
+				return None
 		
 			if scan_cpt <= 0 :
 				print 'error: scan_cpt = ', scan_cpt
 				invalid_file[0] = 2
-				return 
+				return None
 		
 			x_pixels = scan_npts
 			two_d_time_stamp = []
 			pointer_lower_scans = np.zeros((scan_npts), dtype=np.int)
-			if scan_rank > 1 :
+			if scan_rank > 1:
 				pointer_lower_scans = u.unpack_farray(scan_npts, u.unpack_int)
 
 			if verbose:
 				print 'pointer_lower_scans	  : ', pointer_lower_scans
 				print 'x pixels    : ', x_pixels
 
-			if scan_npts > 2999 :
+			if scan_npts > 2999:
 				invalid_file[0] = 3
-				return
+				return None
 
 			# read scan information  
 			namelength = u.unpack_int()
@@ -983,29 +979,29 @@ class mda:
 				positioner.number = u.unpack_int()
 				positioner.fieldName = posName(positioner.number)
 				if verbose: print "positioner ", j
-				length = u.unpack_int() # length of name string
+				length = u.unpack_int()  # length of name string
 				if length: positioner.name = u.unpack_string()
 				if verbose: print "positioner[%d].name = %s" % (j, `positioner.name`)
-				length = u.unpack_int() # length of desc string
+				length = u.unpack_int()  # length of desc string
 				if length: positioner.desc = u.unpack_string()
 				if verbose: print "positioner[%d].desc = %s" % (j, `positioner.desc`)
-				length = u.unpack_int() # length of step_mode string
+				length = u.unpack_int()  # length of step_mode string
 				if length: positioner.step_mode = u.unpack_string()
 				if verbose: print "positioner[%d].step_mode = %s" % (j, `positioner.step_mode`)
-				length = u.unpack_int() # length of unit string
+				length = u.unpack_int()  # length of unit string
 				if length: positioner.unit = u.unpack_string()
 				if verbose: print "positioner[%d].unit = %s" % (j, `positioner.unit`)
-				length = u.unpack_int() # length of readback_name string
+				length = u.unpack_int()  # length of readback_name string
 				if length: positioner.readback_name = u.unpack_string()
 				if verbose: print "positioner[%d].readback_name = %s" % (j, `positioner.readback_name`)
-				length = u.unpack_int() # length of readback_desc string
+				length = u.unpack_int()  # length of readback_desc string
 				if length: positioner.readback_desc = u.unpack_string()
 				if verbose: print "positioner[%d].readback_desc = %s" % (j, `positioner.readback_desc`)
-				length = u.unpack_int() # length of readback_unit string
+				length = u.unpack_int()  # length of readback_unit string
 				if length: positioner.readback_unit = u.unpack_string()
 				if verbose: print "positioner[%d].readback_unit = %s" % (j, `positioner.readback_unit`)
 				
-				if (i_outer_loop == 0) :
+				if i_outer_loop == 0:
 					two_d_info = (scan_name, scan_time, scan_no_positioners, scan_no_detectors, scan_no_triggers)
 					two_d_positioner = positioner
 	
@@ -1014,17 +1010,17 @@ class mda:
 				detector.number = u.unpack_int()
 				detector.fieldName = detName(detector.number)
 				if verbose: print "detector ", j
-				length = u.unpack_int() # length of name string
+				length = u.unpack_int()  # length of name string
 				if length: detector.name = u.unpack_string()
 				if verbose: print "detector[%d].name = %s" % (j, `detector.name`)
-				length = u.unpack_int() # length of desc string
+				length = u.unpack_int()  # length of desc string
 				if length: detector.desc = u.unpack_string()
 				if verbose: print "detector[%d].desc = %s" % (j, `detector.desc`)
-				length = u.unpack_int() # length of unit string
+				length = u.unpack_int()  # length of unit string
 				if length: detector.unit = u.unpack_string()
 				if verbose: print "detector[%d].unit = %s" % (j, `detector.unit`)
 				
-				if (i_outer_loop == 0) :
+				if i_outer_loop == 0:
 					detector_description_arr.append(detector.name)
 					
 			for j in range(scan_no_triggers):
@@ -1037,31 +1033,31 @@ class mda:
 				trigger.command = u.unpack_float()
 				if verbose: print "trigger[%d].command = %s" % (j, `trigger.command`)
 
-			### read data
-			# positioners
+			# read data: positioners
 			file.seek(file.tell() - (len(buf) - u.get_position()))
 			buf = file.read(scan_no_positioners * scan_npts * 8)
 			u = Unpacker(buf)
 			for j in range(scan_no_positioners):
-				if verbose: print "read %d pts for pos. %d at buf loc %x" % (scan_npts,
-																			 j, u.get_position())
+				if verbose:
+					print "read %d pts for pos. %d at buf loc %x" % (scan_npts, j, u.get_position())
 				readback_array = u.unpack_farray(scan_npts, u.unpack_double)	
-				if verbose: print "readback_array = ",	readback_array
+				if verbose:
+					print "readback_array = ", readback_array
 			
-				if x_coord_arr[0] == 0 :
+				if x_coord_arr[0] == 0:
 					readback_array = np.array(readback_array)
 					x_coord_arr = readback_array.copy()
 
-			if verbose: print 'x coord array : ', x_coord_arr
+			if verbose:
+				print 'x coord array : ', x_coord_arr
 
-#			 #This is slow so read directly 
-#			 # detectors
-#			 file.seek(file.tell() - (len(buf) - u.get_position()))
-#			 buf = file.read(scan_no_detectors * scan_npts * 4)
-#			 u = Unpacker(buf)
-#			 for j in range(scan_no_detectors):
-#				 detector_array = u.unpack_farray(scan_npts, u.unpack_float)
-#				 detector_arr[:, i_outer_loop, j] = detector_array[:]
+			# This is slow so read directly detectors
+			# file.seek(file.tell() - (len(buf) - u.get_position()))
+			# buf = file.read(scan_no_detectors * scan_npts * 4)
+			# u = Unpacker(buf)
+			# for j in range(scan_no_detectors):
+			# 		detector_array = u.unpack_farray(scan_npts, u.unpack_float)
+			# 		detector_arr[:, i_outer_loop, j] = detector_array[:]
 
 			import struct
 			# detectors
@@ -1069,7 +1065,7 @@ class mda:
 			detector_array = np.zeros((scan_npts), dtype=np.float32)
 			for j in range(scan_no_detectors):
 				buf = file.read(scan_npts * 4)
-				detector_array = struct.unpack('>'+str(scan_npts)+'f', buf)
+				detector_array = struct.unpack('>' + str(scan_npts) + 'f', buf)
 				detector_arr[:, i_outer_loop, j] = detector_array[:]
 
 			if verbose: print "detector_array", detector_array
@@ -1079,20 +1075,20 @@ class mda:
 			
 			temp_timestamp = []
 			
-			for i_innermost_loop in range(len(pointer_lower_scans)) :
-				if (i_innermost_loop > 0) and (rank > 2) :
+			for i_innermost_loop in range(len(pointer_lower_scans)):
+				if (i_innermost_loop > 0) and (rank > 2):
 					if (pointer_lower_scans[i_innermost_loop] == 0) or \
 						(pointer_lower_scans[i_innermost_loop] < outer_pointer_lower_scans[i_outer_loop] ):
 						print 'skipping rest of line, because either pointer_lower_scans(i_innermost_loop) EQ 0 or lt outer_pointer'
-						print 'current y position: ', i_outer_loop,  ' of total ', len(outer_pointer_lower_scans)-1
-						print 'current x position: ', i_innermost_loop,  ' of total ', len(pointer_lower_scans) -1
+						print 'current y position: ', i_outer_loop, ' of total ', len(outer_pointer_lower_scans) - 1
+						print 'current x position: ', i_innermost_loop, ' of total ', len(pointer_lower_scans) - 1
 						print 'pointer_lower_scans(i_innermost_loop): ', pointer_lower_scans[i_innermost_loop], \
 						' outer_pointer_lower_scans(i_outer_loop) : ', outer_pointer_lower_scans[i_outer_loop]
 						continue
 
 					file.seek(pointer_lower_scans[i_innermost_loop])
 
-				buf = file.read(5000) # enough to read scan header
+				buf = file.read(5000)  # enough to read scan header
 				u = Unpacker(buf)
 			
 				scan_rank = u.unpack_int()
@@ -1105,7 +1101,7 @@ class mda:
 					print 'scan_cpt:	', scan_cpt
 			
 				if scan_rank > 2048:
-					return
+					return None
 				if scan_cpt == 0:
 					print 'warning: scan_header.cpt EQ 0 '
 
@@ -1134,25 +1130,25 @@ class mda:
 					positioner.number = u.unpack_int()
 					positioner.fieldName = posName(positioner.number)
 					if verbose: print "positioner ", j
-					length = u.unpack_int() # length of name string
+					length = u.unpack_int()  # length of name string
 					if length: positioner.name = u.unpack_string()
 					if verbose: print "positioner[%d].name = %s" % (j, `positioner.name`)
-					length = u.unpack_int() # length of desc string
+					length = u.unpack_int()  # length of desc string
 					if length: positioner.desc = u.unpack_string()
 					if verbose: print "positioner[%d].desc = %s" % (j, `positioner.desc`)
-					length = u.unpack_int() # length of step_mode string
+					length = u.unpack_int()  # length of step_mode string
 					if length: positioner.step_mode = u.unpack_string()
 					if verbose: print "positioner[%d].step_mode = %s" % (j, `positioner.step_mode`)
-					length = u.unpack_int() # length of unit string
+					length = u.unpack_int()  # length of unit string
 					if length: positioner.unit = u.unpack_string()
 					if verbose: print "positioner[%d].unit = %s" % (j, `positioner.unit`)
-					length = u.unpack_int() # length of readback_name string
+					length = u.unpack_int()  # length of readback_name string
 					if length: positioner.readback_name = u.unpack_string()
 					if verbose: print "positioner[%d].readback_name = %s" % (j, `positioner.readback_name`)
-					length = u.unpack_int() # length of readback_desc string
+					length = u.unpack_int()  # length of readback_desc string
 					if length: positioner.readback_desc = u.unpack_string()
 					if verbose: print "positioner[%d].readback_desc = %s" % (j, `positioner.readback_desc`)
-					length = u.unpack_int() # length of readback_unit string
+					length = u.unpack_int()  # length of readback_unit string
 					if length: positioner.readback_unit = u.unpack_string()
 					if verbose: print "positioner[%d].readback_unit = %s" % (j, `positioner.readback_unit`)
 
@@ -1161,13 +1157,13 @@ class mda:
 					detector.number = u.unpack_int()
 					detector.fieldName = detName(detector.number)
 					if verbose: print "detector ", j
-					length = u.unpack_int() # length of name string
+					length = u.unpack_int()  # length of name string
 					if length: detector.name = u.unpack_string()
 					if verbose: print "detector[%d].name = %s" % (j, `detector.name`)
-					length = u.unpack_int() # length of desc string
+					length = u.unpack_int()  # length of desc string
 					if length: detector.desc = u.unpack_string()
 					if verbose: print "detector[%d].desc = %s" % (j, `detector.desc`)
-					length = u.unpack_int() # length of unit string
+					length = u.unpack_int()  # length of unit string
 					if length: detector.unit = u.unpack_string()
 					if verbose: print "detector[%d].unit = %s" % (j, `detector.unit`)
 
@@ -1175,27 +1171,25 @@ class mda:
 					trigger = scanTrigger()
 					trigger.number = u.unpack_int()
 					if verbose: print "trigger ", j
-					length = u.unpack_int() # length of name string
+					length = u.unpack_int()  # length of name string
 					if length:
 						trigger.name = u.unpack_string()
 					if verbose: print "trigger[%d].name = %s" % (j, `trigger.name`)
 					trigger.command = u.unpack_float()
 					if verbose: print "trigger[%d].command = %s" % (j, `trigger.command`)
 
-				### read data
-				# positioners
+				# read data: positioners
 				file.seek(file.tell() - (len(buf) - u.get_position()))
 				buf = file.read(scan_no_positioners * scan_npts * 8)
 				u = Unpacker(buf)
 				for j in range(scan_no_positioners):
-					if verbose: print "read %d pts for pos. %d at buf loc %x" % (scan_npts,
-																				 j, u.get_position())
+					if verbose: print "read %d pts for pos. %d at buf loc %x" % (scan_npts, j, u.get_position())
 					readback_array = u.unpack_farray(scan_cpt, u.unpack_double)    
-					if verbose: print "readback_array = ",	readback_array
+					if verbose: print "readback_array = ", readback_array
 			
 				if rank == 2:
 					continue
-				if (i_outer_loop == 0) and (i_innermost_loop == 0) :
+				if (i_outer_loop == 0) and (i_innermost_loop == 0):
 					if save_ram:
 						no_energy_channels = save_ram
 					else:
@@ -1207,17 +1201,16 @@ class mda:
 						scan_data.mca_arr = np.zeros((x_pixels, y_pixels, no_energy_channels), dtype=np.float32)
 						#scan_data.mca_arr = self.mp_array_to_np_array(x_pixels, y_pixels, no_energy_channels, None)
 						
-#				 #This is very slow to unpack so read directly 
-#				 # detectors
-#				 pos = file.tell() - (len(buf) - u.get_position())
-#				 file.seek(file.tell() - (len(buf) - u.get_position()))
-#				 buf = file.read(scan_no_detectors * scan_npts * 4)
-#				 u = Unpacker(buf)
-#				 detector_array = np.zeros((scan_npts), dtype=np.float32)
-#				 for j in range(scan_no_detectors):
-#					 detector_array = u.unpack_farray(scan_npts, u.unpack_float)
-#					 if scan_no_detectors > 1: mca_arr[i_innermost_loop, i_outer_loop, :, j] = detector_array[:]		  
-#					 else: mca_arr[i_innermost_loop, i_outer_loop, :] = detector_array[:] 
+				# This is very slow to unpack so read directly detectors
+				# pos = file.tell() - (len(buf) - u.get_position())
+				# file.seek(file.tell() - (len(buf) - u.get_position()))
+				# buf = file.read(scan_no_detectors * scan_npts * 4)
+				# u = Unpacker(buf)
+				# detector_array = np.zeros((scan_npts), dtype=np.float32)
+				# for j in range(scan_no_detectors):
+				# 	detector_array = u.unpack_farray(scan_npts, u.unpack_float)
+				# if scan_no_detectors > 1: mca_arr[i_innermost_loop, i_outer_loop, :, j] = detector_array[:]
+				# else: mca_arr[i_innermost_loop, i_outer_loop, :] = detector_array[:]
 
 				import struct
 				# detectors
@@ -1252,30 +1245,33 @@ class mda:
 				unit = ''
 				value = ''
 				count = 0
-				if type != 0:	# not DBR_STRING
-					count = u.unpack_int()	# 
+				if type != 0:  # not DBR_STRING
+					count = u.unpack_int()
 					n = u.unpack_int()		# length of unit string
-					if n: unit = u.unpack_string()
+					if n:
+						unit = u.unpack_string()
 
 				if type == 0: # DBR_STRING
 					n = u.unpack_int()		# length of value string
-					if n: value = u.unpack_string()
+					if n:
+						value = u.unpack_string()
 				elif type == 32: # DBR_CTRL_CHAR
 					#value = u.unpack_fstring(count)
 					v = u.unpack_farray(count, u.unpack_int)
 					value = ""
-					for i in range(len(v)):
+					for ii in range(len(v)):
 						# treat the byte array as a null-terminated string
-						if v[i] == 0: break
-						value = value + chr(v[i])
+						if v[ii] == 0:
+							break
+						value = value + chr(v[ii])
 
-				elif type == 29: # DBR_CTRL_SHORT
+				elif type == 29:  # DBR_CTRL_SHORT
 					value = u.unpack_farray(count, u.unpack_int)[0]
-				elif type == 33: # DBR_CTRL_LONG
+				elif type == 33:  # DBR_CTRL_LONG
 					value = u.unpack_farray(count, u.unpack_int)[0]
-				elif type == 30: # DBR_CTRL_FLOAT
+				elif type == 30:  # DBR_CTRL_FLOAT
 					value = u.unpack_farray(count, u.unpack_float)[0]
-				elif type == 34: # DBR_CTRL_DOUBLE
+				elif type == 34:  # DBR_CTRL_DOUBLE
 					value = u.unpack_farray(count, u.unpack_double)[0]
 					
 				extra_pv_dict[name] = (desc, unit, value)
@@ -1317,17 +1313,15 @@ class mda:
 		mdapath, mdafile = os.path.split(mdafilename)
 		header, extension = os.path.splitext(mdafile)
 		scan = None
-		invalid_file = 1
 		try:
 			scan = self.read_scan(mdafilename, extra_pvs=True)
-			invalid_file = 0
 		except:
-			invalid_file = 1
+			scan = None
 
-		if scan == None or invalid_file == 1:
+		if scan == None:
 			print 'not read a valid mda flyscan file, filename: ', mdafilename
-			#maps_change_xrf_resetvars, n_ev, n_rows, n_cols, n_energy, energy, energy_spec, scan_time_stamp, dataset_orig
-			return
+			# maps_change_xrf_resetvars, n_ev, n_rows, n_cols, n_energy, energy, energy_spec, scan_time_stamp, dataset_orig
+			return None
 
 		detector_description_arr = scan.detector_description_arr
 		detector_arr = scan.detector_arr
@@ -1339,90 +1333,111 @@ class mda:
 		if '2xfm:mcs:mca1.VAL' in detector_description_arr:
 			wo = detector_description_arr.index('2xfm:mcs:mca1.VAL')
 
-		time = detector_arr[:, :, 0]/25000000.
-		if wo != -1 : 
+		time = detector_arr[:, :, 0] / 25000000.
+		if wo != -1:
 			time = time 
 		else: 
 			time[:, :] = 1.
 
 		wo = -1
 		if '2xfm:mcs:mca2.VAL' in detector_description_arr:
-			wo =  detector_description_arr.index('2xfm:mcs:mca2.VAL')
-		if wo != -1 : detector_description_arr[wo] = '2xfm:scaler3_cts1.B'
-		if wo != -1 : detector_arr[:, :, wo] = detector_arr[:, :, wo]/time
+			wo = detector_description_arr.index('2xfm:mcs:mca2.VAL')
+		if wo != -1:
+			detector_description_arr[wo] = '2xfm:scaler3_cts1.B'
+		if wo != -1:
+			detector_arr[:, :, wo] = detector_arr[:, :, wo] / time
 		wo = -1
 		if '2xfm:mcs:mca3.VAL' in detector_description_arr:
-			wo =  detector_description_arr.index('2xfm:mcs:mca3.VAL')
-		if wo != -1 : detector_description_arr[wo] = '2xfm:scaler3_cts1.C'
-		if wo != -1 : detector_arr[:, :, wo] = detector_arr[:, :, wo]/time
+			wo = detector_description_arr.index('2xfm:mcs:mca3.VAL')
+		if wo != -1:
+			detector_description_arr[wo] = '2xfm:scaler3_cts1.C'
+		if wo != -1:
+			detector_arr[:, :, wo] = detector_arr[:, :, wo] / time
 		wo = -1
 		if '2xfm:mcs:mca4.VAL' in detector_description_arr:
-			wo =  detector_description_arr.index('2xfm:mcs:mca4.VAL')
-		if wo != -1 : detector_description_arr[wo] = '2xfm:scaler3_cts1.D'
+			wo = detector_description_arr.index('2xfm:mcs:mca4.VAL')
+		if wo != -1:
+			detector_description_arr[wo] = '2xfm:scaler3_cts1.D'
 		wo = -1
 		if '2xfm:mcs:mca5.VAL' in detector_description_arr:
-			wo =  detector_description_arr.index('2xfm:mcs:mca5.VAL')
-		if wo != -1 : detector_description_arr[wo] = '2xfm:scaler3_cts2.A'
+			wo = detector_description_arr.index('2xfm:mcs:mca5.VAL')
+		if wo != -1:
+			detector_description_arr[wo] = '2xfm:scaler3_cts2.A'
 		wo = -1
 		if '2xfm:mcs:mca6.VAL' in detector_description_arr:
-			wo =  detector_description_arr.index('2xfm:mcs:mca6.VAL')
-		if wo != -1 : detector_description_arr[wo] = '2xfm:scaler3_cts2.B'
+			wo = detector_description_arr.index('2xfm:mcs:mca6.VAL')
+		if wo != -1:
+			detector_description_arr[wo] = '2xfm:scaler3_cts2.B'
 		wo = -1
 		if '2xfm:mcs:mca7.VAL' in detector_description_arr:
-			wo =  detector_description_arr.index('2xfm:mcs:mca7.VAL')
-		if wo != -1 : detector_description_arr[wo] = '2xfm:scaler3_cts2.C'
+			wo = detector_description_arr.index('2xfm:mcs:mca7.VAL')
+		if wo != -1:
+			detector_description_arr[wo] = '2xfm:scaler3_cts2.C'
 		wo = -1
 		if '2xfm:mcs:mca8.VAL' in detector_description_arr:
-			wo =  detector_description_arr.index('2xfm:mcs:mca8.VAL')
-		if wo != -1 : detector_description_arr[wo] = '2xfm:scaler3_cts2.D'
+			wo = detector_description_arr.index('2xfm:mcs:mca8.VAL')
+		if wo != -1:
+			detector_description_arr[wo] = '2xfm:scaler3_cts2.D'
 		wo = -1
 		if '2xfm:mcs:mca9.VAL' in detector_description_arr:
-			wo =  detector_description_arr.index('2xfm:mcs:mca9.VAL')
-		if wo != -1 : detector_description_arr[wo] = '2xfm:scaler3_cts3.A'
+			wo = detector_description_arr.index('2xfm:mcs:mca9.VAL')
+		if wo != -1:
+			detector_description_arr[wo] = '2xfm:scaler3_cts3.A'
 		wo = -1
 		if '2xfm:mcs:mca10.VAL' in detector_description_arr:
-			wo =  detector_description_arr.index('2xfm:mcs:mca10.VAL')
-		if wo != -1 : detector_description_arr[wo] = '2xfm:scaler3_cts3.B'
+			wo = detector_description_arr.index('2xfm:mcs:mca10.VAL')
+		if wo != -1:
+			detector_description_arr[wo] = '2xfm:scaler3_cts3.B'
 		wo = -1
 		if '2xfm:mcs:mca11.VAL' in detector_description_arr:
-			wo =  detector_description_arr.index('2xfm:mcs:mca11.VAL')
-		if wo != -1 : detector_description_arr[wo] = '2xfm:scaler3_cts3.C'
+			wo = detector_description_arr.index('2xfm:mcs:mca11.VAL')
+		if wo != -1:
+			detector_description_arr[wo] = '2xfm:scaler3_cts3.C'
 		wo = -1
 		if '2xfm:mcs:mca12.VAL' in detector_description_arr:
-			wo =  detector_description_arr.index('2xfm:mcs:mca12.VAL')
-		if wo != -1 : detector_description_arr[wo] = '2xfm:scaler3_cts3.D'
+			wo = detector_description_arr.index('2xfm:mcs:mca12.VAL')
+		if wo != -1:
+			detector_description_arr[wo] = '2xfm:scaler3_cts3.D'
 		wo = -1
 		if '2xfm:mcs:mca13.VAL' in detector_description_arr:
-			wo =  detector_description_arr.index('2xfm:mcs:mca13.VAL')
-		if wo != -1 : detector_description_arr[wo] = '2xfm:scaler3_cts4.A'
+			wo = detector_description_arr.index('2xfm:mcs:mca13.VAL')
+		if wo != -1:
+			detector_description_arr[wo] = '2xfm:scaler3_cts4.A'
 		wo = -1
 		if '2xfm:mcs:mca14.VAL' in detector_description_arr:
-			wo =  detector_description_arr.index('2xfm:mcs:mca14.VAL')
-		if wo != -1 : detector_description_arr[wo] = '2xfm:scaler3_cts4.B'
+			wo = detector_description_arr.index('2xfm:mcs:mca14.VAL')
+		if wo != -1:
+			detector_description_arr[wo] = '2xfm:scaler3_cts4.B'
 		wo = -1
 		if '2xfm:mcs:mca15.VAL' in detector_description_arr:
-			wo =  detector_description_arr.index('2xfm:mcs:mca15.VAL')
-		if wo != -1 : detector_description_arr[wo] = '2xfm:scaler3_cts4.C'
+			wo = detector_description_arr.index('2xfm:mcs:mca15.VAL')
+		if wo != -1:
+			detector_description_arr[wo] = '2xfm:scaler3_cts4.C'
 		wo = -1
 		if '2xfm:mcs:mca16.VAL' in detector_description_arr:
-			wo =  detector_description_arr.index('2xfm:mcs:mca16.VAL')
-		if wo != -1 : detector_description_arr[wo] = '2xfm:scaler3_cts4.D'
+			wo = detector_description_arr.index('2xfm:mcs:mca16.VAL')
+		if wo != -1:
+			detector_description_arr[wo] = '2xfm:scaler3_cts4.D'
 		wo = -1
 		if '2xfm:mcs:mca17.VAL' in detector_description_arr:
-			wo =  detector_description_arr.index('2xfm:mcs:mca17.VAL')
-		if wo != -1 : detector_description_arr[wo] = '2xfm:scaler3_cts5.A'
+			wo = detector_description_arr.index('2xfm:mcs:mca17.VAL')
+		if wo != -1:
+			detector_description_arr[wo] = '2xfm:scaler3_cts5.A'
 		wo = -1
 		if '2xfm:mcs:mca18.VAL' in detector_description_arr:
-			wo =  detector_description_arr.index('2xfm:mcs:mca18.VAL')
-		if wo != -1 : detector_description_arr[wo] = '2xfm:scaler3_cts5.B'
+			wo = detector_description_arr.index('2xfm:mcs:mca18.VAL')
+		if wo != -1:
+			detector_description_arr[wo] = '2xfm:scaler3_cts5.B'
 		wo = -1
 		if '2xfm:mcs:mca19.VAL' in detector_description_arr:
-			wo =  detector_description_arr.index('2xfm:mcs:mca19.VAL')
-		if wo != -1 : detector_description_arr[wo] = '2xfm:scaler3_cts5.C'
+			wo = detector_description_arr.index('2xfm:mcs:mca19.VAL')
+		if wo != -1:
+			detector_description_arr[wo] = '2xfm:scaler3_cts5.C'
 		wo = -1
 		if '2xfm:mcs:mca20.VAL' in detector_description_arr:
-			wo =  detector_description_arr.index('2xfm:mcs:mca20.VAL')
-		if wo != -1 : detector_description_arr[wo] = '2xfm:scaler3_cts5.D'
+			wo = detector_description_arr.index('2xfm:mcs:mca20.VAL')
+		if wo != -1:
+			detector_description_arr[wo] = '2xfm:scaler3_cts5.D'
 
 		n_ev = 0
 		n_rows = y_pixels
@@ -1438,14 +1453,23 @@ class mda:
 		detector_arr = np.ones((x_pixels, y_pixels, len(detector_description_arr)))
 		detector_arr[:, :, 0:len(old_detector_description_arr)] = old_detector_arr[:, :, 0:len(old_detector_description_arr)]	 
 
-		h5filename = header+'_2xfm3__'+str(0)+'.h5'
-		h5_file = os.path.join(path, os.path.join('flyXRF.h5', h5filename))
+		file_path = os.path.join(path, os.path.join('flyXRF.h5', header))
+		hdf_files = glob.glob(file_path + '*.h5')
+		num_files_found = len(hdf_files)
+		if num_files_found != 1:
+			if num_files_found > 1:
+				print 'Error: too many files found, ', hdf_files
+				return None
+			else:
+				print 'Could not file hdf5 file associated with mda file: ', mdafilename
+				return None
 
-		f = call_function_with_retry(h5py.File, 5, 0.1, 1.1, (h5_file, 'r'))
-		if f == None:
-			print 'Error: Could not open file: ', h5_file
+		hdf_file = call_function_with_retry(h5py.File, 5, 0.1, 1.1, (hdf_files[0], 'r'))
+		if hdf_file == None:
+			print 'Error: Could not open file: ', hdf_files[0]
+			return None
 
-		gid = f['MAPS_RAW']
+		gid = hdf_file['MAPS_RAW']
 		if this_detector == 0: entryname = 'data_a'
 		if this_detector == 1: entryname = 'data_b'
 		if this_detector == 2: entryname = 'data_c'
@@ -1475,27 +1499,21 @@ class mda:
 		outputcounts = dataset_id[...]
 		outputcounts = outputcounts.transpose()
 
-		f.close()
+		hdf_file.close()
 
 		hdf_data_size = data.shape
 		this_x_pixels = np.amin([x_pixels, hdf_data_size[0]])
 		this_y_pixels = np.amin([y_pixels, hdf_data_size[1]])
 
-		# create mca_arr as int_arr to save memory. conversion int to flt will still take the combined memopry allocation FOR both,	but is probably a bit better than before
-		scan.mca_arr = np.zeros((x_pixels, y_pixels, 2000), dtype=np.int)## nxmx2000 array  ( 2000 energies)
+		# create mca_arr as int_arr to save memory. conversion int to flt will still take the combined memopry
+		#  allocation FOR both,	but is probably a bit better than before
+		scan.mca_arr = np.zeros((x_pixels, y_pixels, 2000), dtype=np.int)  # nxmx2000 array  ( 2000 energies)
 		#scan.mca_arr = self.mp_array_to_np_array(x_pixels, y_pixels, 2000, None)
 
 		for j_temp in range(20):
 			scan.mca_arr[0:this_x_pixels, 0:this_y_pixels, j_temp*100:(99+j_temp*100+1)] = data[0:this_x_pixels, 0:this_y_pixels, j_temp*100:(99+j_temp*100+1)]
 		del data
 		#scan.mca_arr = scan.mca_arr.astype(float)
-
-		''' old ver
-		detector_arr[0:this_x_pixels, 0:this_y_pixels, len(detector_description_arr)-4] = livetime[0:this_x_pixels, 0:this_y_pixels, 0]
-		detector_arr[0:this_x_pixels, 0:this_y_pixels, len(detector_description_arr)-3] = livetime[0:this_x_pixels, 0:this_y_pixels, 1]
-		detector_arr[0:this_x_pixels, 0:this_y_pixels, len(detector_description_arr)-2] = livetime[0:this_x_pixels, 0:this_y_pixels, 2]
-		detector_arr[0:this_x_pixels, 0:this_y_pixels, len(detector_description_arr)-1] = livetime[0:this_x_pixels, 0:this_y_pixels, 3]
-		'''
 
 		detector_arr[0:this_x_pixels, 0:this_y_pixels, len(detector_description_arr)-16] = livetime[0:this_x_pixels, 0:this_y_pixels, 0]
 		detector_arr[0:this_x_pixels, 0:this_y_pixels, len(detector_description_arr)-15] = livetime[0:this_x_pixels, 0:this_y_pixels, 1]

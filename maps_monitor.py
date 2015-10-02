@@ -166,13 +166,13 @@ def main(mySettings):
 						tag = slist[0]
 						value = ':'.join(slist[1:])
 						
-						if	 tag == 'DIRECTORY': directory = value.strip()
-						elif   tag == 'A'	:  keyword_a = int(value)
-						elif   tag == 'B'	:  keyword_b = int(value)
-						elif   tag == 'C'	:  keyword_c = int(value)
-						elif   tag == 'D'	:  keyword_d = int(value)
-						elif   tag == 'E'	:  keyword_e = int(value)
-						elif   tag == 'F'	:  keyword_f = int(value)						 
+						if tag == 'DIRECTORY': directory = value.strip()
+						elif tag == 'A'	:  keyword_a = int(value)
+						elif tag == 'B'	:  keyword_b = int(value)
+						elif tag == 'C'	:  keyword_c = int(value)
+						elif tag == 'D'	:  keyword_d = int(value)
+						elif tag == 'E'	:  keyword_e = int(value)
+						elif tag == 'F'	:  keyword_f = int(value)
 						elif tag == 'DETECTOR_ELEMENTS' : total_number_detectors  =  int(value)
 						elif tag == 'MAX_NUMBER_OF_FILES_TO_PROCESS' : max_no_processors_files = int(value)
 						elif tag == 'MAX_NUMBER_OF_LINES_TO_PROCESS' : max_no_processors_lines = int(value)
@@ -185,12 +185,12 @@ def main(mySettings):
 						elif tag == 'STANDARD'	:  standard_filenames.append(str(value).strip())
 								
 				f.close()
-						  
-			except: print 'Could not read file: ',	   filenames[0]
-		 
+
+			except: print 'Could not read file: ', filenames[0]
+
 			directory = check_for_alias(directory, alias_dict)
 			print 'move job into processing directory'
-			shutil.copy(filenames[0], os.path.join(processing_path,filenames[0]))	  
+			shutil.copy(filenames[0], os.path.join(processing_path, filenames[0]))
 			os.remove(filenames[0])   
 
 			if keyword_f == 1:

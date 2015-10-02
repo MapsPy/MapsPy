@@ -39,7 +39,6 @@ import numpy as np
 from time import gmtime, strftime
 import h5py
 import shutil
-
 import maps_generate_img_dat
 import maps_definitions
 import maps_elements
@@ -47,11 +46,12 @@ from file_io import maps_hdf5
 import maps_fit_parameters
 import maps_calibration
 import make_maps
-#import maps_tools
 from file_io.file_util import open_file_with_retry, call_function_with_retry
 
 
 # ------------------------------------------------------------------------------------------------
+
+
 def check_and_create_dir(dir_name):
 	if not os.path.exists(dir_name):
 		os.makedirs(dir_name)
@@ -61,6 +61,8 @@ def check_and_create_dir(dir_name):
 	return True
 
 # ------------------------------------------------------------------------------------------------
+
+
 def check_output_dirs(main_dict):
 
 	if check_and_create_dir(main_dict['output_dir']) == False:
@@ -90,6 +92,8 @@ def check_output_dirs(main_dict):
 	return True
 
 # ------------------------------------------------------------------------------------------------
+
+
 def select_beamline(main_dict, make_maps_conf, this_beamline):
 	
 	make_maps_conf.use_det[:] = 0
@@ -102,54 +106,53 @@ def select_beamline(main_dict, make_maps_conf, this_beamline):
 		make_maps_conf.use_det[0] = 1
 		make_maps_conf.fit_t_be = 12000. #[8  microns]
 
-		make_maps_conf.dmaps_names = ['SRcurrent', 'us_ic', 'ds_ic', 'abs_ic', \
-									  'abs_cfg', 'H_dpc_cfg', 'V_dpc_cfg', 'dia1_dpc_cfg', 'dia2_dpc_cfg', \
-									  'H_dpc_norm', 'V_dpc_norm', 'phase', 'ELT1', 'ERT1', 'ICR1', 'OCR1', \
-									  'deadT', 'x_coord', 'y_coord', \
-									  'dummy', 'dummy', 'dummy', 'dummy']
+		make_maps_conf.dmaps_names = ['SRcurrent', 'us_ic', 'ds_ic', 'abs_ic',
+										'abs_cfg', 'H_dpc_cfg', 'V_dpc_cfg', 'dia1_dpc_cfg', 'dia2_dpc_cfg',
+										'H_dpc_norm', 'V_dpc_norm', 'phase', 'ELT1', 'ERT1', 'ICR1', 'OCR1',
+										'deadT', 'x_coord', 'y_coord',
+										'dummy', 'dummy', 'dummy', 'dummy']
 	
 	if (main_dict['beamline'] =='2-ID-D') or (main_dict['beamline'] == '2-ID-B') or (main_dict['beamline'] == '2-BM'):
 		make_maps_conf.use_det[0] = 1
 		make_maps_conf.fit_t_be = 8000. #[8  microns]
 
-		make_maps_conf.dmaps_names = ['SRcurrent', 'us_ic', 'ds_ic', 'abs_ic', \
-										'abs_cfg', 'H_dpc_cfg', 'V_dpc_cfg', 'dia1_dpc_cfg', 'dia2_dpc_cfg', \
-										'H_dpc_norm', 'V_dpc_norm', 'phase', 'ELT1', 'ERT1', 'ICR1', 'OCR1', \
-										'deadT', 'x_coord', 'y_coord', \
+		make_maps_conf.dmaps_names = ['SRcurrent', 'us_ic', 'ds_ic', 'abs_ic',
+										'abs_cfg', 'H_dpc_cfg', 'V_dpc_cfg', 'dia1_dpc_cfg', 'dia2_dpc_cfg',
+										'H_dpc_norm', 'V_dpc_norm', 'phase', 'ELT1', 'ERT1', 'ICR1', 'OCR1',
+										'deadT', 'x_coord', 'y_coord',
 										'dummy', 'dummy', 'dummy', 'dummy']
 
 		print 'make_maps_conf.dmaps_names', make_maps_conf.dmaps_names
-
 
 	if main_dict['beamline'] == 'Bio-CAT':
 		print 'now it is Bio-CAT'
 		make_maps_conf.use_det[0] = 1
 		make_maps_conf.fit_t_be = 24000. #[8  microns]
 
-		make_maps_conf.dmaps_names = ['SRcurrent', 'us_ic', 'ds_ic', 'abs_ic', 'ELT1', 'ERT1', \
-									  'x_coord', 'y_coord', 'dummy', 'dummy', 'dummy', \
-									  'dummy', 'dummy', 'dummy', 'dummy', 'dummy', 'dummy', \
-									  'dummy', 'dummy', 'dummy', 'dummy', 'dummy', 'dummy']
+		make_maps_conf.dmaps_names = ['SRcurrent', 'us_ic', 'ds_ic', 'abs_ic', 'ELT1', 'ERT1',
+										'x_coord', 'y_coord', 'dummy', 'dummy', 'dummy',
+										'dummy', 'dummy', 'dummy', 'dummy', 'dummy', 'dummy',
+										'dummy', 'dummy', 'dummy', 'dummy', 'dummy', 'dummy']
 
 	if main_dict['beamline'] == 'GSE-CARS':
 		make_maps_conf.use_det[0] = 1
 		make_maps_conf.fit_t_be = 24000. #[8  microns]
 
-		make_maps_conf.dmaps_names = ['SRcurrent', 'us_ic', 'ds_ic', 'abs_ic', \
-									   'abs_cfg', 'H_dpc_cfg', 'V_dpc_cfg', 'dia1_dpc_cfg', 'dia2_dpc_cfg', \
-									   'H_dpc_norm', 'V_dpc_norm', 'phase', 'ELT1', 'ERT1', 'ICR1', 'OCR1', \
-									   'deadT', 'x_coord', 'y_coord', \
-									   'dummy', 'dummy', 'dummy', 'dummy']
+		make_maps_conf.dmaps_names = ['SRcurrent', 'us_ic', 'ds_ic', 'abs_ic',
+										'abs_cfg', 'H_dpc_cfg', 'V_dpc_cfg', 'dia1_dpc_cfg', 'dia2_dpc_cfg',
+										'H_dpc_norm', 'V_dpc_norm', 'phase', 'ELT1', 'ERT1', 'ICR1', 'OCR1',
+										'deadT', 'x_coord', 'y_coord',
+										'dummy', 'dummy', 'dummy', 'dummy']
 
 	if main_dict['beamline'] == 'Bionanoprobe':
 		make_maps_conf.use_det[0] = 1
 		make_maps_conf.fit_t_be = 24000. 
 
-		make_maps_conf.dmaps_names = ['SRcurrent', 'us_ic', 'ds_ic', 'abs', \
-									   'H_dpc_cfg', 'V_dpc_cfg', 'dia1_dpc_cfg', 'dia2_dpc_cfg', \
-									   'H_dpc_norm', 'V_dpc_norm', 'phase', 'ELT1', 'ERT1', 'dummy', 'dummy', \
-									   'dummy', 'dummy', 'dummy',  'dummy', \
-									   'dummy', 'dummy', 'dummy', 'dummy']
+		make_maps_conf.dmaps_names = ['SRcurrent', 'us_ic', 'ds_ic', 'abs',
+										'H_dpc_cfg', 'V_dpc_cfg', 'dia1_dpc_cfg', 'dia2_dpc_cfg',
+										'H_dpc_norm', 'V_dpc_norm', 'phase', 'ELT1', 'ERT1', 'dummy', 'dummy',
+										'dummy', 'dummy', 'dummy',  'dummy',
+										'dummy', 'dummy', 'dummy', 'dummy']
 
 	print main_dict['beamline']
 
@@ -157,11 +160,11 @@ def select_beamline(main_dict, make_maps_conf, this_beamline):
 		make_maps_conf.use_det[0] = 1
 		make_maps_conf.fit_t_be = 24000. 
 
-		make_maps_conf.dmaps_names = ['dummy', 'dummy', 'dummy', 'dummy', \
-									   'dummy', 'dummy', 'dummy', 'dummy', \
-									   'dummy', 'dummy', 'dummy', 'dummy', 'dummy', 'dummy', 'dummy', \
-									   'dummy', 'dummy', 'dummy',  'dummy', \
-									   'dummy', 'dummy', 'dummy', 'dummy']
+		make_maps_conf.dmaps_names = ['dummy', 'dummy', 'dummy', 'dummy',
+										'dummy', 'dummy', 'dummy', 'dummy',
+										'dummy', 'dummy', 'dummy', 'dummy', 'dummy', 'dummy', 'dummy',
+										'dummy', 'dummy', 'dummy',  'dummy',
+										'dummy', 'dummy', 'dummy', 'dummy']
 
 	for i in range(len(make_maps_conf.dmaps_names)):
 		make_maps_conf.dmaps[i].name == make_maps_conf.dmaps_names[i]
@@ -170,10 +173,10 @@ def select_beamline(main_dict, make_maps_conf, this_beamline):
 
 		#print make_maps_conf.dmaps[i].name, make_maps_conf.dmaps[i].use
 
-	return
-
 # ------------------------------------------------------------------------------------------------
-def load_spectrum(filename, spectra, append = 1):
+
+
+def load_spectrum(filename, spectra, append=1):
 
 	us_amp = np.zeros((3))
 	ds_amp = np.zeros((3))
@@ -183,26 +186,27 @@ def load_spectrum(filename, spectra, append = 1):
 		print 'load_spectrum(): Could not open file:', filename
 		return
 
-	line = f.readline() # 1. line is version
-	#print line
-	line = f.readline() # 2. is # elements
+	line = f.readline()  # 1. line is version
+	# print line
+	line = f.readline()  # 2. is # elements
 	slist = line.split(':')
-	#tag = slist[0]
+	# tag = slist[0]
 	value = ''.join(slist[1:])
 	n_detector_elements  = int(value)  
-	if n_detector_elements < 1 : n_detector_elements = 1
-	#print 'n_detector_elements', n_detector_elements
+	if n_detector_elements < 1:
+		n_detector_elements = 1
+	# print 'n_detector_elements', n_detector_elements
 	line = f.readline()
 	line = f.readline()
 	slist = line.split(':')
-	#tag = slist[0]
+	# tag = slist[0]
 	value = ''.join(slist[1:])
 	n_channels = int(value)
-	#print 'n_channels', n_channels
+	# print 'n_channels', n_channels
 	f.seek(0, 0)
 
 	amp = np.zeros((8, 3))		 # 8 amplifiers, each with a numerical value(0) and a unit(1), resulting in  a factor (3)
-	amp[:, 0] = 1. # put in a numerical value default of 1.
+	amp[:, 0] = 1.  # put in a numerical value default of 1.
 
 	real_time = []
 	live_time = []
@@ -413,7 +417,7 @@ def load_spectrum(filename, spectra, append = 1):
 
 	for l in range(n_detector_elements):
 		i = int(l)
-		j = int(i+wo+1)
+		j = int(i + wo + 1)
 		if np.sum(data[:, i]) > 0.:
 			shortname = filename.split('/')
 			shortname = shortname[-1]
@@ -476,6 +480,8 @@ def load_spectrum(filename, spectra, append = 1):
 	return
 
 # ------------------------------------------------------------------------------------------------
+
+
 def save_spectrum(main_dict, filename, sfilename):
 	# Get info from .h5 file
 	no_specs = 1

@@ -37,14 +37,18 @@ import requests
 from handlers.SchedulerHandlers import SchedulerHandler, SchedulerJobsWebService, SchedulerProcessNodeWebService
 from plugins.DatabasePlugin import DatabasePlugin
 from plugins.SQLiteDB import SQLiteDB
+from tools import Mailman
 import json
 import cherrypy
 import traceback
 import logging
 import logging.handlers
 import threading
+import datetime
+import Constants
 
 db = DatabasePlugin(cherrypy.engine, SQLiteDB)
+
 
 class Scheduler(object):
 	def __init__(self, settings):
@@ -57,7 +61,12 @@ class Scheduler(object):
 			'log.access_file': "logs/scheduler_access.log",
 			'log.error_file': "logs/scheduler_error.log"
 		})
+		self.mailman = Mailman.mainman(self.settings[Settings.SERVER_SMTP_ADDRESS],
+								self.settings[Settings.SERVER_FROM_ADDRESS],
+								self.settings[Settings.SERVER_MAIL_USERNAME],
+								self.settings[Settings.SERVER_MAIL_PASSWORD])
 		cherrypy.engine.subscribe("new_job", self.callback_new_job)
+		cherrypy.engine.subscribe("update_job", self.callback_update_job)
 		cherrypy.engine.subscribe("process_node_update", self.callback_process_node_update)
 		if hasattr(cherrypy.engine, 'signal_handler'):
 			cherrypy.engine.signal_handler.subscribe()
@@ -83,70 +92,82 @@ class Scheduler(object):
 		}
 
 	def callback_new_job(self, job):
-		print 'callback got new job', job
+		print datetime.now(), 'callback got new job', job
 		try:
 			self.job_lock.acquire(True)
 			p_node = None
-			if job['Process_Node_Id'] > -1:
-				p_node = db.get_process_node_by_id(int(job['Process_Node_Id']))
+			if job[Constants.JOB_PROCESS_NODE_ID] > -1:
+				p_node = db.get_process_node_by_id(int(job[Constants.JOB_PROCESS_NODE_ID]))
 			else:
 				node_list = db.get_all_process_nodes()
-				print 'searching for idle node'
+				print datetime.now(), 'searching for idle node'
 				for node in node_list:
-					if node['Status'] == 'Idle':
+					if node[Constants.PROCESS_NODE_STATUS] == Constants.PROCESS_NODE_STATUS_IDLE:
 						p_node = node
 						break
 			if p_node != None:
-				job['Process_Node_Id'] = p_node['Id']
-				url = 'http://' + str(p_node['Hostname']) + ':' + str(p_node['Port']) + '/job_queue'
-				print 'sending job to ', p_node['ComputerName'], 'url', url
+				job[Constants.JOB_PROCESS_NODE_ID] = p_node[Constants.PROCESS_NODE_ID]
+				url = 'http://' + str(p_node[Constants.PROCESS_NODE_HOSTNAME]) + ':' + str(p_node[Constants.PROCESS_NODE_PORT]) + '/job_queue'
+				print datetime.now(), 'sending job to ', p_node[Constants.PROCESS_NODE_COMPUTERNAME], 'url', url
 				s = requests.Session()
 				r = s.post(url, data=json.dumps(job))
-				print 'result', r.status_code, ':', r.text
+				print datetime.now(), 'result', r.status_code, ':', r.text
 			self.job_lock.release()
 		except:
 			self.job_lock.release()
 			exc_str = traceback.format_exc()
 			return exc_str
 
+	def callback_update_job(self, job):
+		pass
+		#if Constants.JOB_STATUS in job and Constants.JOB_EMAILS in job:
+		#	#if job[Constants.JOB_STATUS] > Constants.JOB_STATUS_PROCESSING and len(job[Constants.JOB_EMAILS]) > 0:
+		#		print datetime.now(), 'sending completed emails'
+		#		mesg = '...'
+		#		try:
+		#			self.mailman.send(job[Constants.JOB_EMAILS], Constants.EMAIL_SUBJECT, mesg)
+		#		except:
+		#			exc_str = traceback.format_exc()
+		#			print datetime.now(), exc_str
+
 	def callback_process_node_update(self, node):
-		print 'callback', node['ComputerName']
+		print datetime.now(), 'callback', node[Constants.PROCESS_NODE_COMPUTERNAME]
 		try:
 			self.job_lock.acquire(True)
-			if not 'Id' in node:
-				print 'getting id for node', node
-				new_node = db.get_process_node_by_name(node['ComputerName'])
-				node['Id'] = new_node['Id']
-				print 'updated node', node
+			if not Constants.PROCESS_NODE_ID in node:
+				print datetime.now(), 'getting id for node', node
+				new_node = db.get_process_node_by_name(node[Constants.PROCESS_NODE_COMPUTERNAME])
+				node[Constants.PROCESS_NODE_ID] = new_node[Constants.PROCESS_NODE_ID]
+				print datetime.now(), 'updated node', node
 				s = requests.Session()
-				url = 'http://' + str(node['Hostname']) + ':' + str(node['Port']) + '/update_id'
-				r = s.post(url, data={'Id': node['Id']})
-				print 'update result', r.status_code, ':', r.text
-			if node['Status'] == 'Idle':
-				job_list = db.get_all_unprocessed_jobs_for_pn_id(int(node['Id']))
+				url = 'http://' + str(node[Constants.PROCESS_NODE_HOSTNAME]) + ':' + str(node[Constants.PROCESS_NODE_PORT]) + '/update_id'
+				r = s.post(url, data={Constants.PROCESS_NODE_ID: node[Constants.PROCESS_NODE_ID]})
+				print datetime.now(), 'update result', r.status_code, ':', r.text
+			if node[Constants.PROCESS_NODE_STATUS] == Constants.PROCESS_NODE_STATUS_IDLE:
+				job_list = db.get_all_unprocessed_jobs_for_pn_id(int(node[Constants.PROCESS_NODE_ID]))
 				if len(job_list) < 1:
 					job_list = db.get_all_unprocessed_jobs()
 				for job in job_list:
-					print 'checking job', job
-					if job['Process_Node_Id'] < 0 or job['Process_Node_Id'] == node['Id']:
-						job['Process_Node_Id'] = node['Id']
-						url = 'http://' + str(node['Hostname']) + ':' + str(node['Port']) + '/job_queue'
-						print '_sending job to ', node['ComputerName'], 'url', url
+					print datetime.now(), 'checking job', job
+					if job[Constants.JOB_PROCESS_NODE_ID] < 0 or job[Constants.JOB_PROCESS_NODE_ID] == node[Constants.PROCESS_NODE_ID]:
+						job[Constants.JOB_PROCESS_NODE_ID] = node[Constants.PROCESS_NODE_ID]
+						url = 'http://' + str(node[Constants.PROCESS_NODE_HOSTNAME]) + ':' + str(node[Constants.PROCESS_NODE_PORT]) + '/job_queue'
+						print datetime.now(), '_sending job to ', node[Constants.PROCESS_NODE_COMPUTERNAME], 'url', url
 						s = requests.Session()
 						r = s.post(url, data=json.dumps(job))
-						print 'result', r.status_code, ':', r.text
+						print datetime.now(), 'result', r.status_code, ':', r.text
 						break
 			self.job_lock.release()
 		except:
 			self.job_lock.release()
 			exc_str = traceback.format_exc()
-			print exc_str
+			print datetime.now(), exc_str
 
 	def _setup_logging_(self, log, logtype, logname):
-		maxBytes = getattr(log, "rot_maxBytes", 20971520) # 20Mb
-		backupCount = getattr(log, "rot_backupCount", 10)
+		max_bytes = getattr(log, "rot_maxBytes", 20971520)  # 20Mb
+		backup_count = getattr(log, "rot_backupCount", 10)
 		fname = getattr(log, logtype, logname)
-		h = logging.handlers.RotatingFileHandler(fname, 'a', maxBytes, backupCount)
+		h = logging.handlers.RotatingFileHandler(fname, 'a', max_bytes, backup_count)
 		h.setLevel(logging.DEBUG)
 		h.setFormatter(cherrypy._cplogging.logfmt)
 		log.error_log.addHandler(h)
@@ -163,4 +184,4 @@ class Scheduler(object):
 		self._setup_logging_(app.log, "rot_access_file", "logs/scheduler_access.log")
 		cherrypy.engine.start()
 		cherrypy.engine.block()
-		print 'done blocking'
+		print datetime.now(), 'done blocking'

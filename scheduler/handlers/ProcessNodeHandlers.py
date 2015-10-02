@@ -39,8 +39,9 @@ import os
 #todo: this is redefined in ProcessNode.py 
 STR_JOB_LOG_DIR_NAME = 'job_logs'
 
+
 class ProcessNodeHandler(object):
-	
+
 	@cherrypy.expose
 	def index(self):
 		return file('public/process_node_index.html')
@@ -63,6 +64,7 @@ class ProcessNodeHandler(object):
 	def update_id(self, Id):
 		cherrypy.engine.publish('update_id', Id)
 		return 'Updated'
+
 
 class ProcessNodeJobsWebService(object):
 	'''
@@ -94,8 +96,6 @@ class ProcessNodeJobsWebService(object):
 				self.db.insert_job_with_id(job)
 			except:
 				myJob = self.db.get_job(job['Id'])
-				#print 'job to check', job['Status']
-				#print 'job2 to check', myJob['Status']
 				if not myJob == None:
 					if int(myJob['Status']) > int(job['Status']):
 						print 'sending updated status for job', myJob
@@ -118,6 +118,13 @@ class ProcessNodeJobsWebService(object):
 
 	# remove a job from the queue
 	def DELETE(self):
-		#cherrypy.session.pop('mystring', None)
-		pass
-
+		cl = cherrypy.request.headers['Content-Length']
+		rawbody = cherrypy.request.body.read(int(cl))
+		job = json.loads(rawbody)
+		if job != None:
+			print 'updating job', job
+			self.db.update_job(job)
+			cherrypy.engine.publish('delete_job', job)
+		else:
+			return 'Empty Job dictionary'
+		return 'done'
