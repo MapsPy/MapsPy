@@ -959,39 +959,42 @@ def maps_batch(wdir='', a=1,b=0,c=0,d=0,e=0, cb_update_func=None):
 		sfilepath = os.path.join(main_dict['master_dir'], maps_settingsfile)
 		f = open_file_with_retry(sfilepath, 'rt')
 		for line in f:
-			if ':' in line : 
-				slist = line.split(':')
-				tag = slist[0]
-				value = ''.join(slist[1:])
-				
-				if tag == 'VERSION':
-					main_dict['version'] = float(value)
-				elif tag == 'DETECTOR_ELEMENTS':
-					main_dict['total_number_detectors'] = int(value)
-				elif tag == 'MAX_NUMBER_OF_FILES_TO_PROCESS':
-					main_dict['max_no_processors_files'] = int(value)
-				elif tag == 'MAX_NUMBER_OF_LINES_TO_PROCESS':
-					main_dict['max_no_processors_lines'] = int(value)
-				elif tag == 'WRITE_HDF5':
-					main_dict['write_hdf'] = int(value)
-				elif tag == 'USE_FIT':
-					main_dict['use_fit'] = int(value)
-				elif tag == 'QUICK_DIRTY':
-					main_dict['quick_dirty'] = int(value)
-				elif tag == 'XRF_BIN':
-					main_dict['xrf_bin'] = int(value)
-				elif tag == 'NNLS':
-					main_dict['nnls'] = int(value)
-				elif tag == 'XANES_SCAN':
-					main_dict['xanes_scan'] = int(value)
-				elif tag == 'DETECTOR_TO_START_WITH':
-					main_dict['detector_to_start_with'] = int(value)
-				elif tag == 'BEAMLINE':
-					main_dict['beamline'] = str(value).strip()
-				elif tag == 'STANDARD':
-					main_dict['standard_filenames'].append(str(value).strip())
-				elif tag == 'DatasetFilesToProc':
-					main_dict['dataset_files_to_proc'] = str(value).replace('\\', '/').strip().split(',')
+			try:
+				if ':' in line:
+					slist = line.split(':')
+					tag = slist[0]
+					value = ''.join(slist[1:])
+
+					if tag == 'VERSION':
+						main_dict['version'] = float(value)
+					elif tag == 'DETECTOR_ELEMENTS':
+						main_dict['total_number_detectors'] = int(value)
+					elif tag == 'MAX_NUMBER_OF_FILES_TO_PROCESS':
+						main_dict['max_no_processors_files'] = int(value)
+					elif tag == 'MAX_NUMBER_OF_LINES_TO_PROCESS' or tag == 'MAX_NUMBER_OF_PROCESSORS_TO_USE':
+						main_dict['max_no_processors_lines'] = int(value)
+					elif tag == 'WRITE_HDF5':
+						main_dict['write_hdf'] = int(value)
+					elif tag == 'USE_FIT':
+						main_dict['use_fit'] = int(value)
+					elif tag == 'QUICK_DIRTY':
+						main_dict['quick_dirty'] = int(value)
+					elif tag == 'XRF_BIN':
+						main_dict['xrf_bin'] = int(value)
+					elif tag == 'NNLS':
+						main_dict['nnls'] = int(value)
+					elif tag == 'XANES_SCAN':
+						main_dict['xanes_scan'] = int(value)
+					elif tag == 'DETECTOR_TO_START_WITH':
+						main_dict['detector_to_start_with'] = int(value)
+					elif tag == 'BEAMLINE':
+						main_dict['beamline'] = str(value).strip()
+					elif tag == 'STANDARD':
+						main_dict['standard_filenames'].append(str(value).strip())
+					elif tag == 'DatasetFilesToProc':
+						main_dict['dataset_files_to_proc'] = str(value).replace('\\', '/').strip().split(',')
+			except:
+				print 'Error parsing tag [', tag, '] values [', value, ']'
 		f.close()
 
 	except:

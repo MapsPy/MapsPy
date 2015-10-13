@@ -31,9 +31,9 @@ SUCH DAMAGE.
 '''
 
 import time
-#import h5py
 
-def open_file_with_retry(filename, open_attr, retry_amt = 5, retry_sleep = 0.1, retry_sleep_inc = 1.1):
+
+def open_file_with_retry(filename, open_attr, retry_amt=5, retry_sleep=0.1, retry_sleep_inc=1.1):
 	file = None
 	for i in range(retry_amt):
 		try:
@@ -44,6 +44,7 @@ def open_file_with_retry(filename, open_attr, retry_amt = 5, retry_sleep = 0.1, 
 			time.sleep(retry_sleep)
 			retry_sleep += retry_sleep_inc
 	return file
+
 
 def call_function_with_retry(func_ptr, retry_amt = 5, retry_sleep = 0.1, retry_sleep_inc = 1.1, *args):
 	retVal = None

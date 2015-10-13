@@ -36,6 +36,7 @@ from __future__ import division
 
 import numpy as np
 import string
+import struct
 
 # -----------------------------------------------------------------------------
 class calibration:
@@ -120,7 +121,7 @@ class maps_conf:
 
 
 # -----------------------------------------------------------------------------
-class XRFmaps_info:
+class XRFmaps_info(object):
 	def __init__(self, n_cols, n_rows, dataset_size, n_energy, n_raw_spec, n_raw_det, n_used_chan, n_used_dmaps,
 				 maps_conf, version):
 		self.n_ev = 0
@@ -160,6 +161,46 @@ class XRFmaps_info:
 						'k': '', 'l': '', 'm': '', 'n': '', 'o': ''}
 		self.extra_str_arr = []
 		self.make_maps_conf = maps_conf
+
+	def dump(self, data_file):
+		data_file.write(struct.pack('>iiiii', self.n_ev, self.version, self.n_cols, self.n_rows, self.n_used_dmaps))
+		data_file.write(struct.pack('>iss', self.n_used_chan, self.scan_time_stamp, self.write_date,))
+		self.x_coord_arr.astype('>f').tofile(data_file)
+		self.y_coord_arr.astype('>f').tofile(data_file)
+		self.dmaps_set.astype('>f').tofile(data_file)
+		self.dataset.astype('>f').tofile(data_file)
+		for f in self.dataset_units:
+			data_file.write(struct.pack('>s', f))
+		for f in self.dmaps_names:
+			data_file.write(struct.pack('>s', f))
+		for f in self.dmaps_units:
+			data_file.write(struct.pack('>s', f))
+		for f in self.chan_names:
+			data_file.write(struct.pack('>s', f))
+		for f in self.chan_units:
+			data_file.write(struct.pack('>s', f))
+		for f in self.dataset_names:
+			data_file.write(struct.pack('>s', f))
+		self.dataset_orig.astype('>f').tofile(data_file)
+		self.dataset_calibration.astype('>f').tofile(data_file)
+		data_file.write(struct.pack('>i', self.n_energy))
+		self.energy.astype('>f').tofile(data_file)
+		self.energy_spec.astype('>f').tofile(data_file)
+		self.max_chan_spec.astype('>f').tofile(data_file)
+		self.raw_spec.astype('>f').tofile(data_file)
+		data_file.write(struct.pack('>ii', self.n_raw_det, self.img_type))
+		self.us_amp.astype('>f').tofile(data_file)
+		self.ds_amp.astype('>f').tofile(data_file)
+		self.energy_fit.astype('>f').tofile(data_file)
+		for key in self.add_long.iterkeys():
+			data_file.write(struct.pack('>si', key, self.add_long[key]))
+		for key in self.add_float.iterkeys():
+			data_file.write(struct.pack('>sf', key, self.add_float[key]))
+		for key in self.add_str.iterkeys():
+			data_file.write(struct.pack('>ss', key, self.add_str[key]))
+		for f in self.extra_str_arr:
+			data_file.write(struct.pack('>s', f))
+
 
 
 # -----------------------------------------------------------------------------
