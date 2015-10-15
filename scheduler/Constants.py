@@ -81,3 +81,9 @@ JOB_PROCESS_NODE_ID = 'Process_Node_Id'  # INTEGER
 
 # ===================================== General Keys =======================================
 STR_JOB_LOG_DIR_NAME = 'job_logs'
+
+# ===================================== Email Msg =======================================
+EMAIL_SUBJECT_ERROR = 'MapsPy Job Failed'
+EMAIL_SUBJECT_COMPLETED = 'MapsPy Job Completed'
+EMAIL_MESSAGE_ERROR = 'MapsPy Job Failed: \n'
+EMAIL_MESSAGE_COMPLETED = 'MapsPy Job Completed: \n'

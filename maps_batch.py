@@ -737,7 +737,7 @@ def _option_b_(main_dict, maps_conf, maps_def, total_number_detectors, info_elem
 		main_dict['XRFmaps_id'] = 0
 
 		spectra_filenames = []
-		#Get integrated spectra from .h5 files and save them as text files
+		# Get integrated spectra from .h5 files and save them as text files
 		for ii in range(len(imgdat_filenames)):
 			sfile = os.path.join(main_dict['XRFmaps_dir'], imgdat_filenames[ii])
 			this_filename = 'intspec' + imgdat_filenames[ii] + '.txt'
@@ -747,7 +747,7 @@ def _option_b_(main_dict, maps_conf, maps_def, total_number_detectors, info_elem
 			save_spectrum(main_dict, sfile, savefile)
 			spectra_filenames.append(savefile)
 
-		#Load spectra into spectra structure
+		# Load spectra into spectra structure
 		spectra = maps_def.define_spectra(main_dict['max_spec_channels'], main_dict['max_spectra'], main_dict['max_ICs'], mode='plot_spec')
 
 		if len(spectra_filenames) == 1:
@@ -901,7 +901,7 @@ def maps_batch(wdir='', a=1,b=0,c=0,d=0,e=0, cb_update_func=None):
 
 	first_run = 1
 
-	#remove quotations marks if any in wdir
+	# remove quotations marks if any in wdir
 	wdir.strip('"')
 	if "'" in wdir:
 		wdir = wdir[1:-1]
@@ -1012,23 +1012,23 @@ def maps_batch(wdir='', a=1,b=0,c=0,d=0,e=0, cb_update_func=None):
 
 	print 'total number of detectors:', main_dict['total_number_detectors']
 
-	#Section a converts mda to h5 and does ROI and ROI+ fits
-	if (a > 0) :
+	# Section a converts mda to h5 and does ROI and ROI+ fits
+	if a > 0:
 		_option_a_(main_dict, maps_conf, cb_update_func)
 
-	#Section b loads 8 largest h5 files, fits them and saves fit parameters 
-	if (b > 0):
+	# Section b loads 8 largest h5 files, fits them and saves fit parameters
+	if b > 0:
 		spectra = _option_b_(main_dict, maps_conf, maps_def, main_dict['total_number_detectors'], info_elements, cb_update_func)
 
-	#Section c converts mda to h5 files and does ROI/ROI+/FITS
-	if (c > 0): 
+	# Section c converts mda to h5 files and does ROI/ROI+/FITS
+	if c > 0:
 		_option_c_(main_dict, cb_update_func)
 
-	#Section d extracts images
-	if (d > 0):
+	# Section d extracts images
+	if d > 0:
 		_option_d_(cb_update_func)
 
-	#Generate average images
+	# Generate average images
 	if main_dict['total_number_detectors'] > 1 and b > 0 and spectra is not None:
 		print ' we are now going to create the maps_generate_average...'
 		n_channels = 2048
@@ -1036,8 +1036,8 @@ def maps_batch(wdir='', a=1,b=0,c=0,d=0,e=0, cb_update_func=None):
 		makemaps = maps_generate_img_dat.analyze(info_elements, main_dict, maps_conf)
 		makemaps.generate_average_img_dat(main_dict['total_number_detectors'], maps_conf, energy_channels)
 
-	#Section e adds exchange information
-	if (e > 0):
+	# Section e adds exchange information
+	if e > 0:
 		print 'Adding exchange information'
 		ch5 = maps_hdf5.h5()
 		ch5.add_exchange(main_dict, maps_conf)
@@ -1047,7 +1047,7 @@ def maps_batch(wdir='', a=1,b=0,c=0,d=0,e=0, cb_update_func=None):
 
 	return
 
-#-----------------------------------------------------------------------------	 
+# ----------------------------------------------------------------------------
 if __name__ == '__main__':
 	dirct = sys.argv[1]
 	print dirct
@@ -1078,4 +1078,3 @@ if __name__ == '__main__':
 			e = 1
 
 	maps_batch(wdir=dirct, a=a, b=b, c=c, d=d, e=e)
-

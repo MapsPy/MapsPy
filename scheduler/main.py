@@ -38,8 +38,6 @@ sys.path.insert(0,parentdir)
 
 import sys
 import Settings
-from Scheduler import Scheduler
-from ProcessNode import ProcessNode
 settings_filename = 'settings.ini'
 
 def main():
@@ -58,13 +56,15 @@ def main():
 	role = str(serverSettings[Settings.SERVER_ROLE])
 	print 'Role =',role
 	if role == 'scheduler':
+		from Scheduler import Scheduler
 		scheduler = Scheduler(settings)
 		scheduler.run()
 	elif role == 'process_node':
+		from ProcessNode import ProcessNode
 		process_node = ProcessNode(settings)
 		process_node.run()
 	else:
-		print 'Unknown role! exiting!'
+		print 'Unknown role! Change settings.ini, Role: to either scheduler or process_node .  exiting!'
 
 if __name__ == '__main__':
 	main()

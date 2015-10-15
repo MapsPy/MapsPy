@@ -133,6 +133,7 @@
                     //'FinishProcTime: '+d.FinishProcTime+'<br>'+
                     'Dataset Files To Process: ' + d.DatasetFilesToProc +'<br>'+
                     'Process Node: '+$host_name+'<br>'+ 
+                    'Email Addresses: '+d.Emails+'<br>'+ 
                     '<a href=/get_output_list?job_path='+d.DataPath+'>Output Directory</a> (output_old) <br>'+
                     '<a href=/get_output_list?job_path='+d.DataPath+'&process_type=PER_PIXEL>Output Directory</a> (output.fits) Per Pixel Fitting<br>'+
                     '<a href=http://'+$host_and_port+'/get_job_log?log_path='+d.Log_Path+'>Job Log</a>';
@@ -290,6 +291,7 @@
                     'StartProcTime': 0,
                     'FinishProcTime': 0,
                     'Log_Path': '',
+                    'Emails': $("#option-emails").val(),
                     'Process_Node_Id': parseInt($pn_id, 10),
                     'DatasetFilesToProc': $dataset_filenames
                 }),
@@ -682,7 +684,7 @@
                 <select id="proc_node_option">
                     <option value="-1">Any
                 </select>
-
+                Email Address on Completion (comma separated)<input type="text" id="option-emails" value="">
 <!--
             write_hdf = 0
 -->

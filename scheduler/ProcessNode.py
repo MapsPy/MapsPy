@@ -57,6 +57,7 @@ import Constants
 
 # Function used to create a new process for jobs
 def new_process_func(job_status, log_name, alias_path, key_a, key_b, key_c, key_d, key_e):
+	print 'Start Job Process'
 	saveout = sys.stdout
 	try:
 		logfile = open(log_name, 'wt')
@@ -64,16 +65,17 @@ def new_process_func(job_status, log_name, alias_path, key_a, key_b, key_c, key_
 		maps_batch(wdir=alias_path, a=key_a, b=key_b, c=key_c, d=key_d, e=key_e)
 		sys.stdout = saveout
 		logfile.close()
+		print 'Completed Job'
 		job_status.value = Constants.JOB_STATUS_COMPLETED
 	except:
 		print datetime.now(), 'Error processing', alias_path
 		traceback.print_exc(file=sys.stdout)
 		sys.stdout = saveout
 		job_status.value = Constants.JOB_STATUS_GENERAL_ERROR
+	print 'Done Job Process'
 
 
 class ProcessNode(object):
-
 	def __init__(self, settings):
 		self.settings = settings
 		serverSettings = settings.getSetting(Settings.SECTION_SERVER)
@@ -324,7 +326,11 @@ class ProcessNode(object):
 				proc.join()
 				self.this_process = psutil.Process(os.getpid())
 				#job_dict[Constants.JOB_FINISH_PROC_TIME] = datetime.now()
-				job_dict[Constants.JOB_STATUS] = job_status.value
+				print 'finished processing job with status', job_status.value
+				if job_status.value == Constants.JOB_STATUS_PROCESSING:
+					job_dict[Constants.JOB_STATUS] = Constants.JOB_STATUS_GENERAL_ERROR
+				else:
+					job_dict[Constants.JOB_STATUS] = job_status.value
 			except:
 				print 'Error processing', job_dict[Constants.JOB_DATA_PATH]
 				traceback.print_exc(file=sys.stdout)
@@ -333,7 +339,7 @@ class ProcessNode(object):
 			self.db.update_job(job_dict)
 			self.send_job_update(job_dict)
 			self.send_status_update()
-			print datetime.now(), 'done processing job', job_dict[Constants.JOB_DATA_PATH]
+			print datetime.now(), 'done processing job', job_dict[Constants.JOB_DATA_PATH], job_dict[Constants.JOB_STATUS]
 		print datetime.now(), 'Finished Processing, going to Idle'
 		self.pn_info[Constants.PROCESS_NODE_STATUS] = Constants.PROCESS_NODE_STATUS_IDLE
 		self.send_status_update()
@@ -374,4 +380,3 @@ class ProcessNode(object):
 		except:
 			print datetime.now(), 'Error sending job update'
 			#traceback.print_exc(file=sys.stdout)
-

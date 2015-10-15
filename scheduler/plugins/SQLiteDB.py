@@ -34,7 +34,7 @@ SUCH DAMAGE.
 import sqlite3 as sql
 
 CREATE_PROCESS_NODES_TABLE_STR = 'CREATE TABLE IF NOT EXISTS ProcessNodes(Id INTEGER PRIMARY KEY, ComputerName TEXT, NumThreads INTEGER, Hostname TEXT, Port INTEGER, Status TEXT, Heartbeat TIMESTAMP, ProcessCpuPercent REAL, ProcessMemPercent REAL, SystemCpuPercent REAL, SystemMemPercent REAL, SystemSwapPercent REAL);'
-CREATE_JOBS_TABLE_STR = 'CREATE TABLE IF NOT EXISTS Jobs(Id INTEGER PRIMARY KEY, DataPath TEXT, ProcMask INTEGER, Version TEXT, DetectorElements INTEGER, MaxFilesToProc INTEGER, MaxLinesToProc INTEGER, QuickAndDirty INTEGER, XRF_Bin INTEGER, NNLS INTEGER, XANES_Scan INTEGER, DetectorToStartWith INTEGER, BeamLine TEXT, Standards TEXT, DatasetFilesToProc TEXT, Priority INTEGER, Status INTEGER, StartProcTime TIMESTAMP, FinishProcTime TIMESTAMP, Log_Path TEXT, Process_Node_Id INTEGER);'
+CREATE_JOBS_TABLE_STR = 'CREATE TABLE IF NOT EXISTS Jobs(Id INTEGER PRIMARY KEY, DataPath TEXT, ProcMask INTEGER, Version TEXT, DetectorElements INTEGER, MaxFilesToProc INTEGER, MaxLinesToProc INTEGER, QuickAndDirty INTEGER, XRF_Bin INTEGER, NNLS INTEGER, XANES_Scan INTEGER, DetectorToStartWith INTEGER, BeamLine TEXT, Standards TEXT, DatasetFilesToProc TEXT, Priority INTEGER, Status INTEGER, StartProcTime TIMESTAMP, FinishProcTime TIMESTAMP, Log_Path TEXT, Process_Node_Id INTEGER, Emails TEXT);'
 CREATE_JOB_QUEUE_TABLE_STR = 'CREATE TABLE IF NOT EXISTS JobQueue(Id INTEGER PRIMARY KEY, JobId INTEGER, PnId INTEGER, Status INTEGER, StartTime TIMESTAMP, StopStime TIMESTAMP, FOREIGN KEY(JobId) REFERENCES Jobs(Id), FOREIGN KEY(PnId) REFERENCES ProcessNodes(Id));'
 
 DROP_PROCESS_NODES_STR = 'DROP TABLE IF EXISTS ProcessNodes;'
@@ -42,20 +42,20 @@ DROP_JOBS_STR = 'DROP TABLE IF EXISTS Jobs;'
 DROP_JOB_QUEUE_STR = 'DROP TABLE IF EXISTS JobQueue;'
 
 INSERT_PROCESS_NODE = 'INSERT INTO ProcessNodes (ComputerName, NumThreads, Hostname, Port, Status, Heartbeat, ProcessCpuPercent, ProcessMemPercent, SystemCpuPercent, SystemMemPercent, SystemSwapPercent) VALUES(:ComputerName, :NumThreads, :Hostname, :Port, :Status, :Heartbeat, :ProcessCpuPercent, :ProcessMemPercent, :SystemCpuPercent, :SystemMemPercent, :SystemSwapPercent)'
-INSERT_JOB = 'INSERT INTO Jobs (DataPath, ProcMask, Version, DetectorElements, MaxFilesToProc, MaxLinesToProc, QuickAndDirty, XRF_Bin, NNLS, XANES_Scan, DetectorToStartWith, BeamLine, Standards, DatasetFilesToProc, Priority, Status, StartProcTime, FinishProcTime, Log_Path, Process_Node_Id) VALUES(:DataPath, :ProcMask, :Version, :DetectorElements, :MaxFilesToProc, :MaxLinesToProc, :QuickAndDirty, :XRF_Bin, :NNLS, :XANES_Scan, :DetectorToStartWith, :BeamLine, :Standards, :DatasetFilesToProc, :Priority, :Status, NULL, NULL, :Log_Path, :Process_Node_Id)'
-INSERT_JOB_WITH_ID = 'INSERT INTO Jobs (Id, DataPath, ProcMask, Version, DetectorElements, MaxFilesToProc, MaxLinesToProc, QuickAndDirty, XRF_Bin, NNLS, XANES_Scan, DetectorToStartWith, BeamLine, Standards, DatasetFilesToProc, Priority, Status, StartProcTime, FinishProcTime, Log_Path, Process_Node_Id) VALUES(:Id, :DataPath, :ProcMask, :Version, :DetectorElements, :MaxFilesToProc, :MaxLinesToProc, :QuickAndDirty, :XRF_Bin, :NNLS, :XANES_Scan, :DetectorToStartWith, :BeamLine, :Standards, :DatasetFilesToProc, :Priority, :Status, NULL, NULL, :Log_Path, :Process_Node_Id)'
+INSERT_JOB = 'INSERT INTO Jobs (DataPath, ProcMask, Version, DetectorElements, MaxFilesToProc, MaxLinesToProc, QuickAndDirty, XRF_Bin, NNLS, XANES_Scan, DetectorToStartWith, BeamLine, Standards, DatasetFilesToProc, Priority, Status, StartProcTime, FinishProcTime, Log_Path, Process_Node_Id, Emails) VALUES(:DataPath, :ProcMask, :Version, :DetectorElements, :MaxFilesToProc, :MaxLinesToProc, :QuickAndDirty, :XRF_Bin, :NNLS, :XANES_Scan, :DetectorToStartWith, :BeamLine, :Standards, :DatasetFilesToProc, :Priority, :Status, NULL, NULL, :Log_Path, :Process_Node_Id, :Emails)'
+INSERT_JOB_WITH_ID = 'INSERT INTO Jobs (Id, DataPath, ProcMask, Version, DetectorElements, MaxFilesToProc, MaxLinesToProc, QuickAndDirty, XRF_Bin, NNLS, XANES_Scan, DetectorToStartWith, BeamLine, Standards, DatasetFilesToProc, Priority, Status, StartProcTime, FinishProcTime, Log_Path, Process_Node_Id, Emails) VALUES(:Id, :DataPath, :ProcMask, :Version, :DetectorElements, :MaxFilesToProc, :MaxLinesToProc, :QuickAndDirty, :XRF_Bin, :NNLS, :XANES_Scan, :DetectorToStartWith, :BeamLine, :Standards, :DatasetFilesToProc, :Priority, :Status, NULL, NULL, :Log_Path, :Process_Node_Id, :Emails)'
 
 
 UPDATE_PROCESS_NODE_BY_ID = 'UPDATE ProcessNodes SET ComputerName=:ComputerName NumThreads=:NumThreads Hostname=:Hostname, Port=:Port Status=:Status Heartbeat=:Heartbeat, ProcessCpuPercent=:ProcessCpuPercent, ProcessMemPercent=:ProcessMemPercent, SystemCpuPercent=:SystemCpuPercent, SystemMemPercent=:SystemMemPercent, SystemSwapPercent=:SystemSwapPercent WHERE Id=:Id'
 UPDATE_PROCESS_NODE_BY_NAME = 'UPDATE ProcessNodes SET NumThreads=:NumThreads, Hostname=:Hostname, Port=:Port, Status=:Status, Heartbeat=:Heartbeat, ProcessCpuPercent=:ProcessCpuPercent, ProcessMemPercent=:ProcessMemPercent, SystemCpuPercent=:SystemCpuPercent, SystemMemPercent=:SystemMemPercent, SystemSwapPercent=:SystemSwapPercent WHERE ComputerName=:ComputerName'
-UPDATE_JOB_BY_ID = 'UPDATE Jobs SET DataPath=:DataPath, ProcMask=:ProcMask, Version=:Version, DetectorElements=:DetectorElements, MaxFilesToProc=:MaxFilesToProc, MaxLinesToProc=:MaxLinesToProc, QuickAndDirty=:QuickAndDirty, XRF_Bin=:XRF_Bin, NNLS=:NNLS, XANES_Scan=:XANES_Scan, DetectorToStartWith=:DetectorToStartWith, BeamLine=:BeamLine, Standards=:Standards, DatasetFilesToProc=:DatasetFilesToProc, Priority=:Priority, Status=:Status, StartProcTime=:StartProcTime, FinishProcTime=:FinishProcTime, Log_Path=:Log_Path, Process_Node_Id=:Process_Node_Id WHERE Id=:Id'
+UPDATE_JOB_BY_ID = 'UPDATE Jobs SET DataPath=:DataPath, ProcMask=:ProcMask, Version=:Version, DetectorElements=:DetectorElements, MaxFilesToProc=:MaxFilesToProc, MaxLinesToProc=:MaxLinesToProc, QuickAndDirty=:QuickAndDirty, XRF_Bin=:XRF_Bin, NNLS=:NNLS, XANES_Scan=:XANES_Scan, DetectorToStartWith=:DetectorToStartWith, BeamLine=:BeamLine, Standards=:Standards, DatasetFilesToProc=:DatasetFilesToProc, Priority=:Priority, Status=:Status, StartProcTime=:StartProcTime, FinishProcTime=:FinishProcTime, Log_Path=:Log_Path, Process_Node_Id=:Process_Node_Id, Emails=:Emails WHERE Id=:Id'
 
 RESET_PN_STATUS = 'UPDATE ProcessNodes SET Status="Offline", ProcessCpuPercent=0.0, ProcessMemPercent=0.0 WHERE Id>0;'
 
 SELECT_ALL_PROCESS_NODES = 'SELECT Id, ComputerName, NumThreads, Hostname, Port, Status, Heartbeat, ProcessCpuPercent, ProcessMemPercent, SystemCpuPercent, SystemMemPercent, SystemSwapPercent FROM ProcessNodes'
 SELECT_PROCESS_NODE_BY_NAME = 'SELECT Id, ComputerName, NumThreads, Hostname, Port, Status, Heartbeat, ProcessCpuPercent, ProcessMemPercent, SystemCpuPercent, SystemMemPercent, SystemSwapPercent FROM ProcessNodes WHERE ComputerName=:ComputerName'
 SELECT_PROCESS_NODE_BY_ID = 'SELECT Id, ComputerName, NumThreads, Hostname, Port, Status, Heartbeat, ProcessCpuPercent, ProcessMemPercent, SystemCpuPercent, SystemMemPercent, SystemSwapPercent FROM ProcessNodes WHERE Id=:Id'
-SELECT_ALL_JOBS = 'SELECT Id, DataPath, ProcMask, Version, DetectorElements, MaxFilesToProc, MaxLinesToProc, QuickAndDirty, XRF_Bin, NNLS, XANES_Scan, DetectorToStartWith, BeamLine, Standards, DatasetFilesToProc, Priority, Status, StartProcTime, FinishProcTime, Log_Path, Process_Node_Id FROM Jobs'
+SELECT_ALL_JOBS = 'SELECT Id, DataPath, ProcMask, Version, DetectorElements, MaxFilesToProc, MaxLinesToProc, QuickAndDirty, XRF_Bin, NNLS, XANES_Scan, DetectorToStartWith, BeamLine, Standards, DatasetFilesToProc, Priority, Status, StartProcTime, FinishProcTime, Log_Path, Process_Node_Id, Emails FROM Jobs'
 SELECT_ALL_UNPROCESSED_JOBS = SELECT_ALL_JOBS + ' WHERE Status=0'
 SELECT_ALL_PROCESSING_JOBS = SELECT_ALL_JOBS + ' WHERE Status=1'
 SELECT_ALL_FINISHED_JOBS = SELECT_ALL_JOBS + ' WHERE Status>=2'
@@ -112,35 +112,35 @@ class SQLiteDB:
 		con.commit()
 
 	def get_process_node_by_name(self, proc_node_name):
-		con = sql.connect(self.uri)
-		cur = con.cursor()
-		cur.execute(SELECT_PROCESS_NODE_BY_NAME, {'ComputerName':proc_node_name})
-		con.commit()
-		p_list = cur.fetchone()
-		node = {'Id': p_list[0], 'ComputerName':p_list[1], 'NumThreads':p_list[2], 'Hostname':p_list[3], 'Port':p_list[4], 'Status': p_list[5], 'Heartbeat': p_list[6], 'ProcessCpuPercent':p_list[7], 'ProcessMemPercent':p_list[8], 'SystemCpuPercent':p_list[9], 'SystemMemPercent': p_list[10], 'SystemSwapPercent':p_list[11]}
-		return node
+		nodes = self._get_proc_node(SELECT_PROCESS_NODE_BY_NAME, {'ComputerName':proc_node_name})
+		if len(nodes) > 0:
+			return nodes[0]
+		return None
 
 	def get_process_node_by_id(self, proc_node_id):
-		con = sql.connect(self.uri)
-		cur = con.cursor()
-		cur.execute(SELECT_PROCESS_NODE_BY_ID, {'Id':proc_node_id})
-		con.commit()
-		p_list = cur.fetchone()
-		node = {'Id': p_list[0], 'ComputerName':p_list[1], 'NumThreads':p_list[2], 'Hostname':p_list[3], 'Port':p_list[4], 'Status': p_list[5], 'Heartbeat': p_list[6], 'ProcessCpuPercent':p_list[7], 'ProcessMemPercent':p_list[8], 'SystemCpuPercent':p_list[9], 'SystemMemPercent': p_list[10], 'SystemSwapPercent':p_list[11]}
-		return node
+		nodes = self._get_proc_node(SELECT_PROCESS_NODE_BY_ID, {'Id':proc_node_id})
+		if len(nodes) > 0:
+			return nodes[0]
+		return None
 
 	def get_all_process_nodes(self):
+		return self._get_proc_node(SELECT_ALL_PROCESS_NODES)
+
+	def _get_proc_node(self, sql_statement, opt_dict=None):
 		con = sql.connect(self.uri)
 		cur = con.cursor()
-		cur.execute(SELECT_ALL_PROCESS_NODES)
+		if opt_dict is None:
+			cur.execute(sql_statement)
+		else:
+			cur.execute(sql_statement, opt_dict)
 		con.commit()
-		#return cur.fetchall()
 		all_nodes = cur.fetchall()
 		ret_list = []
 		#SELECT_ALL_PROCESS_NODES = 'SELECT ComputerName, NumThreads, Hostname, Port, Status, Heartbeat FROM ProcessNodes'
 		for node in all_nodes:
 			ret_list += [ {'DT_RowId':'row_'+str(node[0]), 'Id':node[0], 'ComputerName':node[1], 'NumThreads':node[2], 'Hostname':node[3], 'Port':node[4], 'Status': node[5], 'Heartbeat': node[6], 'ProcessCpuPercent':node[7], 'ProcessMemPercent':node[8], 'SystemCpuPercent':node[9], 'SystemMemPercent': node[10], 'SystemSwapPercent':node[11] } ]
 		return ret_list
+
 
 	def _get_jobs_(self, sql_statement, opt_dict=None):
 		con = sql.connect(self.uri)
@@ -154,7 +154,7 @@ class SQLiteDB:
 		ret_list = []
 		#SELECT_ALL_JOBS = 'SELECT Id, DataPath, ProcMask, Version, DetectorElements, MaxFilesToProc, MaxLinesToProc, QuickAndDirty, XRF_Bin, NNLS, XANES_Scan, DetectorToStartWith, BeamLine, Standards, DatasetFilesToProc, Status, StartProcTime, FinishProcTime FROM Jobs'
 		for node in all_nodes:
-			ret_list += [ {'DT_RowId':node[0],  'Id':int(node[0]), 'DataPath':node[1], 'ProcMask': node[2], 'Version': node[3], 'DetectorElements':int(node[4]), 'MaxFilesToProc':int(node[5]), 'MaxLinesToProc':int(node[6]), 'QuickAndDirty':node[7], 'XRF_Bin':node[8], 'NNLS':node[9], 'XANES_Scan':node[10], 'DetectorToStartWith':int(node[11]), 'BeamLine':node[12], 'Standards':node[13], 'DatasetFilesToProc':node[14], 'Priority':int(node[15]), 'Status':int(node[16]), 'StartProcTime':node[17], 'FinishProcTime':node[18], 'Log_Path':node[19], 'Process_Node_Id':int(node[20])  } ]
+			ret_list += [ {'DT_RowId':node[0],  'Id':int(node[0]), 'DataPath':node[1], 'ProcMask': node[2], 'Version': node[3], 'DetectorElements':int(node[4]), 'MaxFilesToProc':int(node[5]), 'MaxLinesToProc':int(node[6]), 'QuickAndDirty':node[7], 'XRF_Bin':node[8], 'NNLS':node[9], 'XANES_Scan':node[10], 'DetectorToStartWith':int(node[11]), 'BeamLine':node[12], 'Standards':node[13], 'DatasetFilesToProc':node[14], 'Priority':int(node[15]), 'Status':int(node[16]), 'StartProcTime':node[17], 'FinishProcTime':node[18], 'Log_Path':node[19], 'Process_Node_Id':int(node[20]), 'Emails':node[21]  } ]
 		return ret_list
 
 	def get_all_jobs(self):
@@ -207,9 +207,9 @@ if __name__ == '__main__':
 	import datetime
 	proc_node = { 'ComputerName':'Comp1', 'NumThreads':1, 'Hostname':'127.0.0.2', 'Port':8080, 'Status':'idle', 'Heartbeat':datetime.datetime.now(), 'ProcessCpuPercent':0.0, 'ProcessMemPercent':1.0, 'SystemCpuPercent':2.0, 'SystemMemPercent':10.0, 'SystemSwapPercent':0.0}
 	proc_node2 = { 'ComputerName':'Comp2', 'NumThreads':2, 'Hostname':'127.0.0.3', 'Port':8080, 'Status':'idle', 'Heartbeat':datetime.datetime.now(), 'ProcessCpuPercent':0.0, 'ProcessMemPercent':1.0, 'SystemCpuPercent':2.0, 'SystemMemPercent':10.0, 'SystemSwapPercent':0.0}
-	job1 = { 'DataPath':'/data/mapspy1/', 'ProcMask':1, 'Version':'1.00', 'DetectorElements':1, 'MaxFilesToProc':1, 'MaxLinesToProc':11, 'QuickAndDirty':0, 'XRF_Bin':0, 'NNLS':0, 'XANES_Scan':0, 'DetectorToStartWith':0, 'BeamLine':'2-ID-E', 'Standards':'', 'DatasetFilesToProc': 'all', 'Priority':5, 'Status':0, 'StartProcTime':0, 'FinishProcTime':0, 'Log_Path': '', 'Process_Node_Id': -1 }
-	job2 = { 'DataPath':'/data/mapspy2/', 'ProcMask':4, 'Version':'1.00', 'DetectorElements':1, 'MaxFilesToProc':1, 'MaxLinesToProc':11, 'QuickAndDirty':0, 'XRF_Bin':0, 'NNLS':0, 'XANES_Scan':0, 'DetectorToStartWith':0, 'BeamLine':'2-ID-E', 'Standards':'', 'DatasetFilesToProc': 'all', 'Priority':10, 'Status':0, 'StartProcTime':0, 'FinishProcTime':0, 'Log_Path': '', 'Process_Node_Id': -1 }
-	job3 = { 'DataPath':'/data/mapspy3/', 'ProcMask':8, 'Version':'1.00', 'DetectorElements':1, 'MaxFilesToProc':1, 'MaxLinesToProc':11, 'QuickAndDirty':0, 'XRF_Bin':0, 'NNLS':0, 'XANES_Scan':0, 'DetectorToStartWith':0, 'BeamLine':'2-ID-E', 'Standards':'', 'DatasetFilesToProc': 'all', 'Priority':7, 'Status':0, 'StartProcTime':0, 'FinishProcTime':0, 'Log_Path': '', 'Process_Node_Id': -1 }
+	job1 = { 'DataPath':'/data/mapspy1/', 'ProcMask':1, 'Version':'1.00', 'DetectorElements':1, 'MaxFilesToProc':1, 'MaxLinesToProc':11, 'QuickAndDirty':0, 'XRF_Bin':0, 'NNLS':0, 'XANES_Scan':0, 'DetectorToStartWith':0, 'BeamLine':'2-ID-E', 'Standards':'', 'DatasetFilesToProc': 'all', 'Priority':5, 'Status':0, 'StartProcTime':0, 'FinishProcTime':0, 'Log_Path': '', 'Process_Node_Id': -1, 'Emails':'' }
+	job2 = { 'DataPath':'/data/mapspy2/', 'ProcMask':4, 'Version':'1.00', 'DetectorElements':1, 'MaxFilesToProc':1, 'MaxLinesToProc':11, 'QuickAndDirty':0, 'XRF_Bin':0, 'NNLS':0, 'XANES_Scan':0, 'DetectorToStartWith':0, 'BeamLine':'2-ID-E', 'Standards':'', 'DatasetFilesToProc': 'all', 'Priority':10, 'Status':0, 'StartProcTime':0, 'FinishProcTime':0, 'Log_Path': '', 'Process_Node_Id': -1, 'Emails':'' }
+	job3 = { 'DataPath':'/data/mapspy3/', 'ProcMask':8, 'Version':'1.00', 'DetectorElements':1, 'MaxFilesToProc':1, 'MaxLinesToProc':11, 'QuickAndDirty':0, 'XRF_Bin':0, 'NNLS':0, 'XANES_Scan':0, 'DetectorToStartWith':0, 'BeamLine':'2-ID-E', 'Standards':'', 'DatasetFilesToProc': 'all', 'Priority':7, 'Status':0, 'StartProcTime':0, 'FinishProcTime':0, 'Log_Path': '', 'Process_Node_Id': -1, 'Emails':'' }
 	job4 = {'Status': 1, 'MaxLinesToProc': 11, 'FinishProcTime': None, 'ProcMask': 1, 'XRF_Bin': 0, 'MaxFilesToProc': 1, 'BeamLine': u'2-ID-E', 'DataPath': u'/maps_py', 'DetectorElements': 1, 'Priority': 5, 'XANES_Scan': 0, 'Version': u'1.00', 'StartProcTime': None, 'NNLS': 0, 'QuickAndDirty': 0, 'Standards': u'', 'DatasetFilesToProc': 'all', 'DetectorToStartWith': 0, 'Id': 1, 'Log_Path': '', 'Process_Node_Id': -1 }
 	db = SQLiteDB('TestDatabase.db')
 	db.create_tables(True)

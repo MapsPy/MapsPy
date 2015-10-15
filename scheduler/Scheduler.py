@@ -44,7 +44,7 @@ import traceback
 import logging
 import logging.handlers
 import threading
-import datetime
+from datetime import datetime
 import Constants
 
 db = DatabasePlugin(cherrypy.engine, SQLiteDB)
@@ -61,7 +61,7 @@ class Scheduler(object):
 			'log.access_file': "logs/scheduler_access.log",
 			'log.error_file': "logs/scheduler_error.log"
 		})
-		self.mailman = Mailman.mainman(self.settings[Settings.SERVER_SMTP_ADDRESS],
+		self.mailman = Mailman.mailman(self.settings[Settings.SERVER_SMTP_ADDRESS],
 								self.settings[Settings.SERVER_FROM_ADDRESS],
 								self.settings[Settings.SERVER_MAIL_USERNAME],
 								self.settings[Settings.SERVER_MAIL_PASSWORD])
@@ -120,15 +120,22 @@ class Scheduler(object):
 
 	def callback_update_job(self, job):
 		pass
-		#if Constants.JOB_STATUS in job and Constants.JOB_EMAILS in job:
-		#	#if job[Constants.JOB_STATUS] > Constants.JOB_STATUS_PROCESSING and len(job[Constants.JOB_EMAILS]) > 0:
-		#		print datetime.now(), 'sending completed emails'
-		#		mesg = '...'
-		#		try:
-		#			self.mailman.send(job[Constants.JOB_EMAILS], Constants.EMAIL_SUBJECT, mesg)
-		#		except:
-		#			exc_str = traceback.format_exc()
-		#			print datetime.now(), exc_str
+		if Constants.JOB_STATUS in job and Constants.JOB_EMAILS in job:
+			if job[Constants.JOB_STATUS] > Constants.JOB_STATUS_PROCESSING and len(job[Constants.JOB_EMAILS]) > 0:
+				print datetime.now(), 'sending completed emails'
+				if job[Constants.JOB_STATUS] == Constants.JOB_STATUS_COMPLETED:
+					subject = Constants.EMAIL_SUBJECT_COMPLETED
+					mesg = Constants.EMAIL_MESSAGE_COMPLETED
+				else:
+					subject = Constants.EMAIL_SUBJECT_ERROR
+					mesg = Constants.EMAIL_MESSAGE_ERROR
+				for key in job.iterkeys():
+					mesg += key + ': '+str(job[key]) + '\n'
+				try:
+					self.mailman.send(job[Constants.JOB_EMAILS], subject, mesg)
+				except:
+					exc_str = traceback.format_exc()
+					print datetime.now(), exc_str
 
 	def callback_process_node_update(self, node):
 		print datetime.now(), 'callback', node[Constants.PROCESS_NODE_COMPUTERNAME]
