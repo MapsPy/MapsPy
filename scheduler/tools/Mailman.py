@@ -32,7 +32,8 @@ SUCH DAMAGE.
 
 import smtplib
 from email.mime.text import MIMEText
-
+from email.mime.image import MIMEImage
+from email.mime.multipart import MIMEMultipart
 
 class mailman:
 	def __init__(self, smtp_address, from_address, username, password):
@@ -41,11 +42,25 @@ class mailman:
 		self.from_address = from_address
 		self.smtp_address = smtp_address
 
-	def send(self, to_addresses, subject, message):
-		msg = MIMEText(message)
+	def send(self, to_addresses, subject, message, images_dict=None):
+		if images_dict == None:
+			msg = MIMEText(message)
+		else:
+			msg = MIMEMultipart()
+			msg_txt = MIMEText(message)
+			msg.attach(msg_txt)
 		msg['Subject'] = subject
 		msg['From'] = self.from_address
-		msg['To'] = self.to_address
+		msg['To'] = to_addresses
+		if images_dict != None:
+			img_text = '<br><br>'
+			for img_name in images_dict.iterkeys():
+				msg_img = MIMEImage(images_dict[img_name], Name=img_name)
+				msg_img.add_header('Content-ID', '<' + img_name + '>')
+				msg.attach(msg_img)
+				img_text += '<b>' + img_name + '</b><br><img src="cid:' + img_name + '"><br><br>'
+			msgText = MIMEText(img_text, 'html')
+			msg.attach(msgText)
 		smtp = smtplib.SMTP(self.smtp_address)
 		smtp.ehlo()
 		smtp.starttls()

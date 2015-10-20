@@ -42,6 +42,7 @@ import cherrypy
 import json
 import traceback
 import logging
+import logging.handlers
 import threading
 import signal
 import psutil

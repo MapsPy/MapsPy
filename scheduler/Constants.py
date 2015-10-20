@@ -78,6 +78,7 @@ JOB_START_PROC_TIME = 'StartProcTime'  # TIMESTAMP
 JOB_FINISH_PROC_TIME = 'FinishProcTime'  # TIMESTAMP
 JOB_LOG_PATH = 'Log_Path'  # TEXT
 JOB_PROCESS_NODE_ID = 'Process_Node_Id'  # INTEGER
+JOB_EMAILS = 'Emails' # TEXT comma separated
 
 # ===================================== General Keys =======================================
 STR_JOB_LOG_DIR_NAME = 'job_logs'
@@ -87,3 +88,20 @@ EMAIL_SUBJECT_ERROR = 'MapsPy Job Failed'
 EMAIL_SUBJECT_COMPLETED = 'MapsPy Job Completed'
 EMAIL_MESSAGE_ERROR = 'MapsPy Job Failed: \n'
 EMAIL_MESSAGE_COMPLETED = 'MapsPy Job Completed: \n'
+
+# ===================================== HDF5 Groups =======================================
+HDF5_GRP_MAPS = 'MAPS'
+HDF5_GRP_XRF_ROI = 'XRF_roi'
+HDF5_GRP_XRF_ROI_PLUS = 'XRF_roi_plus'
+HDF5_GRP_XRF_FITS = 'XRF_fits'
+HDF5_GRP_CHANNEL_NAMES = 'channel_names'
+
+# ===================================== Directories =======================================
+DIR_MDA = 'mda'
+DIR_OUTPUT_OLD = 'output_old'
+DIR_OUTPUT_FITS = 'output.fits'
+DIR_PCA = 'pca.dir'
+DIR_IMG_DAT = 'img.dat'
+DIR_LINE_DAT = 'line.dat'
+DIR_XANES_DAT = 'xanes.dat'
+DIR_FLY_DAT = 'fly.dat'

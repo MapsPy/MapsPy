@@ -560,147 +560,139 @@
     <title> MapsPy Scheduler </title>
   </head>
   <body>
-    <div id="process_nodes_div">
-        <table id="process_node_table" class="display_table">
-         <thead>
-           <tr>
-            <th></th>
-            <th>Computer Name </th>
-            <th>Status</th>
-            <th>Max Threads</th>
-            <th>Heartbeat</th>
-            <th>System CPU %</th>
-            <th>System Memory %</th>
-            <th>System Swap %</th>
-           </tr>
-         </thead>
-        </table>
-     </div>
-      <br>
-      <br>
-     <div id="jobs_div">
-    <table id="table_unprocessed_jobs" class="display_table">
-        <thead>
-        <tr>
-            <th></th>
-            <th>Queued Jobs</th>
-            <th>Path</th>
-            <th>Status</th>
-            <th>Analysis</th>
-        </tr>
-        </thead>
-    </table>
-    <br>
-    <table id="table_processing_jobs" class="display_table">
-        <thead>
-        <tr>
-            <th></th>
-            <th>Processing Jobs</th>
-            <th>Path</th>
-            <th>Status</th>
-            <th>Analysis</th>
-        </tr>
-        </thead>
-    </table>
-    <br>
-    <table id="table_finished_jobs" class="display_table">
-        <thead>
-        <tr>  
-            <th></th>
-            <th>Finished Jobs</th>
-            <th>Path</th>
-            <th>Status</th>
-            <th>Analysis</th>
-        </tr>
-        </thead>
-    </table>
-     </div>
-
-
     <div class="tabs">
-    <ul class="tab-links">
-        <li class="active"><a href="#tab1">2-ID-E</a></li>
- <!--       <li><a href="#tab2">2-ID-D</a></li>  -->
-    </ul>
- 
-    <div class="tab-content">
-        <div id="tab1" class="tab active">
-            <p>2-ID-E</p>
+        <ul class="tab-links">
+            <li class="active"><a href="#tab1">Status</a></li>
+            <li><a href="#tab2">Submit</a></li> 
+        </ul>
 
-        <!--   <form> -->
-             <fieldset>
-               <legend>Job Information:</legend>
-               Job Path:
-               <input type="text" id="DataPath" value="/"> <button id='Btn-Brouse-2IDE'>Browse</button>
-               <div id="browse-jobs" class="overlay">
-                    <div class="popup">
-                        <h2>Jobs</h2>
-                        <a class="close" href="/">&times;</a>
-                        <div class="content"> 
-                            <div id='jstree'>
-
-                            </div>
-                        </div>
-                        <button id='Btn-Select-Dir'>Select</button>
-                    </div>
-                </div>
-               <input type="checkbox" id="chk_all_datasets">All Datasets
-                        <select id="datasets_list" multiple>
-                        </select>
-               <br>
-                <input type="checkbox" id="analysis-type-a" value="A">A: Analyze datasets using ROI and ROI+<br>
-                <input type="checkbox" id="analysis-type-b" value="B">B: Extract integrated spectra from analyzed files and fit the spectra to optimize fit parameters<br>
-                <input type="checkbox" id="analysis-type-c" value="C">C: Analyze datasets using ROI, ROI+ and per pixel fitting<br>
-<!--                <input type="checkbox" id="analysis-type-d" value="D">D: N/A<br> -->
-                <input type="checkbox" id="analysis-type-e" value="E">E: Add exchange information to analyzed files<br>
-                <input type="checkbox" id="analysis-type-f" value="F">F: Create hdf5 file from single line netcdf files for flyscan<br>
-                Total Number of Detectors:
-                <input type="text" id="option-detector-elements" value="4"><br>
-                Detector to start with:
-                <input type="text" id="option-detector-to-start-with" value="0"><br>
-                Number of <b>files</b> to process simultaneously:
-                <input type="text" id="option-proc-per-file" value="1"> <br>
-                Number of <b>lines</b> to process simultaneously:
-                <input type="text" id="option-proc-per-line" value="1"><br>
-                Priority (1 highest - 10 lowest): 
-                <select id="priority">
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4">4</option>
-                    <option value="5">5</option>
-                    <option value="6">6</option>
-                    <option value="7">7</option>
-                    <option value="8">8</option>
-                    <option value="9">9</option>
-                    <option value="10">10</option>
-                </select><br>
-                <input type="checkbox" id="option-quick-and-dirty">Quick and Dirty
-                <input type="checkbox" id="option-xrf-bin">XRF Bin
-                <input type="checkbox" id="option-nnls">NNLS
-                <input type="checkbox" id="option-xanes">XANES Scan
+        <div class="tab-content">
+            <div id="tab1" class="tab active">
+          
+                <div id="process_nodes_div">
+                    <table id="process_node_table" class="display_table display">
+                     <thead>
+                       <tr>
+                        <th></th>
+                        <th>Computer Name </th>
+                        <th>Status</th>
+                        <th>Max Threads</th>
+                        <th>Heartbeat</th>
+                        <th>System CPU %</th>
+                        <th>System Memory %</th>
+                        <th>System Swap %</th>
+                       </tr>
+                     </thead>
+                    </table>
+                 </div>
                 <br>
-                Process Node:
-                <select id="proc_node_option">
-                    <option value="-1">Any
-                </select>
-                Email Address on Completion (comma separated)<input type="text" id="option-emails" value="">
-<!--
-            write_hdf = 0
--->
-               <br><br>
-               <button id="Btn-Submit-Job">Submit Job</button>
-             </fieldset>
-         </div>
- <!--
-        <div id="tab2" class="tab">
-            <p>2-ID-D</p>
-            <p>Submit Job</p>
-        </div>
- -->
-    </div>
-    </div>
+                <br>
+                <br>
+                <br>
+                <div id="jobs_div">
+                    <table id="table_unprocessed_jobs" class="display_table display">
+                        <thead>
+                        <tr>
+                            <th></th>
+                            <th>Queued Jobs</th>
+                            <th>Path</th>
+                            <th>Status</th>
+                            <th>Analysis</th>
+                        </tr>
+                        </thead>
+                    </table>
+                    <br>
+                    <table id="table_processing_jobs" class="display_table display">
+                        <thead>
+                        <tr>
+                            <th></th>
+                            <th>Processing Jobs</th>
+                            <th>Path</th>
+                            <th>Status</th>
+                            <th>Analysis</th>
+                        </tr>
+                        </thead>
+                    </table>
+                    <br>
+                    <table id="table_finished_jobs" class="display_table display">
+                        <thead>
+                        <tr>  
+                            <th></th>
+                            <th>Finished Jobs</th>
+                            <th>Path</th>
+                            <th>Status</th>
+                            <th>Analysis</th>
+                        </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
 
-    
+            <div id="tab2" class="tab">
+                <fieldset>
+                  <legend>Job Information:</legend>
+                  Job Path:
+                  <input type="text" id="DataPath" value="/"> <button id='Btn-Brouse-2IDE'>Browse</button>
+                  <div id="browse-jobs" class="overlay">
+                       <div class="popup">
+                           <h2>Jobs</h2>
+                           <a class="close" href="/">&times;</a>
+                           <div class="content"> 
+                               <div id='jstree'>
+
+                               </div>
+                           </div>
+                           <button id='Btn-Select-Dir'>Select</button>
+                       </div>
+                   </div>
+                  <input type="checkbox" id="chk_all_datasets">All Datasets
+                           <select id="datasets_list" multiple>
+                           </select>
+                  <br>
+                   <input type="checkbox" id="analysis-type-a" value="A">A: Analyze datasets using ROI and ROI+<br>
+                   <input type="checkbox" id="analysis-type-b" value="B">B: Extract integrated spectra from analyzed files and fit the spectra to optimize fit parameters<br>
+                   <input type="checkbox" id="analysis-type-c" value="C">C: Analyze datasets using ROI, ROI+ and per pixel fitting<br>
+                   <!--<input type="checkbox" id="analysis-type-d" value="D">D: N/A<br> -->
+                   <input type="checkbox" id="analysis-type-e" value="E">E: Add exchange information to analyzed files<br>
+                   <input type="checkbox" id="analysis-type-f" value="F">F: Create hdf5 file from single line netcdf files for flyscan<br>
+                   Total Number of Detectors:
+                   <input type="text" id="option-detector-elements" value="4"><br>
+                   Detector to start with:
+                   <input type="text" id="option-detector-to-start-with" value="0"><br>
+                   Number of <b>files</b> to process simultaneously:
+                   <input type="text" id="option-proc-per-file" value="1"> <br>
+                   Number of <b>lines</b> to process simultaneously:
+                   <input type="text" id="option-proc-per-line" value="1"><br>
+                   Priority (1 highest - 10 lowest): 
+                   <select id="priority">
+                       <option value="1">1</option>
+                       <option value="2">2</option>
+                       <option value="3">3</option>
+                       <option value="4">4</option>
+                       <option value="5">5</option>
+                       <option value="6">6</option>
+                       <option value="7">7</option>
+                       <option value="8">8</option>
+                       <option value="9">9</option>
+                       <option value="10">10</option>
+                   </select><br>
+                   <input type="checkbox" id="option-quick-and-dirty">Quick and Dirty
+                   <input type="checkbox" id="option-xrf-bin">XRF Bin
+                   <input type="checkbox" id="option-nnls">NNLS
+                   <input type="checkbox" id="option-xanes">XANES Scan
+                   <br>
+                   Process Node:
+                   <select id="proc_node_option">
+                       <option value="-1">Any
+                   </select>
+                   Email Address on Completion (comma separated)<input type="text" id="option-emails" value="">
+                  <br>
+                  <br>
+                  <button id="Btn-Submit-Job">Submit Job</button>
+                </fieldset>
+            </div>
+        </div>
+    </div>
+          
   </body>
 </html>

@@ -46,6 +46,9 @@ import logging.handlers
 import threading
 from datetime import datetime
 import Constants
+import h5py
+import StringIO
+import scipy.misc
 
 db = DatabasePlugin(cherrypy.engine, SQLiteDB)
 
@@ -129,10 +132,11 @@ class Scheduler(object):
 				else:
 					subject = Constants.EMAIL_SUBJECT_ERROR
 					mesg = Constants.EMAIL_MESSAGE_ERROR
+				image_dict = self._get_images_from_hdf(job)
 				for key in job.iterkeys():
-					mesg += key + ': '+str(job[key]) + '\n'
+					mesg += key + ': ' + str(job[key]) + '\n'
 				try:
-					self.mailman.send(job[Constants.JOB_EMAILS], subject, mesg)
+					self.mailman.send(job[Constants.JOB_EMAILS], subject, mesg, image_dict)
 				except:
 					exc_str = traceback.format_exc()
 					print datetime.now(), exc_str
@@ -169,6 +173,53 @@ class Scheduler(object):
 			self.job_lock.release()
 			exc_str = traceback.format_exc()
 			print datetime.now(), exc_str
+
+	def _get_images_from_hdf(self, job):
+		images_dict = None
+		try:
+			# create image dictionary
+			images_dict = {}
+			# check how many datasets are in job
+			file_name = ''
+			file_dir = os.path.join(job[Constants.JOB_DATA_PATH], Constants.DIR_IMG_DAT)
+			# will only check one file for images
+			if job[Constants.JOB_DATASET_FILES_TO_PROC] == 'all':
+				print 'Warning: Too many datasets to parse images from'
+				return None
+			else:
+				temp_names = job[Constants.JOB_DATASET_FILES_TO_PROC].split(',')
+				if len(temp_names) > 1:
+					print 'Warning: Can only parse one dataset for images, dataset list is', job[Constants.JOB_DATASET_FILES_TO_PROC]
+					return None
+				temp_name = job[Constants.JOB_DATASET_FILES_TO_PROC]
+				hdf_file_name = temp_name.replace('.mda', '.h5')
+				full_file_name = os.path.join(file_dir, hdf_file_name)
+
+			hdf_file = h5py.File(full_file_name, 'r')
+			maps_group = hdf_file[Constants.HDF5_GRP_MAPS]
+			proc_mask = job[Constants.JOB_PROC_MASK]
+			if proc_mask & 1 == 1:
+				xrf_roi_dataset = maps_group[Constants.HDF5_GRP_XRF_ROI]
+			elif proc_mask & 4 == 4:
+				xrf_roi_dataset = maps_group[Constants.HDF5_GRP_XRF_FITS]
+			else:
+				print 'Warning: ', file_name, ' did not process XRF_ROI or XRF_FITS'
+				return None
+
+			channel_names = maps_group[Constants.HDF5_GRP_CHANNEL_NAMES]
+			if channel_names.shape[0] != xrf_roi_dataset.shape[0]:
+				print 'Warning: ', file_name, ' Datasets', Constants.HDF5_GRP_XRF_ROI, '[', xrf_roi_dataset.shape[0], '] and ', Constants.HDF5_GRP_CHANNEL_NAMES, '[' , channel_names.shape[0], '] length missmatch'
+				return None
+
+			for i in range(channel_names.size):
+				outbuf = StringIO.StringIO()
+				img = scipy.misc.toimage(xrf_roi_dataset[i], mode='L')
+				img.save(outbuf, format='PNG')
+				name = 'channel_' + channel_names[i] + '.png'
+				images_dict[name] = outbuf.getvalue()
+		except:
+			images_dict = None
+		return images_dict
 
 	def _setup_logging_(self, log, logtype, logname):
 		max_bytes = getattr(log, "rot_maxBytes", 20971520)  # 20Mb

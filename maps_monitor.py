@@ -154,7 +154,7 @@ def main(mySettings):
 			f.write(strftime("%Y-%m-%d %H:%M:%S", gmtime())+'\n')
 			f.write('found a job waiting, in file: '+ filenames[0]+'\n')
 			f.close()	
-						
+
 			time.sleep(5)
 
 			standard_filenames = []

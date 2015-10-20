@@ -47,6 +47,7 @@ import maps_fit_parameters
 import maps_calibration
 import make_maps
 from file_io.file_util import open_file_with_retry, call_function_with_retry
+import Constants
 
 
 # ------------------------------------------------------------------------------------------------
@@ -991,7 +992,7 @@ def maps_batch(wdir='', a=1,b=0,c=0,d=0,e=0, cb_update_func=None):
 						main_dict['beamline'] = str(value).strip()
 					elif tag == 'STANDARD':
 						main_dict['standard_filenames'].append(str(value).strip())
-					elif tag == 'DatasetFilesToProc':
+					elif tag == Constants.JOB_DATASET_FILES_TO_PROC:
 						main_dict['dataset_files_to_proc'] = str(value).replace('\\', '/').strip().split(',')
 			except:
 				print 'Error parsing tag [', tag, '] values [', value, ']'
