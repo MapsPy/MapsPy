@@ -172,7 +172,7 @@ class mda:
 	def mp_array_to_np_array(self, x, y, sp, det):
 		n_size = 0
 		n_shape = (1,)
-		if det is None:
+		if det == None:
 			n_size = x * y * sp
 			n_shape = (x, y, sp)
 		else:
@@ -191,7 +191,7 @@ class mda:
 		verbose = False
 		
 		data_file = open_file_with_retry(str(filename), 'rb')
-		if data_file is None:
+		if data_file == None:
 			return None
 		
 		if verbose:

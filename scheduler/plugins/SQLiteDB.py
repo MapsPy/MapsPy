@@ -129,7 +129,7 @@ class SQLiteDB:
 	def _get_proc_node(self, sql_statement, opt_dict=None):
 		con = sql.connect(self.uri)
 		cur = con.cursor()
-		if opt_dict is None:
+		if opt_dict == None:
 			cur.execute(sql_statement)
 		else:
 			cur.execute(sql_statement, opt_dict)
@@ -145,7 +145,7 @@ class SQLiteDB:
 	def _get_jobs_(self, sql_statement, opt_dict=None):
 		con = sql.connect(self.uri)
 		cur = con.cursor()
-		if opt_dict is None:
+		if opt_dict == None:
 			cur.execute(sql_statement)
 		else:
 			cur.execute(sql_statement, opt_dict)

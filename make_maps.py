@@ -144,7 +144,7 @@ def main(main_dict, force_fit=0, no_fit=False, cb_update_func=None):
 			maps_overridefile = os.path.join(main_dict['master_dir'], 'maps_fit_parameters_override.txt') + suffix
 			try:
 				f = open_file_with_retry(maps_overridefile, 'rt', 2, 0.4, 0.2)
-				if f is None:
+				if f == None:
 					maps_overridefile = os.path.join(main_dict['master_dir'], 'maps_fit_parameters_override.txt')
 				else:
 					print maps_overridefile, ' exists.'

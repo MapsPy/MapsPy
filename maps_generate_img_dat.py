@@ -413,7 +413,7 @@ class analyze:
 		filename = os.path.join(self.main_dict['fly_dat_dir'], header + '.fly.dat')
 
 		data_file = open_file_with_retry(str(filename), 'wb')
-		if data_file is None:
+		if data_file == None:
 			print 'Error: (maps_core_generate_fly_dat) failed to open file to write to :', filename
 			return None
 		data_file.write(struct.pack('>iiiii', 0, XRFmaps_info.version, n_channels, scan.x_pixels, scan.y_pixels))
@@ -1412,7 +1412,7 @@ class analyze:
 						bkgnd[start+iline, :] = bkgnd_line[:]
 						tfy[start+iline, :] = tfy_line[:]
 
-						if fitted_line is None:
+						if fitted_line == None:
 							continue
 
 						for jj in range(n_rows):
@@ -1467,7 +1467,7 @@ class analyze:
 												output_dir, n_rows, matrix, spectral_binning, elt_line, values_line, bkgnd_line, tfy_line,
 												info_elements, fitp, old_fitp, fitp.add_pars, keywords, add_matrixfit_pars, xrf_bin, calib)
 
-						if fitted_line is None:
+						if fitted_line == None:
 							continue
 
 						for jj in range(n_rows):
@@ -1617,7 +1617,7 @@ class analyze:
 			gzip = 7
 
 			f = call_function_with_retry(h5py.File, 5, 0.1, 1.1, (filename, 'w'))
-			if f is None:
+			if f == None:
 				print 'maps_generate_img_dat: Error opening file ', filename
 			else:
 				# create a group for maps to hold the data
@@ -1758,7 +1758,7 @@ class analyze:
 					print 'Error calling h5p.maps_change_xrf_read_hdf5(', sfile, make_maps_conf, ')'
 					return
 				f = call_function_with_retry(h5py.File, 5, 0.1, 1.1, (sfile, 'r'))
-				if f is None:
+				if f == None:
 					print 'Error opening file ', sfile
 					return
 				if 'MAPS' not in f:
@@ -2037,7 +2037,7 @@ class analyze:
 						allspectra[:, 1] = this_spec
 
 						file_ptr = open_file_with_retry(file_csv, 'wb')
-						if file_ptr is None:
+						if file_ptr == None:
 							print 'Error opening file:', file_csv
 						else:
 							writer = csv.writer(file_ptr)

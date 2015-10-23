@@ -197,7 +197,7 @@ class ProcessNode(object):
 			print datetime.now(), 'Error sending post'
 		self.pn_info[Constants.PROCESS_NODE_STATUS] = Constants.PROCESS_NODE_STATUS_IDLE
 		# start status thread
-		if self.status_thread is None:
+		if self.status_thread == None:
 			self.status_thread = threading.Thread(target=self.status_thread_func)
 			self.status_thread.start()
 		self.new_job_event.set() # set it at start to check for unfinished jobs

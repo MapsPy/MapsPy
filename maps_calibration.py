@@ -42,9 +42,30 @@ import maps_definitions
 import maps_analyze
 import maps_fit_parameters
 import maps_tools
+import glob
 import henke
+from file_io import maps_mda
 from file_io.file_util import open_file_with_retry
 #from file_io.mca_io import load_mca
+
+def index_full_str_search(str_list, search_str):
+	try:
+		return str_list.index(search_str)
+	except:
+		return -1
+
+def index_partial_str_search(str_list, search_str):
+	for idx in range(len(str_list)):
+		if str_list[idx].find(search_str) > -1:
+			return idx
+	return -1
+
+
+def find_str_idx(str_list, search_list):
+	for search_str in search_list:
+		idx = index_full_str_search(str_list, search_str)
+		if idx > -1:
+			return idx
 
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
@@ -53,33 +74,179 @@ class calibration:
 		self.maps_conf = maps_conf
 		self.main_dict = main_dict
 
+	def convert_mda_to_mca(self, mda_filename, mca_filename):
+		mda_scan = maps_mda.mda()
+		scan = mda_scan.read_scan(mda_filename)
+		num_detectors = 1
+		det_shape_len = len(scan.detector_arr.shape)
+		if len(scan.mca_arr.shape) > 3:
+			num_detectors = scan.mca_arr.shape[3]
+		for i in range(num_detectors):
+			mca_file = open_file_with_retry(mca_filename + str(i), 'wt')
+			mca_file.write('VERSION:    3.1\r\n')
+			mca_file.write('ELEMENTS:    1\r\n')
+			mca_file.write('DATE:    ' + scan.scan_time_stamp + '\r\n')
+			mca_file.write('CHANNELS:    ' + str(scan.mca_arr.shape[2]) + '\r\n')
+			real_time_str_list = ['dxpXMAP2xfm3:mca' + str(i + 1) + '.ERTM',
+								  '2xfm:mca1.ERTM',
+								  '2xfm2:dxpSaturn:mca1.ERTM',
+								  'dxpVortexSDD:mca1.ERTM'
+								  '2iddXMAP:mca' + str(i + 1) + '.ERTM',
+								  '21:D3win:mca' + str(i + 1) + '.ERTM',
+								  'dxpXMAPDP3:mca' + str(i + 1) + '.ERTM',
+								  '26idcXMAP:mca' + str(i + 1) + '.ERTM']
+			live_time_str_list = ['dxpXMAP2xfm3:mca' + str(i + 1) + '.ELTM',
+								  '2xfm2:dxpSaturn:mca1.ELTM',
+								  '2iddXMAP:mca' + str(i + 1) + '.ELTM',
+								  '21:D3win:mca' + str(i + 1) + '.ELTM',
+								  'dxpXMAPDP3:mca' + str(i + 1) + '.ELTM',
+								  '26idcXMAP:mca' + str(i + 1) + '.ELTM',
+								  'dxpVortexSDD:mca1.ELTM']
+			input_cnt_str_list = ['dxpXMAP2xfm3:dxp' + str(i + 1) + ':InputCountRate',
+								  '2iddXMAP:dxp' + str(i + 1) + ':InputCountRate',
+								  '21:D3win:dxp' + str(i + 1) + ':InputCountRate',
+								  'dxpXMAPDP3:dxp' + str(i + 1) + ':InputCountRate',]
+			output_cnt_str_list = ['dxpXMAP2xfm3:dxp' + str(i + 1) + ':OutputCountRate',
+								  '2iddXMAP:dxp' + str(i + 1) + ':OutputCountRate',
+								  '21:D3win:dxp' + str(i + 1) + ':OutputCountRate',
+								  'dxpXMAPDP3:dxp' + str(i + 1) + ':OutputCountRate',]
+			idx_rt = find_str_idx(scan.detector_description_arr, real_time_str_list)
+			idx_lt = find_str_idx(scan.detector_description_arr, live_time_str_list)
+			idx_incnt = find_str_idx(scan.detector_description_arr, input_cnt_str_list)
+			idx_outcnt = find_str_idx(scan.detector_description_arr, output_cnt_str_list)
+			if idx_rt > -1 and idx_lt > -1:
+				if det_shape_len == 2:
+					mca_file.write('REAL_TIME:    ' + str(scan.detector_arr[:, idx_rt].sum()) + '\r\n')
+					rt_sum = scan.detector_arr[:, idx_rt].sum()
+					in_sum = scan.detector_arr[:, idx_incnt].sum()
+					out_sum = scan.detector_arr[:, idx_outcnt].sum()
+					if rt_sum > 0.0 and in_sum > 0.0 and out_sum > 0.0:
+						elt1_arr = rt_sum * out_sum / in_sum
+						mca_file.write('LIVE_TIME:    ' + str(elt1_arr) + '\r\n')
+					else:
+						mca_file.write('LIVE_TIME:    ' + str(scan.detector_arr[:, idx_lt].sum()) + '\r\n')
+				elif det_shape_len == 3:
+					mca_file.write('REAL_TIME:    ' + str(scan.detector_arr[:, :, idx_rt].sum()) + '\r\n')
+					rt_sum = scan.detector_arr[:, :, idx_rt].sum()
+					in_sum = scan.detector_arr[:, :, idx_incnt].sum()
+					out_sum = scan.detector_arr[:, :, idx_outcnt].sum()
+					if rt_sum > 0.0 and in_sum > 0.0 and out_sum > 0.0:
+						elt1_arr = rt_sum * out_sum / in_sum
+						mca_file.write('LIVE_TIME:    ' + str(elt1_arr) + '\r\n')
+					else:
+						mca_file.write('LIVE_TIME:    ' + str(scan.detector_arr[:, :, idx_lt].sum()) + '\r\n')
+			idx = index_partial_str_search(scan.mca_calib_description_arr, 'mca' + str(i + 1) + '.CALO')
+			if idx > -1:
+				mca_file.write('CAL_OFFSET:    ' + str(scan.mca_calib_arr[idx]) + '\r\n')
+			else:
+				mca_file.write('CAL_OFFSET:    0\r\n')
+			idx = index_partial_str_search(scan.mca_calib_description_arr, 'mca' + str(i + 1) + '.CALS')
+			if idx > -1:
+				mca_file.write('CAL_SLOPE:    ' + str(scan.mca_calib_arr[idx]) + '\r\n')
+			else:
+				mca_file.write('CAL_SLOPE:    0\r\n')
+			mca_file.write('CAL_QUAD:    0\r\n')
+			bnp_ds_sum = 0.0
+			for idx in range(len(scan.detector_description_arr)):
+				if scan.detector_description_arr[idx].find('scaler') > -1 or scan.detector_description_arr[idx].find('current') > -1:
+					if det_shape_len == 2:
+						mca_file.write('ENVIRONMENT:    ' + str(scan.detector_description_arr[idx]) + '="' + str(scan.detector_arr[:, idx].mean()) + '"\r\n')
+					elif det_shape_len == 3:
+						mca_file.write('ENVIRONMENT:    ' + str(scan.detector_description_arr[idx]) + '="' + str(scan.detector_arr[:, :, idx].mean()) + '"\r\n')
+				else:
+					if det_shape_len == 2:
+						mca_file.write('ENVIRONMENT:    ' + str(scan.detector_description_arr[idx]) + '="' + str(scan.detector_arr[:, idx].sum()) + '"\r\n')
+					elif det_shape_len == 3:
+						mca_file.write('ENVIRONMENT:    ' + str(scan.detector_description_arr[idx]) + '="' + str(scan.detector_arr[:, :, idx].sum()) + '"\r\n')
+				if scan.detector_description_arr[idx].find('21:D3:scaler1_cts1.B') > -1:
+					bnp_ds_sum += scan.detector_arr[:, :, idx].mean()
+				if scan.detector_description_arr[idx].find('21:D3:scaler1_cts1.C') > -1:
+					bnp_ds_sum += scan.detector_arr[:, :, idx].mean()
+				if scan.detector_description_arr[idx].find('21:D3:scaler1_cts1.D') > -1:
+					bnp_ds_sum += scan.detector_arr[:, :, idx].mean()
+				if scan.detector_description_arr[idx].find('21:D3:scaler1_cts2.A') > -1:
+					bnp_ds_sum += scan.detector_arr[:, :, idx].mean()
+			for idx in range(len(scan.mca_calib_description_arr)):
+				mca_file.write('ENVIRONMENT:    ' + str(scan.mca_calib_description_arr[idx]) + '="' + str(scan.mca_calib_arr[idx]) + '"\r\n')
+			if bnp_ds_sum > 0.0:
+				mca_file.write('ENVIRONMENT:  21:D3:scaler1_cts3.A="' + str(bnp_ds_sum) + '"')
+			for idx in range(len(scan.extra_pv_key_list)):
+				mca_file.write('ENVIRONMENT:  ' + str(scan.extra_pv_key_list[idx]) + '="' + str(scan.extra_pv[idx]) + '"')
+			mca_file.write('Data:\r\n')
+			for idx in range(scan.mca_arr.shape[2]):
+				if det_shape_len == 2:
+					mca_file.write(str(scan.mca_arr[:, idx, i].sum()))
+				elif det_shape_len == 3:
+					mca_file.write(str(int(scan.mca_arr[:, :, idx, i].sum())) + '\r\n')
+			mca_file.close()
+		# end for each detector
+
+	def generage_std_info_for_axo(self):
+		maps_standardInfoFilename = os.path.join(self.main_dict['master_dir'], 'maps_standardinfo.txt')
+		print 'creating ', maps_standardInfoFilename
+		standardInfoFile = open_file_with_retry(maps_standardInfoFilename, 'w')
+		if standardInfoFile != None:
+			standardInfoFile.write('\tThis file describes arbitrary standard reference materials\r\n')
+			standardInfoFile.write('\tplease put the filename that contains the measured standard next. if it was acquired using a multi element detector, please list just the mca0 file\r\n')
+			standardInfoFile.write('FILENAME:      axo_std.mca\r\n')
+			standardInfoFile.write('\tplease put the comma seperated list of elements in the standard\r\n')
+			standardInfoFile.write('ELEMENTS_IN_STANDARD: Ca, Fe, Cu\r\n')
+			standardInfoFile.write('\tplease put the weight (area density) in ug/cm2 for each of the elements above\r\n')
+			standardInfoFile.write('WEIGHT:       1.931, 0.504, 0.284\r\n')
+			standardInfoFile.flush()
+			standardInfoFile.close()
+			standardInfoFile = open_file_with_retry(maps_standardInfoFilename, 'r')
+		return standardInfoFile
+
+	def search_for_axo(self):
+		search_path = os.path.join(self.main_dict['master_dir'], 'axo_std.mca*')
+		print 'Searching for ', search_path
+		file_list = glob.glob(search_path)
+		if len(file_list) < 1:
+			print 'Nothing found.'
+			search_path = os.path.join(self.main_dict['mda_dir'], 'axo_std.mda')
+			print 'Searching for ', search_path
+			file_list = glob.glob(search_path)
+			if len(file_list) < 1:
+				print 'Nothing found.'
+				return None
+			else:
+				# create axo_std
+				self.convert_mda_to_mca(file_list[0], os.path.join(self.main_dict['master_dir'], 'axo_std.mca'))
+		# found axo_std, make maps_standardinfo.txt and return file handle
+		return self.generage_std_info_for_axo()
+
 	# -----------------------------------------------------------------------------
 	def read_generic_calibration(self, this_detector, total_number_detectors, no_nbs, fitp, info_elements):
-		#read info from maps_standardinfo.txt
+		# read info from maps_standardinfo.txt
 		maps_standardInfoFilename = os.path.join(self.main_dict['master_dir'], 'maps_standardinfo.txt')
 		print 'opening ', maps_standardInfoFilename
 		standardInfoFile = open_file_with_retry(maps_standardInfoFilename, 'rt') 
-		if standardInfoFile is None:
-			return
+		if standardInfoFile == None:
+			# try to look for axo mda and create std calib from it.
+			standardInfoFile = self.search_for_axo()
+			if standardInfoFile == None:
+				print 'Warning: Could not load maps_standardinfo.txt.'
+				return False
 		# parse the file for filename, elements, and weights
 		standardinfo_dict = dict()
 		line = standardInfoFile.readline()
-		while len(line) > 0 :
-			#print 'line = ',line
+		while len(line) > 0:
+			# print 'line = ',line
 			if line.find(':') > -1:
 				subline = line.split(':')
 				standardinfo_dict[subline[0].strip().rstrip()] = subline[1].strip().rstrip()
 			line = standardInfoFile.readline()
-		#check that all keys exist
+		# check that all keys exist
 		if not 'FILENAME' in standardinfo_dict:
 			print 'Warning: Could not find key FILENAME in maps_standardinfo.txt, returning'
-			return
+			return False
 		if not 'ELEMENTS_IN_STANDARD' in standardinfo_dict:
 			print 'Warning: Could not find key ELEMENTS_IN_STANDARD in maps_standardinfo.txt, returning'
-			return
+			return False
 		if not 'WEIGHT' in standardinfo_dict:
 			print 'Warning: Could not find key WEIGHT in maps_standardinfo.txt, returning'
-			return
+			return False
 		print standardinfo_dict
 		'''
 		#open standards file 
@@ -89,7 +256,7 @@ class calibration:
 		mca_dict = load_mca(standardFilename)
 		if mca_dict['success'] == False:
 			print 'Error loading',standardFilename
-			return
+			return False
 		'''
 		e_list = [x.strip().rstrip() for x in standardinfo_dict['ELEMENTS_IN_STANDARD'].split(',')]
 		weight_list = [float(x) for x in standardinfo_dict['WEIGHT'].split(',')]
@@ -176,7 +343,7 @@ class calibration:
 			have_standard = 1
 		except: 
 			print 'Could not open standard: ', std.name
-			return
+			return False
 
 		if have_standard == 1:
 			filename = os.path.join(self.main_dict['master_dir'], std.name)
@@ -185,8 +352,8 @@ class calibration:
 																														srcurrent_name=srcurrent_name,
 																														us_ic_name=us_ic_name,
 																														ds_ic_name=ds_ic_name)
-			if calibration is None:
-				return
+			if calibration == None:
+				return False
 
 			if data.size <=1 :
 				print 'error: standard does not contain data : ' + std.name
@@ -268,22 +435,22 @@ class calibration:
 					u, fitted_spec, background, xmin, xmax, perror = fit.fit_spectrum(fitp, this_spectrum, used_chan, calib,
 								first=first, matrix=True, maxiter=maxiter)
 
-					if u is None:
+					if u == None:
 						print 'Error calling fit_spectrum!. returning'
-						return None, None, None
+						return False
 
 				fitp.g.no_iters = 4
 
 				if self.maps_conf.use_fit == 2:
 					this_w_uname = "DO_FIT_ALL_W_TAILS"
 					fitp, avg_fitp, spectra = self.do_fits(this_w_uname, fitp, spectra, per_pix=1, generate_img=1, maxiter=maxiter, suffix=suffix, info_elements=info_elements)
-					if fitp is None:
-						return
+					if fitp == None:
+						return False
 				else:
 					this_w_uname = "DO_MATRIX_FIT"
 					fitp, avg_fitp, spectra = self.do_fits(this_w_uname, fitp, spectra, per_pix=1, generate_img=1, maxiter=maxiter, suffix=suffix, info_elements=info_elements)
-					if fitp is None:
-						return
+					if fitp == None:
+						return False
 
 				std.calibration.offset[0] = fitp.s.val[0]
 				std.calibration.slope[0] = fitp.s.val[1]
@@ -402,7 +569,7 @@ class calibration:
 			print 'this override filename: ', maps_overridefile, ' exists.'
 		except :
 			print 'Warning: did not find the following file: ', maps_overridefile, '	Please make sure the file is present in the parent directory, and try again. For now, I am aborting this action.'
-			return
+			return False
 
 		for line in f:
 			if ':' in line : 
@@ -756,7 +923,7 @@ class calibration:
 		self.maps_conf.e_cal = e_cal
 		self.calibration_write_info(old_ratio=old_ratio, suffix=suffix, aux_arr=aux_arr, info_elements=info_elements)
 
-		return
+		return True
 
 	# -----------------------------------------------------------------------------
 	def lookup_axo_standard_weight(self, this_element):
@@ -833,7 +1000,7 @@ class calibration:
 		live_time = 0
 
 		f = open_file_with_retry(filename, 'rt')
-		if f is None:
+		if f == None:
 			print 'Could not open file:', filename
 			return None, None, None, None, None, None, None, None, None, None
 
@@ -1104,7 +1271,7 @@ class calibration:
 																														 srcurrent_name = srcurrent_name, 
 																														 us_ic_name = us_ic_name, 
 																														 ds_ic_name = ds_ic_name)
-			if calibration is None:
+			if calibration == None:
 				return None
 			if self.maps_conf.use_det.sum() > 0:
 				if current == 0:
@@ -1195,7 +1362,7 @@ class calibration:
 
 		try:
 			f = open_file_with_retry(filename, 'w')
-			if f is None:
+			if f == None:
 				print 'Could not open info_file:', filename
 				return
 		except :
@@ -1737,7 +1904,7 @@ class calibration:
 			fit = maps_analyze.analyze()
 			u, fitted_spec, background, xmin, xmax, perror = fit.fit_spectrum(fitp, spectra[wo[i]].data, spectra[wo[i]].used_chan, spectra[wo[i]].calib, 
 							first=first, matrix=matrix, maxiter=maxiter)
-			if u is None:
+			if u == None:
 				print 'Error calling fit_spectrum!. returning'
 				return None, None, None
 
@@ -1759,7 +1926,7 @@ class calibration:
 				for j in range(keywords.kele_pos[0]): fitp.s.use[j] = fitp.s.batch[j, 3]
 				u, fitted_spec, background, xmin, xmax, perror = fit.fit_spectrum(fitp, spectra[wo[i]].data, spectra[wo[i]].used_chan, spectra[wo[i]].calib, 
 																				first=first, matrix=matrix, maxiter=maxiter)
-				if u is None:
+				if u == None:
 					print 'Error calling fit_spectrum!. returning'
 					return None, None, None
 

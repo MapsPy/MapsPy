@@ -47,7 +47,6 @@ import maps_fit_parameters
 import maps_calibration
 import make_maps
 from file_io.file_util import open_file_with_retry, call_function_with_retry
-import Constants
 
 
 # ------------------------------------------------------------------------------------------------
@@ -183,7 +182,7 @@ def load_spectrum(filename, spectra, append=1):
 	ds_amp = np.zeros((3))
 
 	f = open_file_with_retry(filename, 'rt')
-	if f is None:
+	if f == None:
 		print 'load_spectrum(): Could not open file:', filename
 		return
 
@@ -541,7 +540,7 @@ def save_spectrum(main_dict, filename, sfilename):
 	ch5 = maps_hdf5.h5()
 
 	fh5 = call_function_with_retry(h5py.File, 5, 0.1, 1.1, (filename, 'r'))
-	if fh5 is None:
+	if fh5 == None:
 		print 'Error opeing file ', filename
 		return		 
 	if 'MAPS' not in fh5:
@@ -575,7 +574,7 @@ def save_spectrum(main_dict, filename, sfilename):
 
 	print 'saving', sfilename
 	f = open_file_with_retry(sfilename, 'w')
-	if f is None:
+	if f == None:
 		print '-------\nError opening file to write: ',sfilename
 		return
 	#f = open(sfilename, 'w')

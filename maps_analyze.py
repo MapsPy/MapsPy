@@ -1070,7 +1070,7 @@ class analyze:
 			print 'ERROR: r must be a square matrix'
 			return -1
 
-		if ipvt is None:
+		if ipvt == None:
 			print 'ipvrt none'
 			ipvt = np.arange(n)
 

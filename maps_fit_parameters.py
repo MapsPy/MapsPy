@@ -498,7 +498,7 @@ class maps_fit_parameters:
 		verbose = False
 		
 		f = open_file_with_retry(str(filename), 'rt')
-		if f is None:
+		if f == None:
 			return None, None, None
 		for line in f:
 			if ':' in line : 
@@ -964,7 +964,7 @@ class maps_fit_parameters:
 
 		try:
 			f = open_file_with_retry(maps_overridefile, 'rt')
-			if f is None:
+			if f == None:
 				print 'Error opening file ', filename, 'to write to!'
 				return
 			
@@ -1003,7 +1003,7 @@ class maps_fit_parameters:
 			pass
 
 		f = open_file_with_retry(filename, 'w')
-		if f is None:
+		if f == None:
 			print 'Error opening file ', filename, 'to write to!'
 			return
 	

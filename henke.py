@@ -556,7 +556,7 @@ class henke:
 		for i in range(maxz):
 			if z_array[i] != 0.0:
 				energies, this_f1, this_f2, n_extra, extra_energies, extra_f1, extra_f2 = self.read(ielement=i)
-				if energies is None:
+				if energies == None:
 					continue
 				print this_f1.shape
 				if first_time == 1:
