@@ -129,8 +129,8 @@
                     'Priority: '+d.Priority+'<br>'+
                     'Lines processed in parrallel: '+d.MaxLinesToProc+'<br>'+
                     'Files processed in parrallel: '+d.MaxFilesToProc+'<br>'+
-                    //'StartProcTime: '+d.StartProcTime+'<br>'+
-                    //'FinishProcTime: '+d.FinishProcTime+'<br>'+
+                    'StartProcTime: '+d.StartProcTime+'<br>'+
+                    'FinishProcTime: '+d.FinishProcTime+'<br>'+
                     'Dataset Files To Process: ' + d.DatasetFilesToProc +'<br>'+
                     'Process Node: '+$host_name+'<br>'+ 
                     'Email Addresses: '+d.Emails+'<br>'+ 
@@ -254,6 +254,7 @@
             var $xrfbin = get_check_value('#option-xrf-bin');
             var $nnls = get_check_value('#option-nnls');
             var $xanes = get_check_value('#option-xanes');
+            var $is_live_job = get_check_value('#option-is-live-job');
             var $dataset_filenames = 'all';
             var $pn_id = $( "#proc_node_option option:selected" ).attr('value');
             if ( $("#chk_all_datasets")[0].checked === false )
@@ -292,6 +293,7 @@
                     'FinishProcTime': 0,
                     'Log_Path': '',
                     'Emails': $("#option-emails").val(),
+                    'Is_Live_Job': $is_live_job,
                     'Process_Node_Id': parseInt($pn_id, 10),
                     'DatasetFilesToProc': $dataset_filenames
                 }),
@@ -562,8 +564,8 @@
   <body>
     <div class="tabs">
         <ul class="tab-links">
-            <li class="active"><a href="#tab1">Status</a></li>
-            <li><a href="#tab2">Submit</a></li> 
+            <li class="active"><a href="#tab1">Job Status</a></li>
+            <li><a href="#tab2">Submit a new Job</a></li> 
         </ul>
 
         <div class="tab-content">
@@ -680,6 +682,7 @@
                    <input type="checkbox" id="option-xrf-bin">XRF Bin
                    <input type="checkbox" id="option-nnls">NNLS
                    <input type="checkbox" id="option-xanes">XANES Scan
+                   <input type="checkbox" id="option-is-live-job">Live Job
                    <br>
                    Process Node:
                    <select id="proc_node_option">

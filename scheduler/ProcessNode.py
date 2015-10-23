@@ -275,7 +275,7 @@ class ProcessNode(object):
 				print datetime.now(), 'processing job:', job_dict[Constants.JOB_DATA_PATH], 'alias_path: ', alias_path
 				self.pn_info[Constants.PROCESS_NODE_STATUS] = Constants.PROCESS_NODE_STATUS_PROCESSING
 				job_dict[Constants.JOB_STATUS] = Constants.JOB_STATUS_PROCESSING
-				#job_dict[Constants.JOB_START_PROC_TIME] = datetime.now()
+				job_dict[Constants.JOB_START_PROC_TIME] = datetime.ctime(datetime.now())
 				self.db.update_job(job_dict)
 				self.send_job_update(job_dict)
 				self.send_status_update()
@@ -326,7 +326,7 @@ class ProcessNode(object):
 				self.this_process = psutil.Process(proc.pid)
 				proc.join()
 				self.this_process = psutil.Process(os.getpid())
-				#job_dict[Constants.JOB_FINISH_PROC_TIME] = datetime.now()
+				job_dict[Constants.JOB_FINISH_PROC_TIME] = datetime.ctime(datetime.now())
 				print 'finished processing job with status', job_status.value
 				if job_status.value == Constants.JOB_STATUS_PROCESSING:
 					job_dict[Constants.JOB_STATUS] = Constants.JOB_STATUS_GENERAL_ERROR
@@ -336,6 +336,7 @@ class ProcessNode(object):
 				print 'Error processing', job_dict[Constants.JOB_DATA_PATH]
 				traceback.print_exc(file=sys.stdout)
 				sys.stdout = saveout
+				job_dict[Constants.JOB_FINISH_PROC_TIME] = datetime.ctime(datetime.now())
 				job_dict[Constants.JOB_STATUS] = Constants.JOB_STATUS_GENERAL_ERROR
 			self.db.update_job(job_dict)
 			self.send_job_update(job_dict)
