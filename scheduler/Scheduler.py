@@ -122,7 +122,6 @@ class Scheduler(object):
 			return exc_str
 
 	def callback_update_job(self, job):
-		pass
 		if Constants.JOB_STATUS in job and Constants.JOB_EMAILS in job:
 			if job[Constants.JOB_STATUS] > Constants.JOB_STATUS_PROCESSING and len(job[Constants.JOB_EMAILS]) > 0:
 				print datetime.now(), 'sending completed emails'
