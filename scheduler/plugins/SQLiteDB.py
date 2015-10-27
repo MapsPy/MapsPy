@@ -53,8 +53,8 @@ UPDATE_JOB_BY_ID = 'UPDATE Jobs SET DataPath=:DataPath, ProcMask=:ProcMask, Vers
 RESET_PN_STATUS = 'UPDATE ProcessNodes SET Status="Offline", ProcessCpuPercent=0.0, ProcessMemPercent=0.0 WHERE Id>0;'
 
 SELECT_ALL_PROCESS_NODES = 'SELECT Id, ComputerName, NumThreads, Hostname, Port, Status, Heartbeat, ProcessCpuPercent, ProcessMemPercent, SystemCpuPercent, SystemMemPercent, SystemSwapPercent FROM ProcessNodes'
-SELECT_PROCESS_NODE_BY_NAME = 'SELECT Id, ComputerName, NumThreads, Hostname, Port, Status, Heartbeat, ProcessCpuPercent, ProcessMemPercent, SystemCpuPercent, SystemMemPercent, SystemSwapPercent FROM ProcessNodes WHERE ComputerName=:ComputerName'
-SELECT_PROCESS_NODE_BY_ID = 'SELECT Id, ComputerName, NumThreads, Hostname, Port, Status, Heartbeat, ProcessCpuPercent, ProcessMemPercent, SystemCpuPercent, SystemMemPercent, SystemSwapPercent FROM ProcessNodes WHERE Id=:Id'
+SELECT_PROCESS_NODE_BY_NAME = SELECT_ALL_PROCESS_NODES + ' WHERE ComputerName=:ComputerName'
+SELECT_PROCESS_NODE_BY_ID = SELECT_ALL_PROCESS_NODES + ' WHERE Id=:Id'
 SELECT_ALL_JOBS = 'SELECT Id, DataPath, ProcMask, Version, DetectorElements, MaxFilesToProc, MaxLinesToProc, QuickAndDirty, XRF_Bin, NNLS, XANES_Scan, DetectorToStartWith, BeamLine, Standards, DatasetFilesToProc, Priority, Status, StartProcTime, FinishProcTime, Log_Path, Process_Node_Id, Emails, Is_Live_Job FROM Jobs'
 SELECT_ALL_UNPROCESSED_JOBS = SELECT_ALL_JOBS + ' WHERE Status=0'
 SELECT_ALL_PROCESSING_JOBS = SELECT_ALL_JOBS + ' WHERE Status=1'
@@ -219,6 +219,10 @@ if __name__ == '__main__':
 	db.insert_process_node(proc_node)
 	import json
 	result = db.get_all_process_nodes()
+	print ' '
+	d = datetime.strptime(result[0]['Heartbeat'], '%Y-%m-%d %H:%M:%S.%f')
+	print type(d), d
+	print ' '
 	jenc = json.JSONEncoder()
 	print jenc.encode(result)
 	#add job

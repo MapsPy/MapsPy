@@ -108,7 +108,16 @@ class h5:
 			# create dataset and save full spectra
 			data = np.transpose(mca_arr)
 			dimensions = data.shape
-			chunk_dimensions = (dimensions[0], 1, 1)
+			if len(data.shape) == 1:
+				chunk_dimensions = (dimensions[0])
+			elif len(data.shape) == 2:
+				chunk_dimensions = (dimensions[0], 1)
+			elif len(data.shape) == 3:
+				chunk_dimensions = (dimensions[0], 1, 1)
+			elif len(data.shape) == 4:
+				chunk_dimensions = (dimensions[0], 1, 1, 1)
+			else:
+				chunk_dimensions = data.shape
 			comment = 'these are the full spectra at each pixel of the dataset'
 			ds_data = mapsGrp.create_dataset('mca_arr', data = data, chunks=chunk_dimensions, compression='gzip', compression_opts=gzip)
 			ds_data.attrs['comments'] = comment

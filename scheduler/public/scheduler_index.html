@@ -15,6 +15,46 @@
         //--------------------------- gen functions ----------------------------
         //----------------------------------------------------------------------
         
+        function check_heartbeat_timestamp(aData)
+        {
+            var $bk_color = "#F78181";
+            //sample format
+            //'2015-10-26 11:23:47.325000'
+            if (aData.Status === "Offline")
+                return $bk_color;
+            if (aData.Status === "Processing")
+                return "#F3F781";
+            var $date_arr = aData.Heartbeat.split(" ");
+            if ($date_arr.length > 1)
+            {
+                var $mDate = $date_arr[0].split("-");
+                if ($mDate.length < 3)
+                    return $bk_color;
+                var $mTime = $date_arr[1].split(":");
+                if ($mTime.length < 3)
+                    return $bk_color;
+                // Get the current date and check it to heartbeat
+                var $now = new Date();
+                if ($now.getFullYear() !== parseInt($mDate[0]))
+                    return $bk_color;
+                if ($now.getMonth() + 1 !== parseInt($mDate[1]))
+                    return $bk_color;
+                if ($now.getDate() !== parseInt($mDate[2]))
+                    return $bk_color;
+                var $hourDiff = $now.getHours() - parseInt($mTime[0]);
+                var $minDiff = $now.getMinutes() - parseInt($mTime[1]);
+                if ($hourDiff > 1)
+                    return $bk_color;
+                if ($minDiff > 30)
+                    return $bk_color;
+                // passed
+                $bk_color = "#9FF781";
+            }
+            return $bk_color;
+        }
+        
+        //----------------------------------------------------------------------
+        
         function convert_procmask_number_to_string(aData)
         {
             var $str = "";
@@ -153,8 +193,8 @@
                     'Process Cpu Percent: '+d.ProcessCpuPercent + '%<br>'+
                     'Process Mem Percent: '+d.ProcessMemPercent + '%<br>'+
                     'System Cpu Percent: '+d.SystemCpuPercent + '%<br>'+
-                    'System Free Mem Percent: '+d.SystemMemPercent + '%<br>'+
-                    'System Free Swap Percent: '+d.SystemSwapPercent + '%';
+                    'System Mem Percent: '+d.SystemMemPercent + '%<br>'+
+                    'System Swap Percent: '+d.SystemSwapPercent + '%';
             ;
         }
         
@@ -370,6 +410,11 @@
             //"processing": true,
             //"serverSide": true,
             "ajax": "/process_node",
+            "fnRowCallback": function( nRow, aData, iDisplayIndex, iDisplayIndexFull )
+            {
+                var $bk_color = check_heartbeat_timestamp(aData);
+                $('td', nRow).css('background-color', $bk_color);
+            },
             "columns": [
             {
                 "class":          "details-control",
@@ -688,7 +733,9 @@
                    <select id="proc_node_option">
                        <option value="-1">Any
                    </select>
-                   Email Address on Completion (comma separated)<input type="text" id="option-emails" value="">
+                   <form autocomplete="on">
+                   Email Address on Completion (comma separated)<input type="text" name="email" id="option-emails" value="">
+                   </form>
                   <br>
                   <br>
                   <button id="Btn-Submit-Job">Submit Job</button>
