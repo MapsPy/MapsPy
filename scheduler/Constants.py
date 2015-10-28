@@ -34,6 +34,8 @@ SUCH DAMAGE.
 JOB_STATUS_NEW = 0
 JOB_STATUS_PROCESSING = 1
 JOB_STATUS_COMPLETED = 2
+JOB_STATUS_CANCELING = 3
+JOB_STATUS_CANCELED = 4
 JOB_STATUS_GENERAL_ERROR = 10
 
 # ===================================== Job Status =======================================

@@ -111,6 +111,7 @@ class ProcessNode(object):
 				'request.dispatch': cherrypy.dispatch.MethodDispatcher(),
 				'tools.response_headers.on': True,
 				'tools.response_headers.headers': [('Content-Type', 'text/plain')],
+				'request.methods_with_bodies': ('POST', 'PUT', 'DELETE')
 			},
 			'/static': {
 				'tools.staticdir.on': True,
@@ -179,7 +180,16 @@ class ProcessNode(object):
 		self.pn_info[Constants.PROCESS_NODE_ID] = int(new_id)
 
 	def callback_delete_job(self, job):
-		pass
+		try:
+			job[Constants.JOB_STATUS] = Constants.JOB_STATUS_CANCELED
+			self.db.update_job(job)
+			if self.this_process != psutil.Process(os.getpid()):
+				self.this_process.kill()
+				self.this_process = psutil.Process(os.getpid())
+		except:
+			print datetime.now(), 'run error'
+			traceback.print_exc(file=sys.stdout)
+			self.stop()
 
 	def run(self):
 		webapp = ProcessNodeHandler()

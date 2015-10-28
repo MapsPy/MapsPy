@@ -31,12 +31,10 @@ SUCH DAMAGE.
 '''
 
 
-import string
 import json
 import cherrypy
 import glob
 import os
-import traceback
 import base64
 import Settings
 import unicodedata
@@ -319,10 +317,11 @@ class SchedulerJobsWebService(object):
 
 	# delete job from queue
 	def DELETE(self):
-		#cl = cherrypy.request.headers['Content-Length']
-		#rawbody = cherrypy.request.body.read(int(cl))
-		#job = json.loads(rawbody)
-		pass
+		cl = cherrypy.request.headers['Content-Length']
+		rawbody = cherrypy.request.body.read(int(cl))
+		job = json.loads(rawbody)
+		cherrypy.engine.publish("delete_job", job)
+		return 'canceled job Id:' + str(job['Id'])
 
 
 class SchedulerProcessNodeWebService(object):

@@ -70,6 +70,7 @@ class Scheduler(object):
 								self.settings[Settings.SERVER_MAIL_PASSWORD])
 		cherrypy.engine.subscribe("new_job", self.callback_new_job)
 		cherrypy.engine.subscribe("update_job", self.callback_update_job)
+		cherrypy.engine.subscribe("delete_job", self.callback_delete_job)
 		cherrypy.engine.subscribe("process_node_update", self.callback_process_node_update)
 		if hasattr(cherrypy.engine, 'signal_handler'):
 			cherrypy.engine.signal_handler.subscribe()
@@ -87,6 +88,7 @@ class Scheduler(object):
 				'request.dispatch': cherrypy.dispatch.MethodDispatcher(),
 				'tools.response_headers.on': True,
 				'tools.response_headers.headers': [('Content-Type', 'text/plain')],
+				'request.methods_with_bodies': ('POST', 'PUT', 'DELETE')
 			},
 			'/static': {
 				'tools.staticdir.on': True,
@@ -139,6 +141,30 @@ class Scheduler(object):
 				except:
 					exc_str = traceback.format_exc()
 					print datetime.now(), exc_str
+
+	def callback_delete_job(self, job):
+		try:
+			status = job[Constants.JOB_STATUS]
+			if status == Constants.JOB_STATUS_COMPLETED or status == Constants.JOB_STATUS_CANCELED or status == Constants.JOB_STATUS_GENERAL_ERROR:
+				return
+			elif status == Constants.JOB_STATUS_PROCESSING or status == Constants.JOB_STATUS_NEW or status == Constants.JOB_STATUS_CANCELING:
+				self.job_lock.acquire(True)
+				job[Constants.JOB_STATUS] = Constants.JOB_STATUS_CANCELING
+				db.update_job(job)
+				self.job_lock.release()
+				if job[Constants.JOB_PROCESS_NODE_ID] > -1:
+					p_node = db.get_process_node_by_id(int(job[Constants.JOB_PROCESS_NODE_ID]))
+					url = 'http://' + str(p_node[Constants.PROCESS_NODE_HOSTNAME]) + ':' + str(p_node[Constants.PROCESS_NODE_PORT]) + '/job_queue'
+					print datetime.now(), 'sending job to ', p_node[Constants.PROCESS_NODE_COMPUTERNAME], 'url', url
+					s = requests.Session()
+					r = s.delete(url, data=json.dumps(job))
+					print datetime.now(), 'update result', r.status_code, ':', r.text
+				else:
+					print 'Warning: callback_delete_job - No Process Node Id to send cancel to.'
+		except:
+			self.job_lock.release()
+			exc_str = traceback.format_exc()
+			print datetime.now(), exc_str
 
 	def callback_process_node_update(self, node):
 		print datetime.now(), 'callback', node[Constants.PROCESS_NODE_COMPUTERNAME]
