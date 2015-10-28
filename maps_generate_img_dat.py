@@ -482,11 +482,8 @@ class analyze:
 				file_path = os.path.join(self.main_dict['master_dir'], os.path.join('flyXRF', header))
 				nc_files = glob.glob(file_path + '*.nc')
 				num_files_found = len(nc_files)
-				if num_files_found != 1:
-					if num_files_found > 1:
-						print 'Error: too many files found, ', nc_files
-					else:
-						print 'Could not file nc file associated with mda file: ', mdafilename
+				if num_files_found < 1:
+					print 'Could not find netcdf files associated with mda: ', mdafilename
 				else:
 					test_netcdf = FLYSCAN_TYPE_NETCDF
 
@@ -526,7 +523,7 @@ class analyze:
 				print 'This scan has the combined file with info stored in a text file which is not yet supported - returning.'
 				return None
 
-			elif (info.rank == 2) and (np.sum(info.spectrum) == 0 and (test_netcdf == FLYSCAN_TYPE_2ID_NETCDF)):
+			elif (info.rank == 2) and (np.sum(info.spectrum) == 0 and (test_netcdf == FLYSCAN_TYPE_2ID_NETCDF or test_netcdf == FLYSCAN_TYPE_NETCDF)):
 				# this is a fly scan, but i found a netcdf file with matching
 				# name. this should be a fly scna with XRF
 				print 'trying to do the combined file'

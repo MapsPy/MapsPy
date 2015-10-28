@@ -714,7 +714,7 @@ class mda:
 
 	def read_scan(self, filename, threeD_only=1, invalid_file=[0], extra_pvs=False, save_ram=0):
 		
-		verbose = False
+		verbose = True
 		
 		# the following variables are created or read with this routine:
 		scan_name =  ' '
@@ -759,8 +759,12 @@ class mda:
 			print 'Scan is Regular:', add_scan_s_regular
 			print 'Pointer to extra pvs:', pointer_extra_PVs
 
+		file.seek(0,2)
+		f_size = file.tell()
+
 		file.seek(pmain_scan)
-		buf = file.read(5000) # enough to read scan header
+
+		buf = file.read(f_size) # enough to read scan header
 		u = Unpacker(buf)
 			
 		scan_rank = u.unpack_int()
@@ -851,11 +855,11 @@ class mda:
 		one_d_positioner = positioner
 		
 		for j in range(scan_no_detectors):
-			detector = scanDetector()
-			detector.number = u.unpack_int()
-			detector.fieldName = detName(detector.number)
-			if verbose: print "detector ", j
 			try:
+				detector = scanDetector()
+				detector.number = u.unpack_int()
+				detector.fieldName = detName(detector.number)
+				if verbose: print "detector ", j
 				length = u.unpack_int() # length of name string
 				if length: detector.name = u.unpack_string()
 				if verbose: print "detector[%d].name = %s" % (j, `detector.name`)
