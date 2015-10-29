@@ -205,10 +205,33 @@ class nc:
 			for ix in range(n_cols): 
 				if ix < len(xmapdat.liveTime[:, 0]):
 					scan.mca_arr[ix, i_lines, 0:2000] = xmapdat.data[ix, this_detector, 0:2000]
+
+					scan.detector_arr[ix, i_lines, new_det_len-16] = xmapdat.liveTime[ix, 0]
+					scan.detector_arr[ix, i_lines, new_det_len-15] = xmapdat.liveTime[ix, 1]
+					scan.detector_arr[ix, i_lines, new_det_len-14] = xmapdat.liveTime[ix, 2]
+					scan.detector_arr[ix, i_lines, new_det_len-13] = xmapdat.liveTime[ix, 3]
+
+					scan.detector_arr[ix, i_lines, new_det_len-12] = xmapdat.realTime[ix, 0]
+					scan.detector_arr[ix, i_lines, new_det_len-11] = xmapdat.realTime[ix, 1]
+					scan.detector_arr[ix, i_lines, new_det_len-10] = xmapdat.realTime[ix, 2]
+					scan.detector_arr[ix, i_lines, new_det_len-9] = xmapdat.realTime[ix, 3]
+
+					scan.detector_arr[ix, i_lines, new_det_len-8] = xmapdat.inputCounts[ix, 0] / xmapdat.liveTime[ix, 0]
+					scan.detector_arr[ix, i_lines, new_det_len-7] = xmapdat.inputCounts[ix, 1] / xmapdat.liveTime[ix, 1]
+					scan.detector_arr[ix, i_lines, new_det_len-6] = xmapdat.inputCounts[ix, 2] / xmapdat.liveTime[ix, 2]
+					scan.detector_arr[ix, i_lines, new_det_len-5] = xmapdat.inputCounts[ix, 3] / xmapdat.liveTime[ix, 3]
+
+					scan.detector_arr[ix, i_lines, new_det_len-4] = xmapdat.outputCounts[ix, 0] / xmapdat.realTime[ix, 0]
+					scan.detector_arr[ix, i_lines, new_det_len-3] = xmapdat.outputCounts[ix, 1] / xmapdat.realTime[ix, 1]
+					scan.detector_arr[ix, i_lines, new_det_len-2] = xmapdat.outputCounts[ix, 2] / xmapdat.realTime[ix, 2]
+					scan.detector_arr[ix, i_lines, new_det_len-1] = xmapdat.outputCounts[ix, 3] / xmapdat.realTime[ix, 3]
+
+					'''
 					scan.detector_arr[ix, i_lines, new_det_len - 1] = xmapdat.liveTime[ix, 0]
 					scan.detector_arr[ix, i_lines, new_det_len - 2] = xmapdat.liveTime[ix, 1]
 					scan.detector_arr[ix, i_lines, new_det_len - 3] = xmapdat.liveTime[ix, 2]
 					scan.detector_arr[ix, i_lines, new_det_len - 4] = xmapdat.liveTime[ix, 3]
+					'''
 
 		return scan
 

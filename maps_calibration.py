@@ -83,10 +83,10 @@ class calibration:
 			num_detectors = scan.mca_arr.shape[3]
 		for i in range(num_detectors):
 			mca_file = open_file_with_retry(mca_filename + str(i), 'wt')
-			mca_file.write('VERSION:    3.1\r\n')
-			mca_file.write('ELEMENTS:    1\r\n')
-			mca_file.write('DATE:    ' + scan.scan_time_stamp + '\r\n')
-			mca_file.write('CHANNELS:    ' + str(scan.mca_arr.shape[2]) + '\r\n')
+			mca_file.write('VERSION:    3.1\n')
+			mca_file.write('ELEMENTS:    1\n')
+			mca_file.write('DATE:    ' + scan.scan_time_stamp + '\n')
+			mca_file.write('CHANNELS:    ' + str(scan.mca_arr.shape[2]) + '\n')
 			real_time_str_list = ['dxpXMAP2xfm3:mca' + str(i + 1) + '.ERTM',
 								  '2xfm:mca1.ERTM',
 								  '2xfm2:dxpSaturn:mca1.ERTM',
@@ -116,48 +116,48 @@ class calibration:
 			idx_outcnt = find_str_idx(scan.detector_description_arr, output_cnt_str_list)
 			if idx_rt > -1 and idx_lt > -1:
 				if det_shape_len == 2:
-					mca_file.write('REAL_TIME:    ' + str(scan.detector_arr[:, idx_rt].sum()) + '\r\n')
+					mca_file.write('REAL_TIME:    ' + str(scan.detector_arr[:, idx_rt].sum()) + '\n')
 					rt_sum = scan.detector_arr[:, idx_rt].sum()
 					in_sum = scan.detector_arr[:, idx_incnt].sum()
 					out_sum = scan.detector_arr[:, idx_outcnt].sum()
 					if rt_sum > 0.0 and in_sum > 0.0 and out_sum > 0.0:
 						elt1_arr = rt_sum * out_sum / in_sum
-						mca_file.write('LIVE_TIME:    ' + str(elt1_arr) + '\r\n')
+						mca_file.write('LIVE_TIME:    ' + str(elt1_arr) + '\n')
 					else:
-						mca_file.write('LIVE_TIME:    ' + str(scan.detector_arr[:, idx_lt].sum()) + '\r\n')
+						mca_file.write('LIVE_TIME:    ' + str(scan.detector_arr[:, idx_lt].sum()) + '\n')
 				elif det_shape_len == 3:
-					mca_file.write('REAL_TIME:    ' + str(scan.detector_arr[:, :, idx_rt].sum()) + '\r\n')
+					mca_file.write('REAL_TIME:    ' + str(scan.detector_arr[:, :, idx_rt].sum()) + '\n')
 					rt_sum = scan.detector_arr[:, :, idx_rt].sum()
 					in_sum = scan.detector_arr[:, :, idx_incnt].sum()
 					out_sum = scan.detector_arr[:, :, idx_outcnt].sum()
 					if rt_sum > 0.0 and in_sum > 0.0 and out_sum > 0.0:
 						elt1_arr = rt_sum * out_sum / in_sum
-						mca_file.write('LIVE_TIME:    ' + str(elt1_arr) + '\r\n')
+						mca_file.write('LIVE_TIME:    ' + str(elt1_arr) + '\n')
 					else:
-						mca_file.write('LIVE_TIME:    ' + str(scan.detector_arr[:, :, idx_lt].sum()) + '\r\n')
+						mca_file.write('LIVE_TIME:    ' + str(scan.detector_arr[:, :, idx_lt].sum()) + '\n')
 			idx = index_partial_str_search(scan.mca_calib_description_arr, 'mca' + str(i + 1) + '.CALO')
 			if idx > -1:
-				mca_file.write('CAL_OFFSET:    ' + str(scan.mca_calib_arr[idx]) + '\r\n')
+				mca_file.write('CAL_OFFSET:    ' + str(scan.mca_calib_arr[idx]) + '\n')
 			else:
-				mca_file.write('CAL_OFFSET:    0\r\n')
+				mca_file.write('CAL_OFFSET:    0\n')
 			idx = index_partial_str_search(scan.mca_calib_description_arr, 'mca' + str(i + 1) + '.CALS')
 			if idx > -1:
-				mca_file.write('CAL_SLOPE:    ' + str(scan.mca_calib_arr[idx]) + '\r\n')
+				mca_file.write('CAL_SLOPE:    ' + str(scan.mca_calib_arr[idx]) + '\n')
 			else:
-				mca_file.write('CAL_SLOPE:    0\r\n')
-			mca_file.write('CAL_QUAD:    0\r\n')
+				mca_file.write('CAL_SLOPE:    0\n')
+			mca_file.write('CAL_QUAD:    0\n')
 			bnp_ds_sum = 0.0
 			for idx in range(len(scan.detector_description_arr)):
 				if scan.detector_description_arr[idx].find('scaler') > -1 or scan.detector_description_arr[idx].find('current') > -1:
 					if det_shape_len == 2:
-						mca_file.write('ENVIRONMENT:    ' + str(scan.detector_description_arr[idx]) + '="' + str(scan.detector_arr[:, idx].mean()) + '"\r\n')
+						mca_file.write('ENVIRONMENT:    ' + str(scan.detector_description_arr[idx]) + '="' + str(scan.detector_arr[:, idx].mean()) + '"\n')
 					elif det_shape_len == 3:
-						mca_file.write('ENVIRONMENT:    ' + str(scan.detector_description_arr[idx]) + '="' + str(scan.detector_arr[:, :, idx].mean()) + '"\r\n')
+						mca_file.write('ENVIRONMENT:    ' + str(scan.detector_description_arr[idx]) + '="' + str(scan.detector_arr[:, :, idx].mean()) + '"\n')
 				else:
 					if det_shape_len == 2:
-						mca_file.write('ENVIRONMENT:    ' + str(scan.detector_description_arr[idx]) + '="' + str(scan.detector_arr[:, idx].sum()) + '"\r\n')
+						mca_file.write('ENVIRONMENT:    ' + str(scan.detector_description_arr[idx]) + '="' + str(scan.detector_arr[:, idx].sum()) + '"\n')
 					elif det_shape_len == 3:
-						mca_file.write('ENVIRONMENT:    ' + str(scan.detector_description_arr[idx]) + '="' + str(scan.detector_arr[:, :, idx].sum()) + '"\r\n')
+						mca_file.write('ENVIRONMENT:    ' + str(scan.detector_description_arr[idx]) + '="' + str(scan.detector_arr[:, :, idx].sum()) + '"\n')
 				if scan.detector_description_arr[idx].find('21:D3:scaler1_cts1.B') > -1:
 					bnp_ds_sum += scan.detector_arr[:, :, idx].mean()
 				if scan.detector_description_arr[idx].find('21:D3:scaler1_cts1.C') > -1:
@@ -167,17 +167,17 @@ class calibration:
 				if scan.detector_description_arr[idx].find('21:D3:scaler1_cts2.A') > -1:
 					bnp_ds_sum += scan.detector_arr[:, :, idx].mean()
 			for idx in range(len(scan.mca_calib_description_arr)):
-				mca_file.write('ENVIRONMENT:    ' + str(scan.mca_calib_description_arr[idx]) + '="' + str(scan.mca_calib_arr[idx]) + '"\r\n')
+				mca_file.write('ENVIRONMENT:    ' + str(scan.mca_calib_description_arr[idx]) + '="' + str(scan.mca_calib_arr[idx]) + '"\n')
 			if bnp_ds_sum > 0.0:
 				mca_file.write('ENVIRONMENT:  21:D3:scaler1_cts3.A="' + str(bnp_ds_sum) + '"')
 			for idx in range(len(scan.extra_pv_key_list)):
 				mca_file.write('ENVIRONMENT:  ' + str(scan.extra_pv_key_list[idx]) + '="' + str(scan.extra_pv[idx]) + '"')
-			mca_file.write('Data:\r\n')
+			mca_file.write('DATA:\n')
 			for idx in range(scan.mca_arr.shape[2]):
 				if det_shape_len == 2:
 					mca_file.write(str(scan.mca_arr[:, idx, i].sum()))
 				elif det_shape_len == 3:
-					mca_file.write(str(int(scan.mca_arr[:, :, idx, i].sum())) + '\r\n')
+					mca_file.write(str(int(scan.mca_arr[:, :, idx, i].sum())) + '\n')
 			mca_file.close()
 		# end for each detector
 
@@ -186,13 +186,13 @@ class calibration:
 		print 'creating ', maps_standardInfoFilename
 		standardInfoFile = open_file_with_retry(maps_standardInfoFilename, 'w')
 		if standardInfoFile != None:
-			standardInfoFile.write('\tThis file describes arbitrary standard reference materials\r\n')
-			standardInfoFile.write('\tplease put the filename that contains the measured standard next. if it was acquired using a multi element detector, please list just the mca0 file\r\n')
-			standardInfoFile.write('FILENAME:      axo_std.mca\r\n')
-			standardInfoFile.write('\tplease put the comma seperated list of elements in the standard\r\n')
-			standardInfoFile.write('ELEMENTS_IN_STANDARD: Ca, Fe, Cu\r\n')
-			standardInfoFile.write('\tplease put the weight (area density) in ug/cm2 for each of the elements above\r\n')
-			standardInfoFile.write('WEIGHT:       1.931, 0.504, 0.284\r\n')
+			standardInfoFile.write('\tThis file describes arbitrary standard reference materials\n')
+			standardInfoFile.write('\tplease put the filename that contains the measured standard next. if it was acquired using a multi element detector, please list just the mca0 file\n')
+			standardInfoFile.write('FILENAME:      axo_std.mca\n')
+			standardInfoFile.write('\tplease put the comma seperated list of elements in the standard\n')
+			standardInfoFile.write('ELEMENTS_IN_STANDARD: Ca, Fe, Cu\n')
+			standardInfoFile.write('\tplease put the weight (area density) in ug/cm2 for each of the elements above\n')
+			standardInfoFile.write('WEIGHT:       1.931, 0.504, 0.284\n')
 			standardInfoFile.flush()
 			standardInfoFile.close()
 			standardInfoFile = open_file_with_retry(maps_standardInfoFilename, 'r')
@@ -1030,7 +1030,7 @@ class calibration:
 					   'quad'	: np.zeros((n_detector_elements)) }
 
 		found_data = 0
-		f = open(filename)
+		f = open_file_with_retry(filename, 'rt')
 		lines = f.readlines()
 
 		for line in lines:
@@ -1167,6 +1167,8 @@ class calibration:
 					dataindex = lines.index(line)
 					break
 
+		f.close()
+
 		if found_data: 
 			data = np.zeros((n_channels, n_detector_elements))
 			for i in range(n_channels):
@@ -1175,10 +1177,7 @@ class calibration:
 					line = lines[dataindex]
 					counts = float(line)
 					data[i, j] = counts
-
-		f.close()
-
-		if data.size == 0: 
+		else:
 			print 'Not a valid data file:', filename
 			return
 
@@ -1749,7 +1748,7 @@ class calibration:
 
 						axes.text(0.97, -0.08, 'mapspy', color = foreground_color, transform = axes.transAxes) 
 						image_filename = 'calib'+str(l)+'_'+str(k)+'standard.png'
-						print 'saving ', os.path.join(directory,image_filename)
+						print 'saving standard png', os.path.join(directory,image_filename)
 						fig.savefig(os.path.join(directory, image_filename), dpi=dpi, facecolor=background_color, edgecolor=None)
 					except:
 						print 'Warning: Could not save standard calibration plot.'

@@ -68,6 +68,9 @@ def check_output_dirs(main_dict):
 	if check_and_create_dir(main_dict['output_dir']) == False:
 		return False
 
+	if check_and_create_dir(main_dict['output_fits']) == False:
+		return False
+
 	if check_and_create_dir(main_dict['mda_dir']) == False:
 		return False
 
@@ -572,7 +575,7 @@ def save_spectrum(main_dict, filename, sfilename):
 
 	fh5.close()
 
-	print 'saving', sfilename
+	print 'saving - ', sfilename
 	f = open_file_with_retry(sfilename, 'w')
 	if f == None:
 		print '-------\nError opening file to write: ',sfilename
@@ -802,24 +805,24 @@ def _option_b_(main_dict, maps_conf, maps_def, total_number_detectors, info_elem
 				print 'error renaming average_resulting_maps_fit_parameters_override to maps_fit_parameters_override'
 				pass
 
-		dirlist = os.listdir(current_directory)
-		if 'output_old' in dirlist:
-			#print ' delete files in output_old directory'
-			filelist = os.listdir(os.path.join(current_directory, 'output_old'))
-			for fl in filelist:
-				thisfile = os.path.join(os.path.join(current_directory, 'output_old'), fl)
-				os.remove(thisfile)
-		else:
-			os.makedirs(os.path.join(current_directory, 'output_old'))
-		#todo: create directory if it does not exist
-		#Copy files to output_fits
-		src_files = os.listdir(os.path.join(current_directory, 'output'))
-		print src_files
-		for fn in src_files:
-			full_file_name = os.path.join(os.path.join(current_directory, 'output'), fn)
-			if os.path.isfile(full_file_name):
-				shutil.copy(full_file_name, os.path.join(current_directory, 'output_old'))
-				os.remove(full_file_name)
+	dirlist = os.listdir(current_directory)
+	if 'output_old' in dirlist:
+		#print ' delete files in output_old directory'
+		filelist = os.listdir(os.path.join(current_directory, 'output_old'))
+		for fl in filelist:
+			thisfile = os.path.join(os.path.join(current_directory, 'output_old'), fl)
+			os.remove(thisfile)
+	else:
+		os.makedirs(os.path.join(current_directory, 'output_old'))
+	#todo: create directory if it does not exist
+	#Copy files to output_fits
+	src_files = os.listdir(os.path.join(current_directory, 'output'))
+	print src_files
+	for fn in src_files:
+		full_file_name = os.path.join(os.path.join(current_directory, 'output'), fn)
+		if os.path.isfile(full_file_name):
+			shutil.copy(full_file_name, os.path.join(current_directory, 'output_old'))
+			os.remove(full_file_name)
 
 	return spectra
 
@@ -924,6 +927,7 @@ def maps_batch(wdir='', a=1,b=0,c=0,d=0,e=0, cb_update_func=None):
 			'L_font':'', 
 			'master_dir':	wdir,
 			'output_dir':	os.path.join(wdir, 'output'),
+			'output_fits':	os.path.join(wdir, 'output.fits'),
 			'img_dat_dir':	os.path.join(wdir, 'img.dat'),
 			'line_dat_dir': os.path.join(wdir, 'line.dat'),
 			'xanes_dat_dir':os.path.join(wdir, 'xanes.dat'),
