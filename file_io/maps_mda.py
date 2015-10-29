@@ -902,7 +902,7 @@ class mda:
 				# remove those y positions that are incorrect for aborted scans
 				if y_pixels < 3:
 					invalid_file[0] = 2
-					print 'scanned y_pixels less than 3 in an aborted array'
+					print 'ERROR: scanned y_pixels less than 3 in an aborted array'
 					return None
 
 				y_coord_arr = y_coord_arr[0:y_pixels]

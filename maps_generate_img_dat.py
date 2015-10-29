@@ -44,6 +44,7 @@ import sys
 import multiprocessing
 import csv
 import glob
+import traceback
 
 from file_io import maps_mda
 from file_io import maps_nc
@@ -1736,78 +1737,80 @@ class analyze:
 		for n_filenumber in range(no_files):
 			# is the avergae .dat file older than the dat0 file ? if so, generate a
 			# new avg file, otherwise skip it.
+			try:
+				added_number_detectors = 0
+				for this_detector_element in range(total_number_detectors):
+					sfile = os.path.join(self.main_dict['XRFmaps_dir'], imgdat_filenames[n_filenumber] + '.h5' + str(this_detector_element).strip())
+					#print sfile
+					n_ev, n_rows, n_cols, n_energy, energy, energy_spec, scan_time_stamp, dataset_orig = self.change_xrf_resetvars()
+					#temp = max([sfile.split('/'), sfile.split('\\')])
+					#if temp == -1:
+					#	temp = 0
 
-			added_number_detectors = 0
-			for this_detector_element in range(total_number_detectors):
-				sfile = os.path.join(self.main_dict['XRFmaps_dir'], imgdat_filenames[n_filenumber] + '.h5' + str(this_detector_element).strip())
-				#print sfile
-				n_ev, n_rows, n_cols, n_energy, energy, energy_spec, scan_time_stamp, dataset_orig = self.change_xrf_resetvars()
-				#temp = max([sfile.split('/'), sfile.split('\\')])
-				#if temp == -1:
-				#	temp = 0
+					if not os.path.isfile(sfile) :
+						print 'WARNING: did not find :', sfile, ' skipping to next'
+						continue
 
-				if not os.path.isfile(sfile) :
-					print 'WARNING: did not find :', sfile, ' skipping to next'
-					continue
-
-				XRFmaps_info, n_cols, n_rows, n_channels, valid_read = h5p.maps_change_xrf_read_hdf5(sfile, make_maps_conf)
-				if valid_read == 0:
-					print 'Error calling h5p.maps_change_xrf_read_hdf5(', sfile, make_maps_conf, ')'
-					return
-				f = call_function_with_retry(h5py.File, 5, 0.1, 1.1, (sfile, 'r'))
-				if f == None:
-					print 'Error opening file ', sfile
-					return
-				if 'MAPS' not in f:
-					print 'error, hdf5 file does not contain the required MAPS group. I am aborting this action'
-					return
-
-				maps_group_id = f['MAPS']
-
-				entryname = 'mca_arr'
-				mca_arr, valid_read = h5p.read_hdf5_core(maps_group_id, entryname)
-				mca_arr = np.transpose(mca_arr)
-
-				if valid_read == 0:
-					print 'warning: did not find the valid mca array in dataset. cannot extract spectra'
-					return
-
-				f.close()
-
-				if added_number_detectors == 0:
-
-					avg_XRFmaps_info, n_cols, n_rows, n_channels, valid_read = h5p.maps_change_xrf_read_hdf5(sfile, make_maps_conf)
+					XRFmaps_info, n_cols, n_rows, n_channels, valid_read = h5p.maps_change_xrf_read_hdf5(sfile, make_maps_conf)
 					if valid_read == 0:
 						print 'Error calling h5p.maps_change_xrf_read_hdf5(', sfile, make_maps_conf, ')'
-						return
-					avg_mca_arr = mca_arr.copy()
+						break
+					f = call_function_with_retry(h5py.File, 5, 0.1, 1.1, (sfile, 'r'))
+					if f == None:
+						print 'Error opening file ', sfile
+						break
+					if 'MAPS' not in f:
+						print 'error, hdf5 file does not contain the required MAPS group. I am aborting this action'
+						break
 
-				elif added_number_detectors >= 1:
-					avg_XRFmaps_info.dmaps_set[:, :, :] = avg_XRFmaps_info.dmaps_set[:, :, :] + XRFmaps_info.dmaps_set[:, :, :]
-					avg_XRFmaps_info.dataset[:, :, :] = avg_XRFmaps_info.dataset[:, :, :] + XRFmaps_info.dataset[:, :, :]
-					avg_XRFmaps_info.dataset_orig[:, :, :, :] = avg_XRFmaps_info.dataset_orig[:, :, :, :] + XRFmaps_info.dataset_orig[:, :, :, :]
-					avg_XRFmaps_info.dataset_calibration[:, :, :] = avg_XRFmaps_info.dataset_calibration[:, :, :] + XRFmaps_info.dataset_calibration[:, :, :]
-					avg_XRFmaps_info.energy_spec[:] = avg_XRFmaps_info.energy_spec[:] + XRFmaps_info.energy_spec[:]
-					avg_XRFmaps_info.max_chan_spec[:, :] = avg_XRFmaps_info.max_chan_spec[:, :] + XRFmaps_info.max_chan_spec[:, :]
-					avg_XRFmaps_info.raw_spec[:, :] = avg_XRFmaps_info.raw_spec[:, :] + XRFmaps_info.raw_spec[:, :]
-					avg_mca_arr = avg_mca_arr + mca_arr
+					maps_group_id = f['MAPS']
 
-				added_number_detectors = added_number_detectors+1
+					entryname = 'mca_arr'
+					mca_arr, valid_read = h5p.read_hdf5_core(maps_group_id, entryname)
+					mca_arr = np.transpose(mca_arr)
 
-			if not os.path.isfile(sfile):
-				print 'WARNING: did not find any of these:', sfile, ' skipping to next level'
-				continue
+					if valid_read == 0:
+						print 'warning: did not find the valid mca array in dataset. cannot extract spectra'
+						break
 
-			avg_XRFmaps_info.dmaps_set[:, :, :] = avg_XRFmaps_info.dmaps_set[:, :, :] / added_number_detectors
-			avg_XRFmaps_info.dataset[:, :, :] = avg_XRFmaps_info.dataset[:, :, :] / added_number_detectors
-			avg_XRFmaps_info.dataset_orig[:, :, :, :] = avg_XRFmaps_info.dataset_orig[:, :, :, :] / added_number_detectors
-			avg_XRFmaps_info.dataset_calibration[:, :, :] = avg_XRFmaps_info.dataset_calibration[:, :, :] / added_number_detectors
-			avg_XRFmaps_info.energy_spec[:] = avg_XRFmaps_info.energy_spec[:] / added_number_detectors
-			avg_XRFmaps_info.max_chan_spec[:, :] = avg_XRFmaps_info.max_chan_spec[:, :] / added_number_detectors
-			avg_XRFmaps_info.raw_spec[:, :] = avg_XRFmaps_info.raw_spec[:, :] / added_number_detectors
+					f.close()
 
-			h5p.write_hdf5(avg_XRFmaps_info, os.path.join(self.main_dict['XRFmaps_dir'], imgdat_filenames[n_filenumber]+'.h5'), avg_mca_arr, energy_channels, extra_pv=extra_pv)
+					if added_number_detectors == 0:
 
+						avg_XRFmaps_info, n_cols, n_rows, n_channels, valid_read = h5p.maps_change_xrf_read_hdf5(sfile, make_maps_conf)
+						if valid_read == 0:
+							print 'Error calling h5p.maps_change_xrf_read_hdf5(', sfile, make_maps_conf, ')'
+							break
+						avg_mca_arr = mca_arr.copy()
+
+					elif added_number_detectors >= 1:
+						avg_XRFmaps_info.dmaps_set[:, :, :] = avg_XRFmaps_info.dmaps_set[:, :, :] + XRFmaps_info.dmaps_set[:, :, :]
+						avg_XRFmaps_info.dataset[:, :, :] = avg_XRFmaps_info.dataset[:, :, :] + XRFmaps_info.dataset[:, :, :]
+						avg_XRFmaps_info.dataset_orig[:, :, :, :] = avg_XRFmaps_info.dataset_orig[:, :, :, :] + XRFmaps_info.dataset_orig[:, :, :, :]
+						avg_XRFmaps_info.dataset_calibration[:, :, :] = avg_XRFmaps_info.dataset_calibration[:, :, :] + XRFmaps_info.dataset_calibration[:, :, :]
+						avg_XRFmaps_info.energy_spec[:] = avg_XRFmaps_info.energy_spec[:] + XRFmaps_info.energy_spec[:]
+						avg_XRFmaps_info.max_chan_spec[:, :] = avg_XRFmaps_info.max_chan_spec[:, :] + XRFmaps_info.max_chan_spec[:, :]
+						avg_XRFmaps_info.raw_spec[:, :] = avg_XRFmaps_info.raw_spec[:, :] + XRFmaps_info.raw_spec[:, :]
+						avg_mca_arr = avg_mca_arr + mca_arr
+
+					added_number_detectors = added_number_detectors+1
+
+				if not os.path.isfile(sfile):
+					print 'WARNING: did not find any of these:', sfile, ' skipping to next level'
+					continue
+
+				avg_XRFmaps_info.dmaps_set[:, :, :] = avg_XRFmaps_info.dmaps_set[:, :, :] / added_number_detectors
+				avg_XRFmaps_info.dataset[:, :, :] = avg_XRFmaps_info.dataset[:, :, :] / added_number_detectors
+				avg_XRFmaps_info.dataset_orig[:, :, :, :] = avg_XRFmaps_info.dataset_orig[:, :, :, :] / added_number_detectors
+				avg_XRFmaps_info.dataset_calibration[:, :, :] = avg_XRFmaps_info.dataset_calibration[:, :, :] / added_number_detectors
+				avg_XRFmaps_info.energy_spec[:] = avg_XRFmaps_info.energy_spec[:] / added_number_detectors
+				avg_XRFmaps_info.max_chan_spec[:, :] = avg_XRFmaps_info.max_chan_spec[:, :] / added_number_detectors
+				avg_XRFmaps_info.raw_spec[:, :] = avg_XRFmaps_info.raw_spec[:, :] / added_number_detectors
+
+				h5p.write_hdf5(avg_XRFmaps_info, os.path.join(self.main_dict['XRFmaps_dir'], imgdat_filenames[n_filenumber]+'.h5'), avg_mca_arr, energy_channels, extra_pv=extra_pv)
+			except:
+				exc_str = traceback.format_exc()
+				print datetime.datetime.now(), exc_str
 		return
 
 	# ----------------------------------------------------------------------
@@ -2013,7 +2016,7 @@ class analyze:
 					axes.text(0.97, -0.23, 'mapspy', color=foreground_color, transform=axes.transAxes)
 					if (png == 1) or (png == 2):
 						image_filename = filename + '.png'
-						print 'saving ', os.path.join(self.main_dict['output_dir'], image_filename)
+						print 'saving png ', os.path.join(self.main_dict['output_dir'], image_filename)
 						fig.savefig(os.path.join(self.main_dict['output_dir'], image_filename), dpi=dpi, facecolor=background_color, edgecolor=None)
 
 					if ps > 0:

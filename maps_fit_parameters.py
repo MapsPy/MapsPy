@@ -924,7 +924,7 @@ class maps_fit_parameters:
 #-----------------------------------------------------------------------------	  
 	def write_fit_parameters(self, main_dict, fitp, filename, suffix=''):
 
-		print 'saving ', filename
+		print 'saving fit parameters ', filename
 		
 		srcurrent = -1
 		us_ic = -1

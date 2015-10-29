@@ -229,7 +229,7 @@ def plot_spectrum(info_elements, spectra = 0, i_spectrum = 0, add_plot_spectra =
 				axes.text(0.97, -0.23, 'mapspy', color = foreground_color, transform = axes.transAxes)
 				if (png == 1) or (png == 2) :  
 					image_filename = filename+'.png'
-					print 'saving ', os.path.join(outdir,image_filename)
+					print 'saving tools png', os.path.join(outdir,image_filename)
 					fig.savefig(os.path.join(outdir, image_filename), dpi=dpi, facecolor=background_color, edgecolor=None)
 				   
 				if (ps > 0):

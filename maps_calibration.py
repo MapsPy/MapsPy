@@ -1748,7 +1748,7 @@ class calibration:
 
 						axes.text(0.97, -0.08, 'mapspy', color = foreground_color, transform = axes.transAxes) 
 						image_filename = 'calib'+str(l)+'_'+str(k)+'standard.png'
-						print 'saving ', os.path.join(directory,image_filename)
+						print 'saving standard png', os.path.join(directory,image_filename)
 						fig.savefig(os.path.join(directory, image_filename), dpi=dpi, facecolor=background_color, edgecolor=None)
 					except:
 						print 'Warning: Could not save standard calibration plot.'
