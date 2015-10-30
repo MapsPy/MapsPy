@@ -146,19 +146,20 @@ class Scheduler(object):
 		try:
 			status = job[Constants.JOB_STATUS]
 			if status == Constants.JOB_STATUS_COMPLETED or status == Constants.JOB_STATUS_CANCELED or status == Constants.JOB_STATUS_GENERAL_ERROR:
+				db.delete_job_by_id(job[Constants.JOB_ID])
+				if status == Constants.JOB_STATUS_COMPLETED or status == Constants.JOB_STATUS_GENERAL_ERROR and job[Constants.JOB_PROCESS_NODE_ID] > -1:
+					self.call_delete_job(job)
 				return
 			elif status == Constants.JOB_STATUS_PROCESSING or status == Constants.JOB_STATUS_NEW or status == Constants.JOB_STATUS_CANCELING:
 				self.job_lock.acquire(True)
-				job[Constants.JOB_STATUS] = Constants.JOB_STATUS_CANCELING
+				if job[Constants.JOB_PROCESS_NODE_ID] > -1:
+					job[Constants.JOB_STATUS] = Constants.JOB_STATUS_CANCELING
+				else:
+					job[Constants.JOB_STATUS] = Constants.JOB_STATUS_CANCELED
 				db.update_job(job)
 				self.job_lock.release()
 				if job[Constants.JOB_PROCESS_NODE_ID] > -1:
-					p_node = db.get_process_node_by_id(int(job[Constants.JOB_PROCESS_NODE_ID]))
-					url = 'http://' + str(p_node[Constants.PROCESS_NODE_HOSTNAME]) + ':' + str(p_node[Constants.PROCESS_NODE_PORT]) + '/job_queue'
-					print datetime.now(), 'sending job to ', p_node[Constants.PROCESS_NODE_COMPUTERNAME], 'url', url
-					s = requests.Session()
-					r = s.delete(url, data=json.dumps(job))
-					print datetime.now(), 'update result', r.status_code, ':', r.text
+					self.call_delete_job(job)
 				else:
 					print 'Warning: callback_delete_job - No Process Node Id to send cancel to.'
 		except:
@@ -182,7 +183,7 @@ class Scheduler(object):
 			if node[Constants.PROCESS_NODE_STATUS] == Constants.PROCESS_NODE_STATUS_IDLE:
 				job_list = db.get_all_unprocessed_jobs_for_pn_id(int(node[Constants.PROCESS_NODE_ID]))
 				if len(job_list) < 1:
-					job_list = db.get_all_unprocessed_jobs()
+					job_list = db.get_all_unprocessed_jobs_for_any_node()
 				for job in job_list:
 					print datetime.now(), 'checking job', job
 					if job[Constants.JOB_PROCESS_NODE_ID] < 0 or job[Constants.JOB_PROCESS_NODE_ID] == node[Constants.PROCESS_NODE_ID]:
@@ -198,6 +199,14 @@ class Scheduler(object):
 			self.job_lock.release()
 			exc_str = traceback.format_exc()
 			print datetime.now(), exc_str
+
+	def call_delete_job(self, job):
+		p_node = db.get_process_node_by_id(int(job[Constants.JOB_PROCESS_NODE_ID]))
+		url = 'http://' + str(p_node[Constants.PROCESS_NODE_HOSTNAME]) + ':' + str(p_node[Constants.PROCESS_NODE_PORT]) + '/job_queue'
+		print datetime.now(), 'sending job to ', p_node[Constants.PROCESS_NODE_COMPUTERNAME], 'url', url
+		s = requests.Session()
+		r = s.delete(url, data=json.dumps(job))
+		print datetime.now(), 'update result', r.status_code, ':', r.text
 
 	def _get_images_from_hdf(self, job):
 		images_dict = None

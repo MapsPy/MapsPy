@@ -57,12 +57,15 @@ SELECT_PROCESS_NODE_BY_NAME = SELECT_ALL_PROCESS_NODES + ' WHERE ComputerName=:C
 SELECT_PROCESS_NODE_BY_ID = SELECT_ALL_PROCESS_NODES + ' WHERE Id=:Id'
 SELECT_ALL_JOBS = 'SELECT Id, DataPath, ProcMask, Version, DetectorElements, MaxFilesToProc, MaxLinesToProc, QuickAndDirty, XRF_Bin, NNLS, XANES_Scan, DetectorToStartWith, BeamLine, Standards, DatasetFilesToProc, Priority, Status, StartProcTime, FinishProcTime, Log_Path, Process_Node_Id, Emails, Is_Live_Job FROM Jobs'
 SELECT_ALL_UNPROCESSED_JOBS = SELECT_ALL_JOBS + ' WHERE Status=0'
+SELECT_ALL_UNPROCESSED_JOBS_ANY_NODE = SELECT_ALL_JOBS + ' WHERE Status=0 and Process_Node_Id=-1'
 SELECT_ALL_PROCESSING_JOBS = SELECT_ALL_JOBS + ' WHERE Status=1'
 SELECT_ALL_FINISHED_JOBS = SELECT_ALL_JOBS + ' WHERE Status>=2'
 SELECT_ALL_UNPROCESSED_AND_PROCESSING_JOBS = SELECT_ALL_JOBS + ' WHERE Status<=1 ORDER BY Status DESC'
 SELECT_ALL_UNPROCESSED_JOBS_FOR_PN_ID = SELECT_ALL_JOBS + ' WHERE Status<=1 AND Process_Node_Id=:Process_Node_Id ORDER BY Priority ASC'
 SELECT_JOB_BY_ID = SELECT_ALL_JOBS + ' WHERE Id=:Id'
 SELECT_JOBS_BY_STATUS = SELECT_ALL_JOBS + ' WHERE Status=:Status ORDER BY Priority DESC'
+
+DELETE_JOB_BY_ID = 'DELETE FROM Jobs WHERE Id=:Id'
 
 
 class SQLiteDB:
@@ -166,6 +169,9 @@ class SQLiteDB:
 	def get_all_unprocessed_jobs_for_pn_id(self, pn_id):
 		return self._get_jobs_(SELECT_ALL_UNPROCESSED_JOBS_FOR_PN_ID, {'Process_Node_Id': pn_id})
 
+	def get_all_unprocessed_jobs_for_any_node(self):
+		return self._get_jobs_(SELECT_ALL_UNPROCESSED_JOBS_ANY_NODE)
+
 	def get_all_unprocessed_and_processing_jobs(self):
 		return self._get_jobs_(SELECT_ALL_UNPROCESSED_AND_PROCESSING_JOBS)
 
@@ -188,11 +194,25 @@ class SQLiteDB:
 		return None
 
 	def update_job(self, job_dict):
-		print 'updating job', job_dict
-		con = sql.connect(self.uri)
-		cur = con.cursor()
-		cur.execute(UPDATE_JOB_BY_ID, job_dict)
-		con.commit()
+		try:
+			print 'updating job', job_dict
+			con = sql.connect(self.uri)
+			cur = con.cursor()
+			cur.execute(UPDATE_JOB_BY_ID, job_dict)
+			con.commit()
+			return True
+		except:
+			return False
+
+	def delete_job_by_id(self, job_id):
+		try:
+			con = sql.connect(self.uri)
+			cur = con.cursor()
+			cur.execute(DELETE_JOB_BY_ID, {'Id': int(job_id)})
+			con.commit()
+			return True
+		except:
+			return False
 
 	def save(self, entry):
 		print 'saving',entry

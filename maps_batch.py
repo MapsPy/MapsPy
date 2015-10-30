@@ -761,16 +761,6 @@ def _option_b_(main_dict, maps_conf, maps_def, total_number_detectors, info_elem
 				load_spectrum(spectra_filenames[iii], spectra)
 
 		calib = maps_calibration.calibration(main_dict, maps_conf)
-		''' #TODO: look into loading standards multiple ways (from tags and from maps_standards.txt
-		for st in range(len(standard_filenames)):
-			print 'Started reading in standards from:', standard_filenames[st]
-
-			nbs = calib.read_nbsstds(os.path.join(main_dict['master_dir'],standard_filenames[st]))
-			if ("1832" in standard_filenames[st]) :
-				maps_conf.nbs32 = nbs
-			if ("1833" in standard_filenames[st]) :
-				maps_conf.nbs33 = nbs
-		'''
 		# now start the fitting of the integrated spectra we just loaded
 		fp = maps_fit_parameters.maps_fit_parameters()
 		fitp = fp.define_fitp(main_dict['beamline'], info_elements)

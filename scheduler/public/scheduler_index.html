@@ -355,6 +355,7 @@
                 success: function(data) 
                 {
                     $.notify("Queued Job: " + $("#DataPath").val(), "success");
+                    $queued_table.ajax.reload();
                 },
                 error: function(xhr, textStatus, errorThrown)
                 {
@@ -484,7 +485,7 @@
             $queued_table.ajax.reload();
             $processing_table.ajax.reload();
             $finished_table.ajax.reload();
-        }, 3000);
+        }, 5000);
 	
         //----------------------------------------------------------------------
         
@@ -604,7 +605,7 @@
                     datatype: "json",
                     success: function(data) 
                     {
-                        $.notify("Canceled Job: " + row.data().Id, "success");
+                        $.notify("Canceling Job: " + row.data().Id, "success");
                     },
                     error: function(xhr, textStatus, errorThrown)
                     {

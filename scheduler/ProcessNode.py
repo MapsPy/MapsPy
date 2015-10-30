@@ -182,14 +182,17 @@ class ProcessNode(object):
 	def callback_delete_job(self, job):
 		try:
 			job[Constants.JOB_STATUS] = Constants.JOB_STATUS_CANCELED
-			self.db.update_job(job)
+			#self.db.update_job(job)
+			self.db.delete_job_by_id(job[Constants.JOB_ID])
 			if self.this_process != psutil.Process(os.getpid()):
 				self.this_process.kill()
 				self.this_process = psutil.Process(os.getpid())
+				job[Constants.JOB_STATUS] = Constants.JOB_STATUS_CANCELED
+				#self.db.update_job(job)
+			self.send_job_update(job)
 		except:
-			print datetime.now(), 'run error'
+			print datetime.now(), 'callback_delete_job: Error'
 			traceback.print_exc(file=sys.stdout)
-			self.stop()
 
 	def run(self):
 		webapp = ProcessNodeHandler()
@@ -337,19 +340,19 @@ class ProcessNode(object):
 				proc.join()
 				self.this_process = psutil.Process(os.getpid())
 				job_dict[Constants.JOB_FINISH_PROC_TIME] = datetime.ctime(datetime.now())
-				print 'finished processing job with status', job_status.value
+				print datetime.now(), 'finished processing job with status', job_status.value
 				if job_status.value == Constants.JOB_STATUS_PROCESSING:
 					job_dict[Constants.JOB_STATUS] = Constants.JOB_STATUS_GENERAL_ERROR
 				else:
 					job_dict[Constants.JOB_STATUS] = job_status.value
 			except:
-				print 'Error processing', job_dict[Constants.JOB_DATA_PATH]
+				print datetime.now(), 'Error processing', job_dict[Constants.JOB_DATA_PATH]
 				traceback.print_exc(file=sys.stdout)
 				sys.stdout = saveout
 				job_dict[Constants.JOB_FINISH_PROC_TIME] = datetime.ctime(datetime.now())
 				job_dict[Constants.JOB_STATUS] = Constants.JOB_STATUS_GENERAL_ERROR
-			self.db.update_job(job_dict)
-			self.send_job_update(job_dict)
+			if self.db.update_job(job_dict):
+				self.send_job_update(job_dict)
 			self.send_status_update()
 			print datetime.now(), 'done processing job', job_dict[Constants.JOB_DATA_PATH], job_dict[Constants.JOB_STATUS]
 		print datetime.now(), 'Finished Processing, going to Idle'
@@ -388,7 +391,7 @@ class ProcessNode(object):
 	def send_job_update(self, job_dict):
 		try:
 			self.session.put(self.scheduler_job_url, params=self.pn_info, data=json.dumps(job_dict))
-			print 'sent status'
+			print datetime.now(), 'sent job status', job_dict
 		except:
 			print datetime.now(), 'Error sending job update'
 			#traceback.print_exc(file=sys.stdout)

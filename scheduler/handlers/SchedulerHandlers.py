@@ -321,7 +321,7 @@ class SchedulerJobsWebService(object):
 		rawbody = cherrypy.request.body.read(int(cl))
 		job = json.loads(rawbody)
 		cherrypy.engine.publish("delete_job", job)
-		return 'canceled job Id:' + str(job['Id'])
+		return 'Canceling job Id:' + str(job['Id'])
 
 
 class SchedulerProcessNodeWebService(object):

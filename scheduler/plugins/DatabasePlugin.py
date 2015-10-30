@@ -53,6 +53,9 @@ class DatabasePlugin(plugins.SimplePlugin):
 	def create_tables(self):
 		self.db.create_tables()
 
+	def delete_job_by_id(self, job_id):
+		return self.db.delete_job_by_id(job_id)
+
 	def insert_process_node(self, entity):
 		self.db.insert_process_node(entity)
 
@@ -80,6 +83,9 @@ class DatabasePlugin(plugins.SimplePlugin):
 	def get_all_unprocessed_jobs_for_pn_id(self, pn_id):
 		return self.db.get_all_unprocessed_jobs_for_pn_id(pn_id)
 
+	def get_all_unprocessed_jobs_for_any_node(self):
+		return self.db.get_all_unprocessed_jobs_for_any_node()
+
 	def get_all_unprocessed_and_processing_jobs(self):
 		return self.db.get_all_unprocessed_and_processing_jobs()
 
@@ -99,4 +105,4 @@ class DatabasePlugin(plugins.SimplePlugin):
 		self.db.reset_process_nodes_status()
 
 	def update_job(self, job_dict):
-		self.db.update_job(job_dict)
+		return self.db.update_job(job_dict)
