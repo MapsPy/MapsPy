@@ -162,6 +162,116 @@ def posName(i):
 
 # ----------------------------------------------------------------------
 
+def convert_pv_names(mda_filename, scan):
+	detector_header_2id_1 = '2xfm:mcs:'
+	detector_header_2id_2 = '2xfm:scaler3'
+	detector_header_8bm_1 = '8bmb:3820:'
+	detector_header_8bm_2 = '8bmb:3820:scaler1'
+	detector_header_1 = ''
+	detector_header_2 = ''
+	if mda_filename.find('8bmb') >= 0:
+		det_time = scan.detector_arr[:, :, 0] / 50000000.
+		detector_header_1 = detector_header_8bm_1
+		detector_header_2 = detector_header_8bm_2
+	else:
+		# default to 2ide
+		det_time = scan.detector_arr[:, :, 0] / 25000000.
+		detector_header_1 = detector_header_2id_1
+		detector_header_2 = detector_header_2id_2
+
+	#det_time = scan.detector_arr[:, :, 0] / 25000000.
+	det_des = detector_header_1 + 'mca1.VAL'
+	if det_des in scan.detector_description_arr:
+		#Does this have to be here? Not in IDL.
+		#ind = scan.detector_description_arr.index(det_des)
+		#scan.detector_description_arr[ind] = detector_header_2 + '_cts1.A'
+		#time = time
+		pass
+	else:
+		det_time[:,:] = 1.
+
+	det_des = detector_header_1 + 'mca2.VAL'
+	if det_des in scan.detector_description_arr:
+		ind = scan.detector_description_arr.index(det_des)
+		scan.detector_description_arr[ind] = detector_header_2 + '_cts1.B'
+		scan.detector_arr[:, :, ind] = scan.detector_arr[:, :, ind] / det_time
+	det_des = detector_header_1 + 'mca3.VAL'
+	if det_des in scan.detector_description_arr:
+		ind = scan.detector_description_arr.index(det_des)
+		scan.detector_description_arr[ind] = detector_header_2 + '_cts1.C'
+		scan.detector_arr[:, :, ind] = scan.detector_arr[:, :, ind] / det_time
+	det_des = detector_header_1 + 'mca4.VAL'
+	if det_des in scan.detector_description_arr:
+		ind = scan.detector_description_arr.index(det_des)
+		scan.detector_description_arr[ind] = detector_header_2 + '_cts1.D'
+	det_des = detector_header_1 + 'mca5.VAL'
+	if det_des in scan.detector_description_arr:
+		ind = scan.detector_description_arr.index(det_des)
+		scan.detector_description_arr[ind] = detector_header_2 + '_cts2.A'
+	det_des = detector_header_1 + 'mca6.VAL'
+	if det_des in scan.detector_description_arr:
+		ind = scan.detector_description_arr.index(det_des)
+		scan.detector_description_arr[ind] = detector_header_2 + '_cts2.B'
+	det_des = detector_header_1 + 'mca7.VAL'
+	if det_des in scan.detector_description_arr:
+		ind = scan.detector_description_arr.index(det_des)
+		scan.detector_description_arr[ind] = detector_header_2 + '_cts2.C'
+	det_des = detector_header_1 + 'mca8.VAL'
+	if det_des in scan.detector_description_arr:
+		ind = scan.detector_description_arr.index(det_des)
+		scan.detector_description_arr[ind] = detector_header_2 + '_cts2.D'
+	det_des = detector_header_1 + 'mca9.VAL'
+	if det_des in scan.detector_description_arr:
+		ind = scan.detector_description_arr.index(det_des)
+		scan.detector_description_arr[ind] = detector_header_2 + '_cts3.A'
+	det_des = detector_header_1 + 'mca10.VAL'
+	if det_des in scan.detector_description_arr:
+		ind = scan.detector_description_arr.index(det_des)
+		scan.detector_description_arr[ind] = detector_header_2 + '_cts3.B'
+	det_des = detector_header_1 + 'mca11.VAL'
+	if det_des in scan.detector_description_arr:
+		ind = scan.detector_description_arr.index(det_des)
+		scan.detector_description_arr[ind] = detector_header_2 + '_cts3.C'
+	det_des = detector_header_1 + 'mca12.VAL'
+	if det_des in scan.detector_description_arr:
+		ind = scan.detector_description_arr.index(det_des)
+		scan.detector_description_arr[ind] = detector_header_2 + '_cts3.D'
+	det_des = detector_header_1 + 'mca13.VAL'
+	if det_des in scan.detector_description_arr:
+		ind = scan.detector_description_arr.index(det_des)
+		scan.detector_description_arr[ind] = detector_header_2 + '_cts4.A'
+	det_des = detector_header_1 + 'mca14.VAL'
+	if det_des in scan.detector_description_arr:
+		ind = scan.detector_description_arr.index(det_des)
+		scan.detector_description_arr[ind] = detector_header_2 + '_cts4.B'
+	det_des = detector_header_1 + 'mca15.VAL'
+	if det_des in scan.detector_description_arr:
+		ind = scan.detector_description_arr.index(det_des)
+		scan.detector_description_arr[ind] = detector_header_2 + '_cts4.C'
+	det_des = detector_header_1 + 'mca16.VAL'
+	if det_des in scan.detector_description_arr:
+		ind = scan.detector_description_arr.index(det_des)
+		scan.detector_description_arr[ind] = detector_header_2 + '_cts4.D'
+	det_des = detector_header_1 + 'mca17.VAL'
+	if det_des in scan.detector_description_arr:
+		ind = scan.detector_description_arr.index(det_des)
+		scan.detector_description_arr[ind] = detector_header_2 + '_cts5.A'
+	det_des = detector_header_1 + 'mca18.VAL'
+	if det_des in scan.detector_description_arr:
+		ind = scan.detector_description_arr.index(det_des)
+		scan.detector_description_arr[ind] = detector_header_2 + '_cts5.B'
+	det_des = detector_header_1 + 'mca19.VAL'
+	if det_des in scan.detector_description_arr:
+		ind = scan.detector_description_arr.index(det_des)
+		scan.detector_description_arr[ind] = detector_header_2 + '_cts5.C'
+	det_des = detector_header_1 + 'mca20.VAL'
+	if det_des in scan.detector_description_arr:
+		ind = scan.detector_description_arr.index(det_des)
+		scan.detector_description_arr[ind] = detector_header_2 + '_cts5.D'
+
+
+# ----------------------------------------------------------------------
+
 class mda:
 	def __init__(self):
 		pass
@@ -1340,6 +1450,8 @@ class mda:
 			# maps_change_xrf_resetvars, n_ev, n_rows, n_cols, n_energy, energy, energy_spec, scan_time_stamp, dataset_orig
 			return None
 
+		convert_pv_names(mdafilename, scan)
+
 		detector_description_arr = scan.detector_description_arr
 		detector_arr = scan.detector_arr
 
@@ -1347,6 +1459,7 @@ class mda:
 		y_pixels = detector_arr.shape[1]
 
 		wo = -1
+		'''
 		if '2xfm:mcs:mca1.VAL' in detector_description_arr:
 			wo = detector_description_arr.index('2xfm:mcs:mca1.VAL')
 
@@ -1455,7 +1568,7 @@ class mda:
 			wo = detector_description_arr.index('2xfm:mcs:mca20.VAL')
 		if wo != -1:
 			detector_description_arr[wo] = '2xfm:scaler3_cts5.D'
-
+		'''
 		n_ev = 0
 		n_rows = y_pixels
 		n_cols = x_pixels

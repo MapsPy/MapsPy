@@ -36,6 +36,7 @@ from __future__ import division
 import numpy as np
 import os
 import time
+import glob
 
 from file_util import open_file_with_retry, call_function_with_retry
 
@@ -75,6 +76,7 @@ class nc:
 		extra_pv = 0
 		binning = 0
 
+
 		mda = maps_mda.mda()
 		scan = mda.read_scan(filename, threeD_only=threeD_only, invalid_file=invalid_file, extra_pvs=True)
 		if scan == None:
@@ -82,95 +84,7 @@ class nc:
 
 		invalid_file = invalid_file[0]
 
-		det_time = scan.detector_arr[:, :, 0] / 25000000.
-		det_des = '2xfm:mcs:mca1.VAL'
-		if det_des in scan.detector_description_arr:
-			#Does this have to be here? Not in IDL. 
-			#ind = scan.detector_description_arr.index(det_des)
-			#scan.detector_description_arr[ind] = '2xfm:scaler3_cts1.A'
-			#time = time
-			pass
-		else:
-			det_time[:,:] = 1. 
-					
-		det_des = '2xfm:mcs:mca2.VAL'
-		if det_des in scan.detector_description_arr:
-			ind = scan.detector_description_arr.index(det_des)
-			scan.detector_description_arr[ind] = '2xfm:scaler3_cts1.B'
-			scan.detector_arr[:, :, ind] = scan.detector_arr[:, :, ind] / det_time
-		det_des = '2xfm:mcs:mca3.VAL'
-		if det_des in scan.detector_description_arr:
-			ind = scan.detector_description_arr.index(det_des)
-			scan.detector_description_arr[ind] = '2xfm:scaler3_cts1.C'
-			scan.detector_arr[:, :, ind] = scan.detector_arr[:, :, ind] / det_time
-		det_des = '2xfm:mcs:mca4.VAL'
-		if det_des in scan.detector_description_arr:
-			ind = scan.detector_description_arr.index(det_des)
-			scan.detector_description_arr[ind] = '2xfm:scaler3_cts1.D'
-		det_des = '2xfm:mcs:mca5.VAL'
-		if det_des in scan.detector_description_arr:
-			ind = scan.detector_description_arr.index(det_des)
-			scan.detector_description_arr[ind] = '2xfm:scaler3_cts2.A'
-		det_des = '2xfm:mcs:mca6.VAL'
-		if det_des in scan.detector_description_arr:
-			ind = scan.detector_description_arr.index(det_des)
-			scan.detector_description_arr[ind] = '2xfm:scaler3_cts2.B'
-		det_des = '2xfm:mcs:mca7.VAL'
-		if det_des in scan.detector_description_arr:
-			ind = scan.detector_description_arr.index(det_des)
-			scan.detector_description_arr[ind] = '2xfm:scaler3_cts2.C'
-		det_des = '2xfm:mcs:mca8.VAL'
-		if det_des in scan.detector_description_arr:
-			ind = scan.detector_description_arr.index(det_des)
-			scan.detector_description_arr[ind] = '2xfm:scaler3_cts2.D'			  
-		det_des = '2xfm:mcs:mca9.VAL'
-		if det_des in scan.detector_description_arr:
-			ind = scan.detector_description_arr.index(det_des)
-			scan.detector_description_arr[ind] = '2xfm:scaler3_cts3.A'			  
-		det_des = '2xfm:mcs:mca10.VAL'
-		if det_des in scan.detector_description_arr:
-			ind = scan.detector_description_arr.index(det_des)
-			scan.detector_description_arr[ind] = '2xfm:scaler3_cts3.B'
-		det_des = '2xfm:mcs:mca11.VAL'
-		if det_des in scan.detector_description_arr:
-			ind = scan.detector_description_arr.index(det_des)
-			scan.detector_description_arr[ind] = '2xfm:scaler3_cts3.C'
-		det_des = '2xfm:mcs:mca12.VAL'
-		if det_des in scan.detector_description_arr:
-			ind = scan.detector_description_arr.index(det_des)
-			scan.detector_description_arr[ind] = '2xfm:scaler3_cts3.D'
-		det_des = '2xfm:mcs:mca13.VAL'
-		if det_des in scan.detector_description_arr:
-			ind = scan.detector_description_arr.index(det_des)
-			scan.detector_description_arr[ind] = '2xfm:scaler3_cts4.A'
-		det_des = '2xfm:mcs:mca14.VAL'
-		if det_des in scan.detector_description_arr:
-			ind = scan.detector_description_arr.index(det_des)
-			scan.detector_description_arr[ind] = '2xfm:scaler3_cts4.B'
-		det_des = '2xfm:mcs:mca15.VAL'
-		if det_des in scan.detector_description_arr:
-			ind = scan.detector_description_arr.index(det_des)
-			scan.detector_description_arr[ind] = '2xfm:scaler3_cts4.C'
-		det_des = '2xfm:mcs:mca16.VAL'
-		if det_des in scan.detector_description_arr:
-			ind = scan.detector_description_arr.index(det_des)
-			scan.detector_description_arr[ind] = '2xfm:scaler3_cts4.D'			  
-		det_des = '2xfm:mcs:mca17.VAL'
-		if det_des in scan.detector_description_arr:
-			ind = scan.detector_description_arr.index(det_des)
-			scan.detector_description_arr[ind] = '2xfm:scaler3_cts5.A'
-		det_des = '2xfm:mcs:mca18.VAL'
-		if det_des in scan.detector_description_arr:
-			ind = scan.detector_description_arr.index(det_des)
-			scan.detector_description_arr[ind] = '2xfm:scaler3_cts5.B'			  
-		det_des = '2xfm:mcs:mca19.VAL'
-		if det_des in scan.detector_description_arr:
-			ind = scan.detector_description_arr.index(det_des)
-			scan.detector_description_arr[ind] = '2xfm:scaler3_cts5.C'
-		det_des = '2xfm:mcs:mca20.VAL'
-		if det_des in scan.detector_description_arr:
-			ind = scan.detector_description_arr.index(det_des)
-			scan.detector_description_arr[ind] = '2xfm:scaler3_cts5.D'
+		maps_mda.convert_pv_names(filename, scan)
 
 		if invalid_file > 0:		
 			print 'not a valid mda flyscan file, error number: ', str(invalid_file), '	filename: ', filename
@@ -196,8 +110,16 @@ class nc:
 		new_detector_arr[:, :, 0:old_det_len] = scan.detector_arr[:, :, 0:old_det_len]	
 		scan.detector_arr = new_detector_arr
 
+		file_path = os.path.join(self.main_dict['master_dir'], os.path.join('flyXRF', header))
+
 		for i_lines in range(n_rows):
-			ncfile = os.path.join(path, 'flyXRF', header + '_2xfm3__' + str(i_lines) + '.nc' )
+
+			nc_files = glob.glob(file_path + '*_' + str(i_lines) + '.nc')
+			#ncfile = os.path.join(path, 'flyXRF', header + '_2xfm3__' + str(i_lines) + '.nc' )
+			if len(nc_files) > 0:
+				ncfile = nc_files[0]
+			else:
+				continue
 
 			xmapdat = read_xmap_netcdf(ncfile, True)
 			if xmapdat == None:

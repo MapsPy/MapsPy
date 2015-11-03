@@ -689,7 +689,7 @@ class henke:
 		wo = np.where(z_array == 1)[0]
 
 		if len(wo) == 0 : 
-			print  name, 'encountered error, will return'
+			print 'Warning: get_henke_single() name=', name, ' encountered error, will return'
 			return 0, 0, 0, 0
 		
 		z = wo+1

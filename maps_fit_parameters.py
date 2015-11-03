@@ -1215,13 +1215,19 @@ class maps_fit_parameters:
 		if suffix != '':
 			this_detector_number = int(suffix) + 1
 			temp = ELT1[:]
-			temp.split('mca')
-			position = len(temp[0])
-			ELT1 = ELT1[0:position+1] + 'mca' + str(this_detector_number) + ELT1[position + 4: len(ELT1) - (position + 4) + 1]
+			temp = temp.split('mca')
+			position = len(temp[1])
+			if position > 0:
+				ELT1 = temp[0] + 'mca' + str(this_detector_number) + temp[1][1:]
+			else:
+				ELT1 = temp[0] + 'mca' + str(this_detector_number) + temp[1]
 			temp = ERT1[:]
-			temp.split('mca')
-			position = len(temp[0])
-			ERT1 = ERT1[0: position] + 'mca' + str(this_detector_number) + ERT1[position + 4: len(ERT1) - (position + 4) + 1]
+			temp = temp.split('mca')
+			position = len(temp[1])
+			if position > 0:
+				ERT1 = temp[0] + 'mca' + str(this_detector_number) + temp[1][1:]
+			else:
+				ERT1 = temp[0] + 'mca' + str(this_detector_number) + temp[1]
 	
 		if ELT1 != -1:
 			print>>f, 'ELT1:', ELT1
