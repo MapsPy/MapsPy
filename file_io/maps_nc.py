@@ -110,7 +110,7 @@ class nc:
 		new_detector_arr[:, :, 0:old_det_len] = scan.detector_arr[:, :, 0:old_det_len]	
 		scan.detector_arr = new_detector_arr
 
-		file_path = os.path.join(self.main_dict['master_dir'], os.path.join('flyXRF', header))
+		file_path = os.path.join(path, os.path.join('flyXRF', header))
 
 		for i_lines in range(n_rows):
 
