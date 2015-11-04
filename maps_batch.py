@@ -37,6 +37,7 @@ import sys
 import getopt
 import numpy as np
 from time import gmtime, strftime
+import logging
 import h5py
 import shutil
 import maps_generate_img_dat
@@ -46,8 +47,59 @@ from file_io import maps_hdf5
 import maps_fit_parameters
 import maps_calibration
 import make_maps
+import Constants
 from file_io.file_util import open_file_with_retry, call_function_with_retry
 
+# ------------------------------------------------------------------------------------------------
+
+# Function used to create a new process for jobs
+def new_process_func(job_logger, alias_path, job_dict):
+	job_logger.info('Start Job Process')
+	try:
+		maps_set_str = os.path.join(str(alias_path), 'maps_settings.txt')
+		f = open(maps_set_str, 'w')
+		f.write('	  This file will set some MAPS settings mostly to do with fitting' + '\n')
+		f.write('VERSION:' + str(job_dict[Constants.JOB_VERSION]).strip() + '\n')
+		f.write('DETECTOR_ELEMENTS:' + str(job_dict[Constants.JOB_DETECTOR_ELEMENTS]).strip() + '\n')
+		f.write('MAX_NUMBER_OF_FILES_TO_PROCESS:' + str(job_dict[Constants.JOB_MAX_FILES_TO_PROC]).strip() + '\n')
+		f.write('MAX_NUMBER_OF_LINES_TO_PROCESS:' + str(job_dict[Constants.JOB_MAX_LINES_TO_PROC]).strip() + '\n')
+		f.write('QUICK_DIRTY:' + str(job_dict[Constants.JOB_QUICK_AND_DIRTY]).strip() + '\n')
+		f.write('XRF_BIN:' + str(job_dict[Constants.JOB_XRF_BIN]).strip() + '\n')
+		f.write('NNLS:' + str(job_dict[Constants.JOB_NNLS]).strip() + '\n')
+		f.write('XANES_SCAN:' + str(job_dict[Constants.JOB_XANES_SCAN]).strip() + '\n')
+		f.write('DETECTOR_TO_START_WITH:' + str(job_dict[Constants.JOB_DETECTOR_TO_START_WITH]).strip() + '\n')
+		f.write('BEAMLINE:' + str(job_dict[Constants.JOB_BEAM_LINE]).strip() + '\n')
+		f.write('DatasetFilesToProc:' + str(job_dict[Constants.JOB_DATASET_FILES_TO_PROC]).strip() + '\n')
+		standard_filenames = job_dict[Constants.JOB_STANDARDS].split(';')
+		for item in standard_filenames:
+			f.write('STANDARD:' + item.strip() + '\n')
+		f.close()
+		proc_mask = int(job_dict[Constants.JOB_PROC_MASK])
+		key_a = 0
+		key_b = 0
+		key_c = 0
+		key_d = 0
+		key_e = 0
+		key_f = 0 # for netcdf to hdf5 future feature
+		if proc_mask & 1 == 1:
+			key_a = 1
+		if proc_mask & 2 == 2:
+			key_b = 1
+		if proc_mask & 4 == 4:
+			key_c = 1
+		if proc_mask & 8 == 8:
+			key_d = 1
+		if proc_mask & 16 == 16:
+			key_e = 1
+		if proc_mask & 32 == 32:
+			key_f = 1
+		maps_batch(wdir=alias_path, a=key_a, b=key_b, c=key_c, d=key_d, e=key_e, logger=job_logger)
+		job_logger.info('Completed Job')
+	except:
+		job_logger.exception('job process')
+		return -1
+	job_logger.info('Done Job Process')
+	return 0
 
 # ------------------------------------------------------------------------------------------------
 
@@ -678,6 +730,8 @@ def save_spectrum(main_dict, filename, sfilename):
 	return
 
 # ------------------------------------------------------------------------------------------------
+
+
 def _option_a_(main_dict, maps_conf, cb_update_func=None):
 	print '\n Section A \n'
 	check_output_dirs(main_dict)
@@ -686,16 +740,9 @@ def _option_a_(main_dict, maps_conf, cb_update_func=None):
 
 	make_maps.main(main_dict, force_fit=0, no_fit=True, cb_update_func=cb_update_func)
 
-	#		 for this_detector in range(0, total_number_detectors):
-	#			 header, scan_ext= os.path.splitext(filenames[0])
-	#			 print header
-	#			 mdafilename = os.path.join(main_dict['mda_dir'],header+scan_ext)
-	#			 print 'doing filen #: ',  mdafilename
-	#			 makemaps = maps_generate_img_dat.analyze(info_elements, main_dict, maps_conf, use_fit = maps_conf.use_fit)
-	#			 makemaps.generate_img_dat_threaded(header, mdafilename, this_detector, total_number_detectors, quick_dirty, nnls,
-	#												max_no_processors_lines, xrf_bin)
-
 # ------------------------------------------------------------------------------------------------
+
+
 def _option_b_(main_dict, maps_conf, maps_def, total_number_detectors, info_elements, cb_update_func=None):
 	print '\n Section B \n'
 	current_directory = main_dict['master_dir']
@@ -887,7 +934,7 @@ def _option_d_(cb_update_func=None):
 	#		  maps_tools.extract_all(main_dict, test_string)
 
 # ------------------------------------------------------------------------------------------------
-def maps_batch(wdir='', a=1,b=0,c=0,d=0,e=0, cb_update_func=None):
+def maps_batch(wdir='', a=1,b=0,c=0,d=0,e=0, logger=None, cb_update_func=None):
 
 	verbose = True
 	time_started = strftime("%Y-%m-%d %H:%M:%S", gmtime())
