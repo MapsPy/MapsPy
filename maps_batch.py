@@ -38,6 +38,7 @@ import getopt
 import numpy as np
 from time import gmtime, strftime
 import logging
+import logging.handlers
 import h5py
 import shutil
 import maps_generate_img_dat
@@ -50,11 +51,26 @@ import make_maps
 import Constants
 from file_io.file_util import open_file_with_retry, call_function_with_retry
 
+def setup_logger(log_name, stream_to_console=True):
+	logger = logging.getLogger('mapsbatch')
+	fHandler = logging.FileHandler('job_logs/' + log_name)
+	logger.setLevel(logging.DEBUG)
+	formatter = logging.Formatter('%(asctime)s | %(levelname)s | PID[%(process)d] | %(funcName)s(): %(message)s')
+	fHandler.setFormatter(formatter)
+	logger.addHandler(fHandler)
+	if stream_to_console:
+		ch = logging.StreamHandler()
+		ch.setFormatter(formatter)
+		ch.setLevel(logging.ERROR)
+		logger.addHandler(ch)
+	return logger
+
 # ------------------------------------------------------------------------------------------------
 
 # Function used to create a new process for jobs
-def new_process_func(job_logger, alias_path, job_dict):
-	job_logger.info('Start Job Process')
+def new_process_func(log_name, alias_path, job_dict):
+	logger = log_name
+	logger.info('Start Job Process')
 	try:
 		maps_set_str = os.path.join(str(alias_path), 'maps_settings.txt')
 		f = open(maps_set_str, 'w')
@@ -93,12 +109,14 @@ def new_process_func(job_logger, alias_path, job_dict):
 			key_e = 1
 		if proc_mask & 32 == 32:
 			key_f = 1
-		maps_batch(wdir=alias_path, a=key_a, b=key_b, c=key_c, d=key_d, e=key_e, logger=job_logger)
-		job_logger.info('Completed Job')
+		maps_batch(wdir=alias_path, a=key_a, b=key_b, c=key_c, d=key_d, e=key_e, logger=logger)
+		logger.info('Completed Job')
 	except:
-		job_logger.exception('job process')
+		logger.exception('job process')
+		#fHandler.close()
 		return -1
-	job_logger.info('Done Job Process')
+	logger.info('Done Job Process')
+	#fHandler.close()
 	return 0
 
 # ------------------------------------------------------------------------------------------------
@@ -108,7 +126,7 @@ def check_and_create_dir(dir_name):
 	if not os.path.exists(dir_name):
 		os.makedirs(dir_name)
 		if not os.path.exists(dir_name):
-			print 'warning: did not find the '+dir_name+' directory, and could not create a new directory. Will abort this action'
+			print 'warning: did not find the ' + dir_name + ' directory, and could not create a new directory. Will abort this action'
 			return False
 	return True
 
@@ -939,6 +957,9 @@ def maps_batch(wdir='', a=1,b=0,c=0,d=0,e=0, logger=None, cb_update_func=None):
 	verbose = True
 	time_started = strftime("%Y-%m-%d %H:%M:%S", gmtime())
 
+	if logger == None:
+		logger = setup_logger()
+
 	first_run = 1
 
 	# remove quotations marks if any in wdir
@@ -949,11 +970,11 @@ def maps_batch(wdir='', a=1,b=0,c=0,d=0,e=0, logger=None, cb_update_func=None):
 	wdir = os.path.normpath(wdir)
 
 	if verbose:
-		print 'working directory =', wdir
+		logger.info('working directory =%s', wdir)
 		
 	if not os.path.exists(wdir):
-		print 'Error - Directory ', wdir, ' does not exist. Please specify working directory.'
-		return
+		logger.error('Error - Directory %s does not exist. Please specify working directory.', wdir)
+		raise ValueError('Directory %s does not exist')
 
 	#define main_dict
 	main_dict = {'mapspy_version':'1.2',
@@ -994,7 +1015,6 @@ def maps_batch(wdir='', a=1,b=0,c=0,d=0,e=0, logger=None, cb_update_func=None):
 			'version': 0}
 
 	# Get info from maps_settings.txt
-	print 'maps_batch'
 	maps_settingsfile = 'maps_settings.txt'
 	try:
 		sfilepath = os.path.join(main_dict['master_dir'], maps_settingsfile)
@@ -1035,11 +1055,11 @@ def maps_batch(wdir='', a=1,b=0,c=0,d=0,e=0, logger=None, cb_update_func=None):
 					elif tag == 'DatasetFilesToProc':
 						main_dict['dataset_files_to_proc'] = str(value).replace('\\', '/').strip().split(',')
 			except:
-				print 'Error parsing tag [', tag, '] values [', value, ']'
+				logger.warning('Error parsing tag [%s] values [%s]', tag, value)
 		f.close()
 
 	except:
-		print 'maps_batch: Could not open maps_settings.txt.'
+		raise ValueError('maps_batch: Could not open maps_settings.txt.')
 
 	me = maps_elements.maps_elements()
 	info_elements = me.get_element_info()
@@ -1047,11 +1067,11 @@ def maps_batch(wdir='', a=1,b=0,c=0,d=0,e=0, logger=None, cb_update_func=None):
 	maps_def = maps_definitions.maps_definitions()
 	maps_conf = maps_def.set_maps_definitions(main_dict['beamline'], info_elements)
 
-	print 'main_dict beamline: ', main_dict['beamline'], '  maps_config version: ', str(main_dict['version'])
+	logger.info('main_dict beamline: %s maps_config version: %s', main_dict['beamline'], str(main_dict['version']))
 
 	select_beamline(main_dict, maps_conf, main_dict['beamline'])
 
-	print 'total number of detectors:', main_dict['total_number_detectors']
+	logger.info('total number of detectors: %d', main_dict['total_number_detectors'])
 
 	# Section a converts mda to h5 and does ROI and ROI+ fits
 	if a > 0:
@@ -1071,7 +1091,7 @@ def maps_batch(wdir='', a=1,b=0,c=0,d=0,e=0, logger=None, cb_update_func=None):
 
 	# Generate average images
 	if main_dict['total_number_detectors'] > 1 and b > 0 and spectra is not None:
-		print ' we are now going to create the maps_generate_average...'
+		logger.info(' we are now going to create the maps_generate_average...')
 		n_channels = 2048
 		energy_channels = spectra[0].calib['off'] + spectra[0].calib['lin'] * np.arange((n_channels), dtype=np.float)
 		makemaps = maps_generate_img_dat.analyze(info_elements, main_dict, maps_conf)
@@ -1079,14 +1099,12 @@ def maps_batch(wdir='', a=1,b=0,c=0,d=0,e=0, logger=None, cb_update_func=None):
 
 	# Section e adds exchange information
 	if e > 0:
-		print 'Adding exchange information'
+		logger.info('Adding exchange information')
 		ch5 = maps_hdf5.h5()
 		ch5.add_exchange(main_dict, maps_conf)
 
-	print 'time started:  ', time_started
-	print 'time finished: ', strftime("%Y-%m-%d %H:%M:%S", gmtime())
-
-	return
+	logger.info('time started:  %s', time_started)
+	logger.info('time finished: %s', strftime("%Y-%m-%d %H:%M:%S", gmtime()))
 
 # ----------------------------------------------------------------------------
 if __name__ == '__main__':

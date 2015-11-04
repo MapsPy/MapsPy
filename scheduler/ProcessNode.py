@@ -141,10 +141,12 @@ class ProcessNode(object):
 			h.setFormatter(cherrypy._cplogging.logfmt)
 			log.error_log.addHandler(h)
 		else:
+			log.setLevel(logging.DEBUG)
 			h.setFormatter(formatter)
 			log.addHandler(h)
 		if stream_to_console:
 			ch = logging.StreamHandler()
+			ch.setFormatter(formatter)
 			ch.setLevel(logging.ERROR)
 			log.addHandler(ch)
 
@@ -276,10 +278,10 @@ class ProcessNode(object):
 				self.pn_info[Constants.PROCESS_NODE_STATUS] = Constants.PROCESS_NODE_STATUS_PROCESSING
 				job_dict[Constants.JOB_STATUS] = Constants.JOB_STATUS_PROCESSING
 				job_dict[Constants.JOB_START_PROC_TIME] = datetime.ctime(datetime.now())
-				log_name = 'Job_' + str(job_dict[Constants.JOB_ID]) + '_' + datetime.strftime(datetime.now(), "%y_%m_%d_%H_%M_%S")
-				job_dict[Constants.JOB_LOG_PATH] = log_name + '.log'
+				log_name = 'Job_' + str(job_dict[Constants.JOB_ID]) + '_' + datetime.strftime(datetime.now(), "%y_%m_%d_%H_%M_%S") + '.log'
+				job_dict[Constants.JOB_LOG_PATH] = log_name
 				job_logger = logging.getLogger(log_name)
-				self._setup_logging_(job_logger, "file", "job_logs/" + log_name + ".log")
+				self._setup_logging_(job_logger, "file", "job_logs/" + log_name)
 
 				self.db.update_job(job_dict)
 				self.send_job_update(job_dict)
