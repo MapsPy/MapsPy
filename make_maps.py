@@ -37,7 +37,6 @@ import multiprocessing
 import numpy as np
 import time
 import traceback
-import sys
 import maps_generate_img_dat
 import maps_definitions
 import maps_elements
@@ -57,7 +56,7 @@ def mp_make_maps(info_elements, main_dict, maps_conf, header, mdafilename, this_
 		makemaps.generate_img_dat_threaded(header, mdafilename, this_detector, total_number_detectors, quick_dirty, nnls, max_no_processors_lines, xrf_bin)
 	except:
 		print 'Exception at make_maps.mp_make_maps()'
-		traceback.print_exc(file=sys.stdout)
+		traceback.print_exc()
 		return -1
 
 	return 0
@@ -195,8 +194,7 @@ def main(main_dict, force_fit=0, no_fit=False, cb_update_func=None):
 				print 'ERROR - could not read override file: ' + maps_overridefile
 				return
 		except:
-			import traceback,sys
-			traceback.print_exc(file=sys.stdout)
+			traceback.print_exc()
 			print 'ERROR - could not read override file: ' + maps_overridefile
 			return
 
