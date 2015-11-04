@@ -1322,8 +1322,6 @@ class analyze:
 					print 'Multi-threaded fitting started'
 					print 'no_processors_to_use = ', no_processors_to_use
 					print 'cpu_count() = %d\n' % multiprocessing.cpu_count()
-					#no_processors_to_use = multiprocessing.cpu_count() - 1
-					#print 'new no_processors_to_use = ', no_processors_to_use
 					print 'Creating pool with %d processes\n' % no_processors_to_use
 					pool = multiprocessing.Pool(no_processors_to_use)
 
@@ -1335,24 +1333,6 @@ class analyze:
 							data_lines[0:scan.mca_arr[i_fit, jj, :].size, jj, i_fit] = scan.mca_arr[i_fit, jj, :]
 
 					output_dir = self.main_dict['output_dir']
-
-					# #Single processor version for debugging
-					# for i_fit in range(count):
-					# 	data_line = data_lines[:, :, i_fit]
-					# 	print 'fitting row number ', i_fit, ' of ', count-1
-					# 	elt_line[:] = elt1_arr[i_fit, :]
-					#
-					# for jj in range(n_rows):
-					# 	fitted_temp[xmin:xmax+1, kk] = fitted_temp[xmin:xmax+1, kk] + fitted_line[xmin:xmax+1, jj]
-					# 	Ka_temp[xmin:xmax+1, kk] = Ka_temp[xmin:xmax+1, kk] + ka_line[xmin:xmax+1, jj]
-					# 	l_temp[xmin:xmax+1, kk] = l_temp[xmin:xmax+1, kk] + l_line[xmin:xmax+1, jj]
-					# 	bkground_temp[xmin:xmax+1, kk] = bkground_temp[xmin:xmax+1, kk] + bkground_line[xmin:xmax+1, jj]
-					# 	raw_temp[:, kk] = raw_temp[:, kk] + data_line[:, jj]
-					#
-					#
-					# fitted_line, ka_line, l_line, bkground_line,	values_line, bkgnd_line, tfy_line, xmin, xmax = fit.fit_line(data_line,
-					# output_dir, n_rows, matrix, spectral_binning, elt_line, values_line, bkgnd_line, tfy_line,
-					# info_elements, fitp, fitp.add_pars, keywords, add_matrixfit_pars, xrf_bin, calib )
 
 					print 'Started fitting'
 					sys.stdout.flush()
@@ -1387,12 +1367,10 @@ class analyze:
 					#print '------ Waiting for fitting to finish ------'
 					#del data_lines
 					pool.close()
+					pool.join()
 					results = []
 					for r in results_pool:
 						results.append(r.get())
-
-					#pool.terminate()
-					pool.join()
 
 					for iline in range(count):
 						results_line = results[iline]

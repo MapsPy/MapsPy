@@ -47,12 +47,12 @@ from file_io.file_util import open_file_with_retry
 # ------------------------------------------------------------------------------------------------
 
 
-def mp_make_maps(info_elements, main, maps_conf, header, mdafilename, this_detector, use_fit, total_number_detectors,
+def mp_make_maps(info_elements, main_dict, maps_conf, header, mdafilename, this_detector, use_fit, total_number_detectors,
 				quick_dirty, nnls, xrf_bin, max_no_processors_lines):
 
-	makemaps = maps_generate_img_dat.analyze(info_elements, main, maps_conf, use_fit=use_fit)
-	makemaps.generate_img_dat_threaded(header, mdafilename, this_detector, total_number_detectors,
-									quick_dirty, nnls, max_no_processors_lines, xrf_bin)
+	makemaps = maps_generate_img_dat.analyze(info_elements, main_dict, maps_conf, beamline=main_dict['beamline'], use_fit=use_fit)
+	makemaps.generate_img_dat_threaded(header, mdafilename, this_detector, total_number_detectors, quick_dirty, nnls, max_no_processors_lines, xrf_bin)
+
 
 	return
 
@@ -332,18 +332,43 @@ def main(main_dict, force_fit=0, no_fit=False, cb_update_func=None):
 		if no_processors_to_use_files >= 2:
 			# Need to modify stout to flush prints
 			print 'use multiple processors for multiple files'
-			pool = multiprocessing.Pool(no_processors_to_use_files)
+			#pool = multiprocessing.Pool(no_processors_to_use_files)
+			procs_to_start = []
+			procs_to_join = []
 			for pp in range(no_files):
 				header, scan_ext = os.path.splitext(filenames[pp])
 				mdafilename = os.path.join(main_dict['mda_dir'], filenames[pp])
 				print 'Multiple processor file version: doing filen #: ', mdafilename, ' this detector:', this_detector, ' pp:', pp
-
-				pool.apply_async(mp_make_maps, (info_elements, main_dict, maps_conf, header, mdafilename, this_detector,
-												use_fit, total_number_detectors, quick_dirty, main_dict['nnls'],
-												main_dict['xrf_bin'], max_no_processors_lines))
+				proc = multiprocessing.Process(target=mp_make_maps, args=(info_elements, main_dict, maps_conf, header, mdafilename, this_detector,use_fit, total_number_detectors, quick_dirty, main_dict['nnls'], main_dict['xrf_bin'], max_no_processors_lines))
+				procs_to_start += [proc]
+			num_procs_running = 0
+			while len(procs_to_start) > 0 or len(procs_to_join) > 0:
+				for proc in procs_to_start[:]:
+					if num_procs_running < no_processors_to_use_files:
+						print 'Starting file processs'
+						proc.start()
+						procs_to_join += [proc]
+						procs_to_start.remove(proc)
+						num_procs_running += 1
+				for proc in procs_to_join[:]:
+					if proc.exitcode is None and not proc.is_alive():
+						time.sleep(0.1)
+					elif proc.exitcode < 0:
+						print 'Exception thrown for one of the files processing'
+						proc.join()
+						print 'Process Joined'
+						procs_to_join.remove(proc)
+						num_procs_running -= 1
+					else:
+						print 'Finished processing file'
+						proc.join()
+						print 'Process Joined'
+						procs_to_join.remove(proc)
+						num_procs_running -= 1
+			#	pool.apply_async(mp_make_maps, (info_elements, main_dict, maps_conf, header, mdafilename, this_detector,use_fit, total_number_detectors, quick_dirty, main_dict['nnls'], main_dict['xrf_bin'], max_no_processors_lines))
 			# close and join the pool
-			pool.close()
-			pool.join()
+			#pool.close()
+			#pool.join()
 
 		else:
 			#  a single processor machine,	just use the single processor
