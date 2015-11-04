@@ -36,6 +36,8 @@ import os
 import multiprocessing
 import numpy as np
 import time
+import traceback
+import sys
 import maps_generate_img_dat
 import maps_definitions
 import maps_elements
@@ -50,11 +52,15 @@ from file_io.file_util import open_file_with_retry
 def mp_make_maps(info_elements, main_dict, maps_conf, header, mdafilename, this_detector, use_fit, total_number_detectors,
 				quick_dirty, nnls, xrf_bin, max_no_processors_lines):
 
-	makemaps = maps_generate_img_dat.analyze(info_elements, main_dict, maps_conf, beamline=main_dict['beamline'], use_fit=use_fit)
-	makemaps.generate_img_dat_threaded(header, mdafilename, this_detector, total_number_detectors, quick_dirty, nnls, max_no_processors_lines, xrf_bin)
+	try:
+		makemaps = maps_generate_img_dat.analyze(info_elements, main_dict, maps_conf, beamline=main_dict['beamline'], use_fit=use_fit)
+		makemaps.generate_img_dat_threaded(header, mdafilename, this_detector, total_number_detectors, quick_dirty, nnls, max_no_processors_lines, xrf_bin)
+	except:
+		print 'Exception at make_maps.mp_make_maps()'
+		traceback.print_exc(file=sys.stdout)
+		return -1
 
-
-	return
+	return 0
 
 # ------------------------------------------------------------------------------------------------
 
