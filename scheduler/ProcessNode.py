@@ -269,7 +269,7 @@ class ProcessNode(RestBase):
 				self.send_job_update(job_dict)
 				self.send_status_update()
 
-				proc = multiprocessing.Process(target=maps_batch.new_process_func, args=(job_logger, alias_path, job_dict))
+				proc = multiprocessing.Process(target=maps_batch.new_process_func, args=(log_name, alias_path, job_dict))
 				proc.start()
 				self.this_process = psutil.Process(proc.pid)
 				proc.join()

@@ -539,7 +539,7 @@ class h5:
 #-----------------------------------------------------------------------------	 
 	def maps_change_xrf_read_hdf5(self, sfile, make_maps_conf):
 	
-		maps_def = maps_definitions.maps_definitions()
+		maps_def = maps_definitions.maps_definitions(self.logger)
 
 		f = call_function_with_retry(h5py.File, 5, 0.1, 1.1, (sfile, 'r'))
 		if f == None:
@@ -733,7 +733,7 @@ class h5:
 		me = maps_elements.maps_elements(self.logger)
 		info_elements = me.get_element_info()
 	
-		maps_def = maps_definitions.maps_definitions()
+		maps_def = maps_definitions.maps_definitions(self.logger)
 		maps_conf = maps_def.set_maps_definitions('2-ID-E', info_elements)
 
 		XRFmaps_info, n_cols, n_rows, n_channels, valid_read = self.maps_change_xrf_read_hdf5(filename, maps_conf)

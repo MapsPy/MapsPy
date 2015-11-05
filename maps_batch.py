@@ -72,7 +72,7 @@ def setup_logger(log_name, stream_to_console=True):
 def new_process_func(log_name, alias_path, job_dict):
 	global _log_name
 	_log_name = log_name
-	logger = log_name
+	logger = setup_logger('job_logs/' + log_name)
 	logger.info('Start Job Process')
 	try:
 		maps_set_str = os.path.join(str(alias_path), 'maps_settings.txt')
@@ -1065,6 +1065,7 @@ def maps_batch(wdir, option_a_roi_plus, option_b_extract_spectra, option_c_per_p
 	if option_a_roi_plus > 0:
 		_option_a_(main_dict, maps_conf, logger)
 
+	spectra = None
 	# Section b loads 8 largest h5 files, fits them and saves fit parameters
 	if option_b_extract_spectra > 0:
 		spectra = _option_b_(main_dict, maps_conf, maps_def, main_dict['total_number_detectors'], info_elements, logger)
@@ -1078,10 +1079,13 @@ def maps_batch(wdir, option_a_roi_plus, option_b_extract_spectra, option_c_per_p
 		_option_d_(logger)
 
 	# Generate average images
-	if main_dict['total_number_detectors'] > 1 and (option_a_roi_plus > 0 or option_c_per_pixel > 0) and spectra is not None:
+	if main_dict['total_number_detectors'] > 1 and (option_a_roi_plus > 0 or option_c_per_pixel > 0):
 		logger.info(' we are now going to create the maps_generate_average...')
 		n_channels = 2048
-		energy_channels = spectra[0].calib['off'] + spectra[0].calib['lin'] * np.arange((n_channels), dtype=np.float)
+		if option_b_extract_spectra > 0:
+			energy_channels = spectra[0].calib['off'] + spectra[0].calib['lin'] * np.arange((n_channels), dtype=np.float)
+		else:
+			energy_channels = None
 		makemaps = maps_generate_img_dat.analyze(logger, info_elements, main_dict, maps_conf)
 		makemaps.generate_average_img_dat(main_dict['total_number_detectors'], maps_conf, energy_channels)
 
