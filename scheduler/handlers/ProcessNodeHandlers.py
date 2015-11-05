@@ -71,8 +71,9 @@ class ProcessNodeJobsWebService(object):
 	ProcessNode exposed /job_queue
 	'''
 	exposed = True
-	def __init__(self, db):
+	def __init__(self, db, logger):
 		self.db = db
+		self.logger = logger
 
 	@cherrypy.tools.accept(media='text/plain')
 	@cherrypy.tools.json_out()
@@ -98,18 +99,18 @@ class ProcessNodeJobsWebService(object):
 				myJob = self.db.get_job(job['Id'])
 				if not myJob == None:
 					if int(myJob['Status']) > int(job['Status']):
-						print 'sending updated status for job', myJob
+						self.logger.info('sending updated status for job: %s', myJob)
 						cherrypy.engine.publish('send_job_update', myJob)
 					else:
-						print 'updating job', job
+						self.logger.info('updating job: %s', job)
 						self.db.update_job(job)
 				else:
-					print '-updating job', job
+					self.logger.info('-updating job: %s', job)
 					self.db.update_job(job)
 			cherrypy.engine.publish("new_job", job)
 			return 'inserted job'
 		else:
-			print 'Error: could not parse json job'
+			self.logger.error('Error: could not parse json job')
 			return 'Error: could not parse json job'
 
 	# update job
@@ -122,7 +123,7 @@ class ProcessNodeJobsWebService(object):
 		rawbody = cherrypy.request.body.read(int(cl))
 		job = json.loads(rawbody)
 		if job != None:
-			print 'updating job', job
+			self.logger.info('updating job: %s', job)
 			self.db.update_job(job)
 			cherrypy.engine.publish('delete_job', job)
 		else:

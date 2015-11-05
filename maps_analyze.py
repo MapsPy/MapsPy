@@ -75,8 +75,9 @@ def erfc(x):
 
 # -----------------------------------------------------------------------------
 class analyze:
-	def __init__(self):   
+	def __init__(self, logger):
 		self.snip_background = 0
+		self.logger = logger
 	
 	# -----------------------------------------------------------------------------
 	def set_fit_vals(self, fitp, p, element_pos): 
@@ -158,7 +159,7 @@ class analyze:
 
 			if (keywords.use_this_par[element_pos[i]] != 1) and (pall[element_pos[i]] <= -9.999999) : continue 
 	
-			#print i, keywords.use_this_par[element_pos[i]] , pall[element_pos[i]]
+			#self.logger.debug( i, keywords.use_this_par[element_pos[i]] , pall[element_pos[i]]
 	
 			pre_faktor = 10.**pall[element_pos[i]]
 			
@@ -222,7 +223,7 @@ class analyze:
 			if (add_pars[i, j].energy <= 0.) : continue
 			delta_energy = ev.copy() - (add_pars[i, j].energy)
 			faktor = add_pars[i, j].ratio* (10.**pall[temp_element_pos[ii]])
-			#print ii,	pall[temp_element_pos[ii]], faktor
+			#self.logger.debug( ii,	pall[temp_element_pos[ii]], faktor
 			# peak, gauss
 			value = faktor * self.model_gauss_peak(gain, sigma[i, j], delta_energy)
 			counts_pileup = counts_pileup + value
@@ -244,17 +245,17 @@ class analyze:
 
 		counts = counts + counts_background		
 		
-		#		 print 'counts_background', np.sum(counts_background)
-		#		 print 'counts_ka', np.sum(counts_ka)
-		#		 print 'counts_kb', np.sum(counts_kb)
-		#		 print 'counts_l', np.sum(counts_l)
-		#		 print 'counts_m', np.sum(counts_m)
-		#		 print 'counts_elastic', np.sum(counts_elastic)
-		#		 print 'counts_compton', np.sum(counts_compton)
-		#		 print 'counts_step', np.sum(counts_step)
-		#		 print 'counts_tail', np.sum(counts_tail)
-		#		 print 'counts_pileup', np.sum(counts_pileup)
-		#		 print 'counts_escape', np.sum(counts_escape)
+		#		 self.logger.debug( 'counts_background', np.sum(counts_background)
+		#		 self.logger.debug( 'counts_ka', np.sum(counts_ka)
+		#		 self.logger.debug( 'counts_kb', np.sum(counts_kb)
+		#		 self.logger.debug( 'counts_l', np.sum(counts_l)
+		#		 self.logger.debug( 'counts_m', np.sum(counts_m)
+		#		 self.logger.debug( 'counts_elastic', np.sum(counts_elastic)
+		#		 self.logger.debug( 'counts_compton', np.sum(counts_compton)
+		#		 self.logger.debug( 'counts_step', np.sum(counts_step)
+		#		 self.logger.debug( 'counts_tail', np.sum(counts_tail)
+		#		 self.logger.debug( 'counts_pileup', np.sum(counts_pileup)
+		#		 self.logger.debug( 'counts_escape', np.sum(counts_escape)
 
 		self.counts_background = counts_background
 		self.counts_ka = counts_ka
@@ -440,12 +441,12 @@ class analyze:
 
 		sigma, f_step, f_tail, kb_f_tail, gamma = self.set_fit_vals(fitp, p, element_pos)
 		
-		#		 print'add_pars'
+		#		 self.logger.debug('add_pars'
 		#		 for i in range(element_pos.size):
 		#			 for j in range(12):
-		#				 #print i,j
-		#				 print add_pars[i, j].ratio
-		#				 #print add_pars[i, j].energy
+		#				 #self.logger.debug( i,j
+		#				 self.logger.debug( add_pars[i, j].ratio
+		#				 #self.logger.debug( add_pars[i, j].energy
 
 		for i in range(element_pos.size): 
 			if (keywords.use_this_par[element_pos[i]] != 1) and (p[element_pos[i]] <= -9.999999):
@@ -645,22 +646,18 @@ class analyze:
 				else:
 					parinfo_value[i] = 0.0
 				
-			#print i, fitp.s.val[i], parinfo_value[i]
+			#self.logger.debug( i, fitp.s.val[i], parinfo_value[i]
 			parinfo_limits[i, 0] = fitp.s.min[i]
 			parinfo_limits[i, 1] = fitp.s.max[i]
 			if parinfo_limited[i, 0] == 1 :
 				if parinfo_value[i] < parinfo_limits[i, 0] :
-					print 'The start value for the parameter ', fitp.s.name[i], ' seems to be set at ', str(parinfo_value[i]), \
-							'which is below the lower limit of ', str(parinfo_limits[i,0]), \
-							'please correct in the file maps_fit_parameters_override.txt', 'for now, I am aborting this action'
+					self.logger.warning('The start value for the parameter %s seems to be set at %s which is below the lower limit of %s please correct in the file maps_fit_parameters_override.txt', 'for now, I am aborting this action', fitp.s.name[i], str(parinfo_value[i]), str(parinfo_limits[i, 0]))
 					error_status = 1
 					return None, None, None, None, None, None
 
 			if parinfo_limited[i, 1] == 1:
 				if parinfo_value[i] > parinfo_limits[i, 1]:
-					print 'The start value for the parameter ', fitp.s.name[i], ' seems to be set at ', str(parinfo_value[i]), \
-							'which is higher than the top limit of ', str(parinfo_limits[i, 1]), \
-							'please correct in the file maps_fit_parameters_override.txt', 'for now, I am aborting this action'
+					self.logger.warning('The start value for the parameter %s seems to be set at %s which is higher than the top limit of %s please correct in the file maps_fit_parameters_override.txt', 'for now, I am aborting this action', fitp.s.name[i], str(parinfo_value[i]), str(parinfo_limits[i, 1]))
 					error_status = 1
 					return None, None, None, None, None, None
 
@@ -753,9 +750,9 @@ class analyze:
 				
 				if verbose : 
 					time1 = time.time()
-					print 'start fit, maxiter=', maxiter
+					self.logger.debug('start fit, maxiter = %s', maxiter)
 				if have_bounds:
-					print 'with bounds'
+					self.logger.debug('with bounds')
 					p1, cov, infodict, mesg, self.success = leastsqbound(self.residuals_matrix, p0, bounds, args=(y, x, weights), maxfev=maxiter, full_output = True)
 				else:
 					import scipy.optimize
@@ -763,15 +760,15 @@ class analyze:
 				
 				if self.success not in [1, 2, 3, 4]:
 					if verbose:
-						print ' Unable to fit spectrum'
+						self.logger.warning(' Unable to fit spectrum')
 
 				perror1 = self.calc_perror(infodict['fjac'], infodict['ipvt'], len(p1))
 				
 				if verbose:
 					time2 = time.time()
-					print 'fit done in ', time2 - time1
-					print 'success', self.success, mesg
-					print 'number of function evals', infodict['nfev']
+					self.logger.info('fit done in %s', (time2 - time1))
+					self.logger.info('success: %s mesg: %s', self.success, mesg)
+					self.logger.info('number of function evals %s', infodict['nfev'])
 
 				parameters[self.iusepar] = p1
 				
@@ -856,21 +853,21 @@ class analyze:
 
 			if verbose : 
 				time1 = time.time()
-				print 'start fit, maxiter=', maxiter
+				self.logger.debug('start fit, maxiter = %s', maxiter)
 
 			import scipy.optimize
 			p1,cov,infodict,mesg,self.success = scipy.optimize.leastsq(self.residuals, p0, args=(y, x, weights), maxfev=maxiter, full_output=True)
 
 			if self.success not in [1, 2, 3, 4]:
 				if verbose:
-					print ' Unable to fit spectrum'
+					self.logger.warning('Unable to fit spectrum')
 			
 			#p1,cov,infodict,mesg, self.success = leastsqbound(self.residuals, p0, bounds, args=(y, x, weights),maxfev=maxiter, full_output=1)
 			perror1 = self.calc_perror(infodict['fjac'], infodict['ipvt'], len(p1))
 
 			if verbose : 
 				time2 = time.time()
-				print 'fit done in ', time2-time1
+				self.logger.debug('fit done in %s', (time2 - time1))
 
 			parameters[self.fipsuse_nonzero] = p1
 			perror = np.zeros((len(parameters)))
@@ -882,15 +879,17 @@ class analyze:
 			verbose = 0
 			string = ''
 			if len(wusepar) > 0:
-				if verbose: print 'Fit results:', self.success
+				if verbose:
+					self.logger.info('Fit results: %s', self.success)
 				for kk in range(len(wusepar)):			  
-					if verbose : print kk, '  ', fitp.s.name[kk], ' parinfo_value: ', parameters[kk]
+					if verbose:
+						self.logger.debug('kk: %s fitp.s.name[kk]: %s parinfo_value: %s', kk, fitp.s.name[kk], parameters[kk])
 					if parinfo_limited[wusepar[kk], 0]:
 						string = string + ' lower limit: ' + str(parinfo_limits[wusepar[kk], 0])
 					if parinfo_limited[wusepar[kk], 1]:
 						string = string + ' upper limit: ' + str(parinfo_limits[wusepar[kk], 1])
 					if verbose:
-						print string
+						self.logger.debug('string: %s', string)
 					if parinfo_limited[wusepar[kk], 0] == parameters[wusepar[kk]]:
 						if kk < np.min(keywords.kele_pos):
 							gen_pars_at_bndry = gen_pars_at_bndry + 1
@@ -923,39 +922,42 @@ class analyze:
 			self.nfev = 0
 
 		if verbose >= 2:
-			print ' ERRMSG:', mesg
-			print ' status: ', status
+			self.logger.error(' ERRMSG: %s', mesg)
+			self.logger.debug(' status: %s', status)
 			if np.sum(y) > 0.0:
-				print ' niter:', infodict['nfev']
-				print 'nfree (parameters) = ', nfree
-				print 'ndata = ', len(y)
-				print ' chisq:', chisq
-				print ' chisqred:', chisqred
-				print ' abs_err:', self.abs_err
-				print ' rel_err:', self.rel_err
-				print ' time + core ana:', time() - time1
-				print 'snip width:', u[keywords.added_params[0]]
+				self.logger.debug('niter: %s', infodict['nfev'])
+				self.logger.debug('nfree (parameters) = %s', nfree)
+				self.logger.debug('ndata = %s', len(y))
+				self.logger.debug(' chisq: %s', chisq)
+				self.logger.debug(' chisqred: %s', chisqred)
+				self.logger.debug(' abs_err: %s', self.abs_err)
+				self.logger.debug(' rel_err: %s', self.rel_err)
+				self.logger.debug(' time + core ana: %s', (time() - time1))
+				self.logger.debug('snip width: %s', u[keywords.added_params[0]])
 
 			name_len = []
 			for i in range(len(fitp.s.name)): 
 				name_len.append(len(fitp.s.name[i].strip()))
 			max_name_length = np.max(np.asarray(name_len)) + 1
-			print '{0:3}, {1:{2}}, {3:15}, {4:15}, {5:15}, {6:15}, {7:3},{8:3}, {9:15}'.format(
+			m_str = '{0:3}, {1:{2}}, {3:15}, {4:15}, {5:15}, {6:15}, {7:3},{8:3}, {9:15}'.format(
 								'num', 'name', max_name_length, 'fit_value', 'fit_sigma', \
 								'low_limit', 'high_limit', 'llt', 'hlt', '.relstep')
+			self.logger.debug('%s', m_str)
 
 			for i in range(n_pars):
 				if parinfo_fixed[i] != 1:
-					print '{0:3}, {1:{2}}, {3:15}, {4:15}, {5:15}, {6:15}, {7:3},{8:3}, {9:15}'.format(
+					m_str = '{0:3}, {1:{2}}, {3:15}, {4:15}, {5:15}, {6:15}, {7:3},{8:3}, {9:15}'.format(
 						i, fitp.s.name[i], max_name_length, str(u[i]), str(perror[i]), 
 						str(parinfo_limits[i, 0]), str(parinfo_limits[i, 1]),
 						str(parinfo_limited[i, 0]), str(parinfo_limited[i, 1]), str(parinfo_relstep[i]))
+					self.logger.debug('%s', m_str)
+
 		elif verbose == 1:
 					pos = np.where(parinfo_fixed == 0)
 					if len(pos[0]) > 0:
-						print fitp.s.name[pos]
-						print u[pos]
-						print perror[pos]
+						self.logger.debug('fitp.s.name[pos]: %s', fitp.s.name[pos])
+						self.logger.debug('u[pos]: %s', u[pos])
+						self.logger.debug('perror[pos]: %s', perror[pos])
 
 		return u, fitted_spec, background, xmin, xmax, perror
 
@@ -1000,7 +1002,7 @@ class analyze:
 			#return the number of function evaluations:
 			niter = self.nfev
 			if niter == 1:
-				print 'warning: number of iterations resulting from call of maps_fit_spectrum is 1. Must abort this action. '
+				self.logger.warning('warning: number of iterations resulting from call of maps_fit_spectrum is 1. Must abort this action. ')
 				return None, None, None, None, None, None, None, None, None
 
 			fitp_values = u[:]
@@ -1031,7 +1033,8 @@ class analyze:
 			sz = fjac.shape
 			if (n > 0) and (sz[0] >= n) and (sz[1] >= n) and (len(ipvt) >= n):
 
-				if verbose: print 'computing the covariance matrix'
+				if verbose:
+					self.logger.debug('computing the covariance matrix')
 
 				cv = self.calc_covar(fjac[0:n,0:n], ipvt[0:n])
 				cv.shape = [n, n]
@@ -1046,7 +1049,8 @@ class analyze:
 					covar[:,i] = cv[:,i]
 
 				# Compute errors in parameters
-				if verbose: print  'computing parameter errors'
+				if verbose:
+					self.logger.debug('computing parameter errors')
 				perror = np.zeros(nn, dtype=float)
 				d = np.diagonal(covar)
 				wh = (np.nonzero(d >= 0))[0]
@@ -1060,18 +1064,18 @@ class analyze:
 		
 		verbose = 0
 		if verbose:
-			print 'Entering calc_covar...'
+			self.logger.debug('Entering calc_covar...')
 		if np.ndim(rr) != 2:
-			print 'ERROR: r must be a two-dimensional matrix'
+			self.logger.error('ERROR: r must be a two-dimensional matrix')
 			return -1
 		s = rr.shape
 		n = s[0]
 		if s[0] != s[1]:
-			print 'ERROR: r must be a square matrix'
+			self.logger.error('ERROR: r must be a square matrix')
 			return -1
 
 		if ipvt == None:
-			print 'ipvrt none'
+			self.logger.info('ipvrt none')
 			ipvt = np.arange(n)
 
 		r = rr.copy()
@@ -1213,7 +1217,7 @@ class analyze:
 		max_current_width = np.amax(current_width)
 		
 		while max_current_width >= 0.5:
-			#print 'max_current_width = ', max_current_width
+			#self.logger.debug( 'max_current_width = ', max_current_width
 			lo_index = index - current_width
 			wo = np.where(lo_index < max((keywords.xmin, 0)))
 			lo_index[wo] = max((keywords.xmin, 0))

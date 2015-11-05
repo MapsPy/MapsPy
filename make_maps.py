@@ -36,7 +36,6 @@ import os
 import multiprocessing
 import numpy as np
 import time
-import traceback
 import maps_generate_img_dat
 import maps_definitions
 import maps_elements
@@ -48,15 +47,14 @@ from file_io.file_util import open_file_with_retry
 # ------------------------------------------------------------------------------------------------
 
 
-def mp_make_maps(info_elements, main_dict, maps_conf, header, mdafilename, this_detector, use_fit, total_number_detectors,
+def mp_make_maps(logger, info_elements, main_dict, maps_conf, header, mdafilename, this_detector, use_fit, total_number_detectors,
 				quick_dirty, nnls, xrf_bin, max_no_processors_lines):
 
 	try:
-		makemaps = maps_generate_img_dat.analyze(info_elements, main_dict, maps_conf, beamline=main_dict['beamline'], use_fit=use_fit)
+		makemaps = maps_generate_img_dat.analyze(logger, info_elements, main_dict, maps_conf, beamline=main_dict['beamline'], use_fit=use_fit)
 		makemaps.generate_img_dat_threaded(header, mdafilename, this_detector, total_number_detectors, quick_dirty, nnls, max_no_processors_lines, xrf_bin)
 	except:
-		print 'Exception at make_maps.mp_make_maps()'
-		traceback.print_exc()
+		logger.exception('Exception at make_maps.mp_make_maps()')
 		return -1
 
 	return 0
@@ -64,12 +62,12 @@ def mp_make_maps(info_elements, main_dict, maps_conf, header, mdafilename, this_
 # ------------------------------------------------------------------------------------------------
 
 
-def main(main_dict, force_fit=0, no_fit=False, cb_update_func=None):
+def main(main_dict, logger, force_fit=0, no_fit=False):
 	verbose = True
 
 	maps_intermediate_solution_file = 'maps_intermediate_solution.tmp'
 	if verbose:
-		print 'main structure: ', main_dict
+		logger.info('main structure: %s', main_dict)
 
 	if force_fit == 1:
 		use_fit = 1
@@ -77,16 +75,16 @@ def main(main_dict, force_fit=0, no_fit=False, cb_update_func=None):
 	if no_fit == True:
 		use_fit = 0
 
-	me = maps_elements.maps_elements()
+	me = maps_elements.maps_elements(logger)
 	info_elements = me.get_element_info()
 
-	maps_def = maps_definitions.maps_definitions()
+	maps_def = maps_definitions.maps_definitions(logger)
 	maps_conf = maps_def.set_maps_definitions(main_dict['beamline'], info_elements, version=main_dict['version'])
 	max_no_processors_lines = main_dict['max_no_processors_lines']
 	if max_no_processors_lines == -1:
 		max_no_processors_lines = multiprocessing.cpu_count() - 1
-		print 'cpu_count() = %d\n' % multiprocessing.cpu_count()
-		print 'max_no_processors_lines to fit lines ', max_no_processors_lines
+		logger.info('cpu_count() = %d\n' % multiprocessing.cpu_count())
+		logger.info('max_no_processors_lines to fit lines %s', max_no_processors_lines)
 
 	total_number_detectors = main_dict['total_number_detectors']
 	quick_dirty = main_dict['quick_dirty']
@@ -95,14 +93,12 @@ def main(main_dict, force_fit=0, no_fit=False, cb_update_func=None):
 	if quick_dirty != 0:
 		total_number_detectors = 1
 
-	if verbose:
-		print 'total_number_detectors', total_number_detectors
+	logger.info('total_number_detectors %s', total_number_detectors)
 	temp = multiprocessing.cpu_count()
 	no_processors_to_use_files = min(main_dict['max_no_processors_files'], temp)
-	if verbose:
-		print 'no_processors_to_use for files', no_processors_to_use_files
+	logger.info('no_processors_to_use for files %s', no_processors_to_use_files)
 
-	print "main_dict['dataset_files_to_proc']", main_dict['dataset_files_to_proc']
+	logger.info("main_dict['dataset_files_to_proc'] %s", main_dict['dataset_files_to_proc'])
 	if main_dict['dataset_files_to_proc'][0] == 'all':
 		filenames = []
 		dirList=os.listdir(main_dict['mda_dir'])
@@ -122,21 +118,17 @@ def main(main_dict, force_fit=0, no_fit=False, cb_update_func=None):
 
 	no_files = len(filenames)
 	if no_files == 0:
-		print 'Did not find any .mda files in /mda directory.'
-		return
+		logger.warning('Did not find any .mda files in /mda directory.')
+		return False
 	else:
-		print 'Processing files: ', filenames
+		logger.info('Processing files: %s', filenames)
 	#filenames_orig = filenames[:]
 	#basename, scan_ext= os.path.splitext(filenames[0])
 
-	#	 ; determine the number of files, try
-	#	 ; to determine the scan size for each
-	#	 ; file, and then sort the files such
-	#	 ; that in the analysis the biggest
-	#	 ; files are analysed first.
-	#	 scan_sizes = np.zeros((no_files))
+	# determine the number of files, try to determine the scan size for each file, and then sort the files such
+	# that in the analysis the biggest files are analysed first.
 
-	#Calculate intermediate result
+	# Calculate intermediate result
 
 	detector_number_arr = np.zeros((no_files), dtype=int)
 	#detector_number_arr_orig = np.zeros((no_files), dtype=int)
@@ -145,14 +137,14 @@ def main(main_dict, force_fit=0, no_fit=False, cb_update_func=None):
 		# Look for override files in main.master_dir
 		if total_number_detectors > 1:
 			suffix = str(this_detector)
-			print 'suff=', suffix
+			logger.info('suff = %s', suffix)
 			maps_overridefile = os.path.join(main_dict['master_dir'], 'maps_fit_parameters_override.txt') + suffix
 			try:
 				f = open_file_with_retry(maps_overridefile, 'rt', 2, 0.4, 0.2)
 				if f == None:
 					maps_overridefile = os.path.join(main_dict['master_dir'], 'maps_fit_parameters_override.txt')
 				else:
-					print maps_overridefile, ' exists.'
+					logger.info('maps override file %s exists', maps_overridefile)
 					f.close()
 			except:
 				# if i cannot find an override file specific per detector, assuming
@@ -163,7 +155,7 @@ def main(main_dict, force_fit=0, no_fit=False, cb_update_func=None):
 
 		# below is the routine for using matrix math to calculate elemental
 		# content with overlap removal
-		print 'now using matrix math for analysis; calculate intermediate solution for speed now'
+		logger.info('now using matrix math for analysis; calculate intermediate solution for speed now')
 		kk = 0
 
 		temp_elementsuse = []
@@ -171,11 +163,11 @@ def main(main_dict, force_fit=0, no_fit=False, cb_update_func=None):
 		elements_to_use = np.where(np.array(temp_elementsuse) == 1)
 		elements_to_use = elements_to_use[0]
 		if elements_to_use.size == 0:
-			return
+			return False
 
 		spectra = maps_def.define_spectra(main_dict['max_spec_channels'], main_dict['max_spectra'], main_dict['max_ICs'], mode='plot_spec')
 
-		fp = maps_fit_parameters.maps_fit_parameters()
+		fp = maps_fit_parameters.maps_fit_parameters(logger)
 		fitp = fp.define_fitp(main_dict['beamline'], info_elements)
 
 		element_pos = np.concatenate((fitp.keywords.kele_pos, fitp.keywords.lele_pos, fitp.keywords.mele_pos))
@@ -191,12 +183,11 @@ def main(main_dict, force_fit=0, no_fit=False, cb_update_func=None):
 		try:
 			fitp, test_string, pileup_string = fp.read_fitp(maps_overridefile, info_elements, det)
 			if fitp == None:
-				print 'ERROR - could not read override file: ' + maps_overridefile
-				return
+				logger.error('ERROR - could not read override file: %s' + maps_overridefile)
+				return False
 		except:
-			traceback.print_exc()
-			print 'ERROR - could not read override file: ' + maps_overridefile
-			return
+			logger.exception('could not read override file')
+			return False
 
 		for jj in range(fitp.g.n_fitp):
 			if fitp.s.name[jj] in test_string:
@@ -224,8 +215,7 @@ def main(main_dict, force_fit=0, no_fit=False, cb_update_func=None):
 				parinfo_fixed[i] = 1
 
 		which_parameters_to_fit = np.where(fitp.s.use != 1)
-		print 'parameters to fit:'
-		print fitp.s.name[which_parameters_to_fit]
+		logger.info('parameters to fit: %s', fitp.s.name[which_parameters_to_fit])
 
 		x = np.arange(float(main_dict['max_spec_channels']))
 		add_matrixfit_pars = np.zeros((6))
@@ -259,10 +249,9 @@ def main(main_dict, force_fit=0, no_fit=False, cb_update_func=None):
 		temp_fitp_use = fitp.s.use[np.amin(fitp.keywords.kele_pos):np.amax(fitp.keywords.mele_pos) + 1]
 		temp_fitp_name = fitp.s.name[np.amin(fitp.keywords.kele_pos):np.amax(fitp.keywords.mele_pos) + 1]
 		which_elements_to_fit = (np.nonzero(temp_fitp_use != 1))[0]
-		print 'elements to fit:'
-		print temp_fitp_name[which_elements_to_fit]
+		logger.info('elements to fit: %s', temp_fitp_name[which_elements_to_fit])
 
-		fit = maps_analyze.analyze()
+		fit = maps_analyze.analyze(logger)
 
 		fitmatrix = fit.generate_fitmatrix(fitp, x, parinfo_value)
 
@@ -279,7 +268,7 @@ def main(main_dict, force_fit=0, no_fit=False, cb_update_func=None):
 		fitmatrix_reduced[:, mm] = fitmatrix[:, np.max(fitp.keywords.mele_pos) - np.min(fitp.keywords.kele_pos) + 2] # inelastic scatter
 
 		if main_dict['nnls'] == 0:
-			print 'Calculating nnls. Start time: ', time.time()
+			logger.info('Calculating nnls. Start time: %s', time.time())
 			# Compute the singular value decomposition of A:
 			# SVDC, fitmatrix_reduced, W, U, V, /double
 			U, w, V = np.linalg.svd(fitmatrix_reduced, full_matrices=False)
@@ -297,7 +286,7 @@ def main(main_dict, force_fit=0, no_fit=False, cb_update_func=None):
 				# solution = V ## WP ## TRANSPOSE(U) ## B
 
 			sol_intermediate = np.dot(np.dot(V.T, wp), U.T)
-			print 'SVD finished. Time: ', time.time()
+			logger.info('SVD finished. Time: %s', time.time())
 		else:
 			# make sure that sol_intermediate is defined, even if we do not
 			# use it.
@@ -311,8 +300,8 @@ def main(main_dict, force_fit=0, no_fit=False, cb_update_func=None):
 		outfile.close()
 
 		# Read calibration
-		#print 'Started reading in standards from:', main_dict['standard_filenames']
-		calibration = maps_calibration.calibration(main_dict, maps_conf)
+		logger.info('Looking for calibration info')
+		calibration = maps_calibration.calibration(main_dict, maps_conf, logger)
 
 		# perform calibration
 		no_nbs = 1
@@ -335,21 +324,21 @@ def main(main_dict, force_fit=0, no_fit=False, cb_update_func=None):
 
 		if no_processors_to_use_files >= 2:
 			# Need to modify stout to flush prints
-			print 'use multiple processors for multiple files'
+			logger.info('use multiple processors for multiple files')
 			#pool = multiprocessing.Pool(no_processors_to_use_files)
 			procs_to_start = []
 			procs_to_join = []
 			for pp in range(no_files):
 				header, scan_ext = os.path.splitext(filenames[pp])
 				mdafilename = os.path.join(main_dict['mda_dir'], filenames[pp])
-				print 'Multiple processor file version: doing filen #: ', mdafilename, ' this detector:', this_detector, ' pp:', pp
-				proc = multiprocessing.Process(target=mp_make_maps, args=(info_elements, main_dict, maps_conf, header, mdafilename, this_detector,use_fit, total_number_detectors, quick_dirty, main_dict['nnls'], main_dict['xrf_bin'], max_no_processors_lines))
+				logger.info('Multiple processor file version: doing filen #: %s this detector: %s pp: %s', mdafilename, this_detector, pp)
+				proc = multiprocessing.Process(target=mp_make_maps, args=(logger, info_elements, main_dict, maps_conf, header, mdafilename, this_detector,use_fit, total_number_detectors, quick_dirty, main_dict['nnls'], main_dict['xrf_bin'], max_no_processors_lines))
 				procs_to_start += [proc]
 			num_procs_running = 0
 			while len(procs_to_start) > 0 or len(procs_to_join) > 0:
 				for proc in procs_to_start[:]:
 					if num_procs_running < no_processors_to_use_files:
-						print 'Starting file processs'
+						logger.debug('Starting file processs')
 						proc.start()
 						procs_to_join += [proc]
 						procs_to_start.remove(proc)
@@ -358,37 +347,31 @@ def main(main_dict, force_fit=0, no_fit=False, cb_update_func=None):
 					if proc.exitcode is None and not proc.is_alive():
 						time.sleep(0.1)
 					elif proc.exitcode < 0:
-						print 'Exception thrown for one of the files processing'
+						logger.error('Exception thrown for one of the files processing')
 						proc.join()
-						print 'Process Joined'
+						logger.debug('Process Joined')
 						procs_to_join.remove(proc)
 						num_procs_running -= 1
 					else:
-						print 'Finished processing file'
+						logger.debug('Finished processing file')
 						proc.join()
-						print 'Process Joined'
+						logger.debug('Process Joined')
 						procs_to_join.remove(proc)
 						num_procs_running -= 1
-			#	pool.apply_async(mp_make_maps, (info_elements, main_dict, maps_conf, header, mdafilename, this_detector,use_fit, total_number_detectors, quick_dirty, main_dict['nnls'], main_dict['xrf_bin'], max_no_processors_lines))
-			# close and join the pool
-			#pool.close()
-			#pool.join()
-
 		else:
 			#  a single processor machine,	just use the single processor
-			makemaps = maps_generate_img_dat.analyze(info_elements, main_dict, maps_conf, beamline=main_dict['beamline'], use_fit=use_fit)
+			makemaps = maps_generate_img_dat.analyze(logger, info_elements, main_dict, maps_conf, beamline=main_dict['beamline'], use_fit=use_fit)
 			for pp in range(no_files):
 				header, scan_ext = os.path.splitext(filenames[pp])
 				mdafilename = os.path.join(main_dict['mda_dir'], header + scan_ext)
-				print 'Single processor file version: doing filen #: ', mdafilename, ' this detector', this_detector
+				logger.info('Single processor file version: doing filen #: %s this detector %s', mdafilename, this_detector)
 
-				# Routine with multiprocessing
-				#print 'this_detector, total_number_detectors', this_detector, total_number_detectors
 				makemaps.generate_img_dat_threaded(header, mdafilename, this_detector, total_number_detectors, quick_dirty, main_dict['nnls'], max_no_processors_lines, main_dict['xrf_bin'])
 
 	seconds_end = time.time()
-	print 'fitting of all scans took a total of ', int((seconds_end - seconds_start) / 3600.), ' hours and ', \
-		(seconds_end - seconds_start) / 60. - 60. * int((seconds_end - seconds_start) / 3600.), ' minutes'
+	delta_hours = int((seconds_end - seconds_start) / 3600.)
+	delta_min = (seconds_end - seconds_start) / 60. - 60. * int((seconds_end - seconds_start) / 3600.)
+	logger.info('fitting of all scans took a total of %s hours and %s minutes', delta_hours, delta_min)
 
-	print 'MAPS are finished.'
-	return
+	logger.info('MAPS are finished.')
+	return True

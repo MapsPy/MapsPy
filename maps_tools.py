@@ -39,13 +39,12 @@ import os
 
 import numpy as np
 import matplotlib as mplot
+import logging
 
 	
 #----------------------------------------------------------------------   
-def plot_spectrum(info_elements, spectra = 0, i_spectrum = 0, add_plot_spectra = 0, add_plot_names = 0, ps = 0, fitp = 0, perpix = 0,
-				  batch = 0, bitmap = 0, filename = '', outdir = '', from_fit = 0):
-   
-	print 'ploting spectrum'
+def plot_spectrum(info_elements, spectra=0, i_spectrum=0, add_plot_spectra=0, add_plot_names=0, ps=0, fitp=0, perpix=0,	filename='', outdir='', logger=logging.getLogger('plot')):
+	logger.info('ploting spectrum')
 	
 	from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 	mplot.rcParams['pdf.fonttype'] = 42
@@ -55,32 +54,33 @@ def plot_spectrum(info_elements, spectra = 0, i_spectrum = 0, add_plot_spectra =
 	
 	colortable = []
 
-	colortable.append((0., 0., 0.)) # ; black
-	colortable.append((1., 0., 0.)) # ; red
-	colortable.append((0., 1., 0.)) # ; green
-	colortable.append((0., 0., 1.)) # ; blue
-	colortable.append((0., 1., 1.)) # ; turquois
-	colortable.append((1., 0., 1.)) # ; magenta
-	colortable.append((1., 1., 0.)) # ; yellow
-	colortable.append((0.7, 0.7, 0.7)) # ; light grey
-	colortable.append((1., 0.8, 0.75)) # ; flesh
-	colortable.append(( 0.35,  0.35,  0.35)) # ; dark grey		 
-	colortable.append((0., 0.5, 0.5)) # ; sea green
-	colortable.append((1., 0., 0.53)) # ; pink-red
-	colortable.append((0., 1., 0.68)) # ; bluegreen 
-	colortable.append((1., 0.5, 0.)) # ; orange
-	colortable.append((0., 0.68, 1.)) # ; another blue
-	colortable.append((0.5, 0., 1.)) # ; violet
-	colortable.append((1., 1., 1.)) # ; white
+	colortable.append((0., 0., 0.))  # ; black
+	colortable.append((1., 0., 0.))  # ; red
+	colortable.append((0., 1., 0.))  # ; green
+	colortable.append((0., 0., 1.))  # ; blue
+	colortable.append((0., 1., 1.))  # ; turquois
+	colortable.append((1., 0., 1.))  # ; magenta
+	colortable.append((1., 1., 0.))  # ; yellow
+	colortable.append((0.7, 0.7, 0.7))  # ; light grey
+	colortable.append((1., 0.8, 0.75))  # ; flesh
+	colortable.append((0.35, 0.35, 0.35))  # ; dark grey
+	colortable.append((0., 0.5, 0.5))  # ; sea green
+	colortable.append((1., 0., 0.53))  # ; pink-red
+	colortable.append((0., 1., 0.68))  # ; bluegreen
+	colortable.append((1., 0.5, 0.))  # ; orange
+	colortable.append((0., 0.68, 1.))  # ; another blue
+	colortable.append((0.5, 0., 1.))  # ; violet
+	colortable.append((1., 1., 1.))  # ; white
 	
 	foreground_color = colortable[-1]
 	background_color = colortable[0]
 
 	droplist_scale = 0
 	png = 0
-	if ps == 0: png = 2
-	if spectra == 0 : 
-		print 'spectra are 0, returning'
+	if ps == 0:
+		png = 2
+	if spectra == 0:
+		logger.info('spectra are 0, returning')
 		return 
 
 	if filename == '':
@@ -93,7 +93,7 @@ def plot_spectrum(info_elements, spectra = 0, i_spectrum = 0, add_plot_spectra =
 		filename = spectra[0].name 
 	
 	if (png > 0) or (ps > 0):
-		if (png > 0):
+		if png > 0:
 
 			dpi = 100
 			canvas_xsize_in = 900./dpi
@@ -112,9 +112,8 @@ def plot_spectrum(info_elements, spectra = 0, i_spectrum = 0, add_plot_spectra =
 			ya.set_tick_params(color=foreground_color) 
 			xa.set_tick_params(labelcolor=foreground_color) 
 			xa.set_tick_params(color=foreground_color) 
-									
-		   
-		if (ps > 0): 
+
+		if ps > 0:
 			ps_filename = 'ps_'+filename+'.pdf'
 			if ps_filename == '' : return 
 			eps_plot_xsize = 8.
@@ -135,7 +134,7 @@ def plot_spectrum(info_elements, spectra = 0, i_spectrum = 0, add_plot_spectra =
 				np.arange(spectra[this_axis_calib].used_chan)*spectra[this_axis_calib].calib['lin'] + \
 				spectra[this_axis_calib].calib['off']	  
 		xtitle = 'energy [keV]'
-   
+
 		xmin = fitp.g.xmin *0.5
 		xmax = fitp.g.xmax + (fitp.g.xmax-fitp.g.xmin)*0.10
 
@@ -185,7 +184,7 @@ def plot_spectrum(info_elements, spectra = 0, i_spectrum = 0, add_plot_spectra =
 		axes.set_position([0.10,0.18,0.85,0.75])
 		
 		axes.text( -0.10, -0.12, spectra[i_spectrum].name,color = foreground_color, transform = axes.transAxes)
-				  
+
 		if add_plot_spectra.any(): 
 			size = add_plot_spectra.shape
 			if len(size) == 2 : 
@@ -200,20 +199,18 @@ def plot_spectrum(info_elements, spectra = 0, i_spectrum = 0, add_plot_spectra =
 					if (k >= 7) :
 						axes.text( -0.10+0.2*(k-7), -0.18, add_plot_names[k],color = colortable[1+k], transform = axes.transAxes)
 
-		 
 				# plot background next to last
 				plot3 = axes.semilogy(xaxis, add_plot_spectra[:, 2], color = colortable[1+2], linewidth=1.0)
 				# plot fit last
 				plot4 = axes.semilogy(xaxis, add_plot_spectra[:, 0], color = colortable[1+0], linewidth=1.0)
-  
+
 		# plot xrf ticks   
 		element_list = np.array([11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 22, 24, 25, 26, 27, 28, 29, 30, 32, 33, 35])-1
 		x_positions = []
 		for i in range(len(info_elements)): x_positions.append(info_elements[i].xrf['ka1'])
 		color = 2
 
-
-		local_ymax = np.array([1.03, 1.15, 1.3])*ymax 
+		local_ymax = np.array([1.03, 1.15, 1.3])*ymax
 		local_ymin = ymax*0.9
 		for k in range(len(element_list)): 
 			i = element_list[k]
@@ -221,22 +218,22 @@ def plot_spectrum(info_elements, spectra = 0, i_spectrum = 0, add_plot_spectra =
 			line.set_clip_on(False)
 			axes.add_line(line)				   
 			axes.text( x_positions[i], local_ymax[(i-int(i/3)*3)] , info_elements[i].name, ha='center', va='bottom', color = colortable[color])
-  
 
 		if (png > 0) or (ps > 0) :
 
-			if (png>0): 
+			if png > 0:
 				axes.text(0.97, -0.23, 'mapspy', color = foreground_color, transform = axes.transAxes)
 				if (png == 1) or (png == 2) :  
 					image_filename = filename+'.png'
-					print 'saving tools png', os.path.join(outdir,image_filename)
+					logger.info('saving tools png %s', os.path.join(outdir,image_filename))
 					fig.savefig(os.path.join(outdir, image_filename), dpi=dpi, facecolor=background_color, edgecolor=None)
 				   
-				if (ps > 0):
+				if ps > 0:
 					fig.savefig(file_ps)
 
 
-#-----------------------------------------------------------------------------	  
+# -----------------------------------------------------------------------------
+
 def maps_nnls_single(x, input_data, fitmatrix_reduced, n_mca_channels):
 	
 	fitmatrix_r_trans = fitmatrix_reduced.T
@@ -252,20 +249,20 @@ def maps_nnls_single(x, input_data, fitmatrix_reduced, n_mca_channels):
 	x_nn = np.zeros((1, n_nn))
 
 	Atb = np.dot(these_counts, fitmatrix_reduced)
-  
+
 	y = -Atb[0]
 	p = 10
 	ninf = n_nn+1
 	noready = 1
-	while noready :
+	while noready:
 		xF = x_nn[F_nn]
 		yG = y[G_nn]
 		# make sure xF and yG are defined
-		if xF > 0 :
+		if xF > 0:
 			wo_xF = np.where(xF < 0)[0]
 		else :
 			wo_xF = []
-		if yG.size > 0 :
+		if yG.size > 0:
 			wo_yG = np.where(yG < 0) [0]
 		else:
 			wo_yG = []
@@ -320,8 +317,7 @@ def maps_nnls_single(x, input_data, fitmatrix_reduced, n_mca_channels):
 			#yG = np.dot(AG.T,(0.-these_counts))
 			yG = np.dot((0.-these_counts),AG.T)
 		y[G_nn] = yG			   
-	  
-	
+
 	result = x_nn[0]
 	
 	return result
@@ -354,47 +350,47 @@ def maps_nnls_line(data_line, xsize, fitmatrix_reduced, n_mca_channels, elements
 		Atb = np.dot(these_counts, fitmatrix_reduced)
 		y = -Atb
 		p = 3
-		ninf = n_nn+1
+		ninf = n_nn + 1
 		noready = 1
 
-		while noready :
-			xF = x_nn[0,F_nn]
-			yG = y[0,G_nn]
-		   
+		while noready:
+			xF = x_nn[0, F_nn]
+			yG = y[0, G_nn]
+
 			# make sure xF and yG are defined
-			if xF.size > 0 :
+			if xF.size > 0:
 				wo_xF = np.where(xF < 0)[0]
 			else :
 				wo_xF = []
-			if yG.size > 0 :
-				wo_yG = np.where(yG < 0) [0]
+			if yG.size > 0:
+				wo_yG = np.where(yG < 0)[0]
 			else:
 				wo_yG = []
 			if len(wo_xF) == 0 and len(wo_yG) == 0: 
 				x_nn = np.zeros((1, n_nn))
 				y = np.zeros((1, n_nn))
-				x_nn[0,F_nn] = xF
+				x_nn[0, F_nn] = xF
 				break					
 			else: 
 				H1 = []
 				H2 = []
-				if xF.size > 0 : 
+				if xF.size > 0:
 					wo = np.where(xF < 0)
-					if len(wo[0]) > 0 : 
+					if len(wo[0]) > 0:
 						F_nn = np.array(F_nn)
 						H1 = F_nn[wo]
 				if yG.size > 0 : 
 					wo = np.where(yG < 0)
-					if len(wo[0]) > 0 : 
+					if len(wo[0]) > 0:
 						G_nn = np.array(G_nn)
 						H2 = G_nn[wo]
 				
 				H = list(set(H1) | set(H2)) 
-				if len(H) < ninf : 
+				if len(H) < ninf:
 					ninf = len(H)
 				else:
-					if p > 1 :
-						p = p-1
+					if p > 1:
+						p = p - 1
 					else:	  
 						r = np.amax(H)
 						if r in H1:
@@ -406,27 +402,27 @@ def maps_nnls_line(data_line, xsize, fitmatrix_reduced, n_mca_channels, elements
 				F_nn = list(set(set(F_nn) - set(H1)) | set(H2))
 				G_nn = list(set(set(G_nn) - set(H2)) | set(H1)) 
 			 
-			if (len(F_nn) > 0) : 
+			if len(F_nn) > 0:
 				AF = fitmatrix_r_trans[F_nn, :]
 			else: 
 				AF = []
 			AG = fitmatrix_r_trans[G_nn, :]
-			if (len(F_nn) > 0) :
-				xF = np.linalg.lstsq(AF.T, these_counts[0,:])[0]
-			if (len(F_nn) > 0) :
-				x_nn[0,F_nn] = xF 
-			if (AG.size == 0) :
+			if len(F_nn) > 0:
+				xF = np.linalg.lstsq(AF.T, these_counts[0, :])[0]
+			if len(F_nn) > 0:
+				x_nn[0, F_nn] = xF
+			if AG.size == 0:
 				continue
-			if (len(F_nn) > 0) :
-				#yG = np.dot(AG.T,(np.dot(AF,xF)-these_counts))
-				yG = np.dot((np.dot(xF,AF)-these_counts),AG.T)
+			if len(F_nn) > 0:
+				# yG = np.dot(AG.T,(np.dot(AF,xF)-these_counts))
+				yG = np.dot((np.dot(xF, AF) - these_counts), AG.T)
 			else:
-				#yG = np.dot(AG.T,(0.-these_counts))
-				yG = np.dot((0.-these_counts),AG.T)
+				# yG = np.dot(AG.T,(0.-these_counts))
+				yG = np.dot((0. - these_counts), AG.T)
 
-			y[0,G_nn] = yG[0,:]			 
+			y[0, G_nn] = yG[0, :]
 
-		#result = x_nn[0]
+		# result = x_nn[0]
 	
 		for mm in range(len(elements_to_use)):				   
 			if element_lookup_in_reduced[mm] != -1 :
@@ -436,11 +432,11 @@ def maps_nnls_line(data_line, xsize, fitmatrix_reduced, n_mca_channels, elements
 
 
 
-def congrid(a, newdims, method='linear', centre=False, minusone=False):
+def congrid(a, newdims, logger, method='linear', centre=False, minusone=False):
 	'''Arbitrary resampling of source array to new dimension sizes.
 	Currently only supports maintaining the same number of dimensions.
 	To use 1-D arrays, first promote them to shape (x,1).
-   
+
 	Uses the same parameters and creates the same co-ordinate lookup points
 	as IDL''s congrid routine, which apparently originally came from a VAX/VMS
 	routine of the same name.
@@ -467,12 +463,10 @@ def congrid(a, newdims, method='linear', centre=False, minusone=False):
 
 	m1 = np.cast[int](minusone)
 	ofs = np.cast[int](centre) * 0.5
-	old = np.array( a.shape )
-	ndims = len( a.shape )
-	if len( newdims ) != ndims:
-		print "[congrid] dimensions error. " \
-			  "This routine currently only support " \
-			  "rebinning to the same number of dimensions."
+	old = np.array(a.shape)
+	ndims = len(a.shape)
+	if len(newdims) != ndims:
+		logger.error("[congrid] dimensions error. This routine currently only support rebinning to the same number of dimensions.")
 		return None
 	newdims = np.asarray( newdims, dtype=float )
 	dimlist = []
@@ -534,9 +528,7 @@ def congrid(a, newdims, method='linear', centre=False, minusone=False):
 		newa = scipy.ndimage.map_coordinates(a, newcoords)
 		return newa
 	else:
-		print "Congrid error: Unrecognized interpolation type.\n", \
-			  "Currently only \'neighbour\', \'nearest\',\'linear\',", \
-			  "and \'spline\' are supported."
+		logger.error("Congrid error: Unrecognized interpolation type.\nCurrently only \'neighbour\', \'nearest\',\'linear\', and \'spline\' are supported.")
 		return None
 
 

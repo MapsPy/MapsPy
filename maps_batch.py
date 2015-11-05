@@ -40,6 +40,7 @@ from time import gmtime, strftime
 import logging
 import logging.handlers
 import h5py
+from datetime import datetime
 import shutil
 import maps_generate_img_dat
 import maps_definitions
@@ -52,8 +53,8 @@ import Constants
 from file_io.file_util import open_file_with_retry, call_function_with_retry
 
 def setup_logger(log_name, stream_to_console=True):
-	logger = logging.getLogger('mapsbatch')
-	fHandler = logging.FileHandler('job_logs/' + log_name)
+	logger = logging.getLogger(log_name)
+	fHandler = logging.FileHandler(log_name)
 	logger.setLevel(logging.DEBUG)
 	formatter = logging.Formatter('%(asctime)s | %(levelname)s | PID[%(process)d] | %(funcName)s(): %(message)s')
 	fHandler.setFormatter(formatter)
@@ -61,7 +62,7 @@ def setup_logger(log_name, stream_to_console=True):
 	if stream_to_console:
 		ch = logging.StreamHandler()
 		ch.setFormatter(formatter)
-		ch.setLevel(logging.ERROR)
+		ch.setLevel(logging.WARNING)
 		logger.addHandler(ch)
 	return logger
 
@@ -69,6 +70,8 @@ def setup_logger(log_name, stream_to_console=True):
 
 # Function used to create a new process for jobs
 def new_process_func(log_name, alias_path, job_dict):
+	global _log_name
+	_log_name = log_name
 	logger = log_name
 	logger.info('Start Job Process')
 	try:
@@ -109,71 +112,68 @@ def new_process_func(log_name, alias_path, job_dict):
 			key_e = 1
 		if proc_mask & 32 == 32:
 			key_f = 1
-		maps_batch(wdir=alias_path, a=key_a, b=key_b, c=key_c, d=key_d, e=key_e, logger=logger)
+		maps_batch(wdir=alias_path, option_a_roi_plus=key_a, option_b_extract_spectra=key_b, option_c_per_pixel=key_c, option_d_image_extract=key_d, option_e_exchange_format=key_e, logger=logger)
 		logger.info('Completed Job')
 	except:
 		logger.exception('job process')
-		#fHandler.close()
-		return -1
+		raise SystemError("Error Processing Dataset")
 	logger.info('Done Job Process')
-	#fHandler.close()
 	return 0
 
 # ------------------------------------------------------------------------------------------------
 
 
-def check_and_create_dir(dir_name):
+def check_and_create_dir(dir_name, logger):
 	if not os.path.exists(dir_name):
 		os.makedirs(dir_name)
 		if not os.path.exists(dir_name):
-			print 'warning: did not find the ' + dir_name + ' directory, and could not create a new directory. Will abort this action'
+			logger.warning('warning: did not find the %s directory, and could not create a new directory. Will abort this action', dir_name)
 			return False
 	return True
 
 # ------------------------------------------------------------------------------------------------
 
 
-def check_output_dirs(main_dict):
+def check_output_dirs(main_dict, logger):
 
-	if check_and_create_dir(main_dict['output_dir']) == False:
+	if check_and_create_dir(main_dict['output_dir'], logger) == False:
 		return False
 
-	if check_and_create_dir(main_dict['output_fits']) == False:
+	if check_and_create_dir(main_dict['output_fits'], logger) == False:
 		return False
 
-	if check_and_create_dir(main_dict['mda_dir']) == False:
+	if check_and_create_dir(main_dict['mda_dir'], logger) == False:
 		return False
 
-	if check_and_create_dir(main_dict['pca_dir']) == False:
+	if check_and_create_dir(main_dict['pca_dir'], logger) == False:
 		return False
 
-	if check_and_create_dir(main_dict['img_dat_dir']) == False:
+	if check_and_create_dir(main_dict['img_dat_dir'], logger) == False:
 		return False
 
-	if check_and_create_dir(main_dict['line_dat_dir']) == False:
+	if check_and_create_dir(main_dict['line_dat_dir'], logger) == False:
 		return False
 
-	if check_and_create_dir(main_dict['xanes_dat_dir']) == False:
+	if check_and_create_dir(main_dict['xanes_dat_dir'], logger) == False:
 		return False
 
-	if check_and_create_dir(main_dict['fly_dat_dir']) == False:
+	if check_and_create_dir(main_dict['fly_dat_dir'], logger) == False:
 		return False
 
-	check_and_create_dir(os.path.join(main_dict['master_dir'], 'lookup'))
-	check_and_create_dir(os.path.join(main_dict['master_dir'], 'rois'))
+	check_and_create_dir(os.path.join(main_dict['master_dir'], 'lookup'), logger)
+	check_and_create_dir(os.path.join(main_dict['master_dir'], 'rois'), logger)
 
 	return True
 
 # ------------------------------------------------------------------------------------------------
 
 
-def select_beamline(main_dict, make_maps_conf, this_beamline):
-	
+def select_beamline(main_dict, make_maps_conf, this_beamline, logger):
 	make_maps_conf.use_det[:] = 0
 	make_maps_conf.use_beamline = this_beamline
 
-	print 'make_maps_conf.version', make_maps_conf.version
-	print 'main_dict[beamline]', main_dict['beamline']
+	logger.info('make_maps_conf.version %s', make_maps_conf.version)
+	logger.info('main_dict[beamline] %s', main_dict['beamline'])
 
 	if main_dict['beamline'] == '2-ID-E':
 		make_maps_conf.use_det[0] = 1
@@ -195,10 +195,10 @@ def select_beamline(main_dict, make_maps_conf, this_beamline):
 										'deadT', 'x_coord', 'y_coord',
 										'dummy', 'dummy', 'dummy', 'dummy']
 
-		print 'make_maps_conf.dmaps_names', make_maps_conf.dmaps_names
+		logger.info('make_maps_conf.dmaps_names %s', make_maps_conf.dmaps_names)
 
 	if main_dict['beamline'] == 'Bio-CAT':
-		print 'now it is Bio-CAT'
+		logger.info('now it is Bio-CAT')
 		make_maps_conf.use_det[0] = 1
 		make_maps_conf.fit_t_be = 24000. #[8  microns]
 
@@ -227,7 +227,7 @@ def select_beamline(main_dict, make_maps_conf, this_beamline):
 										'dummy', 'dummy', 'dummy',  'dummy',
 										'dummy', 'dummy', 'dummy', 'dummy']
 
-	print main_dict['beamline']
+	logger.info('main_dict["beamline"] %s', main_dict['beamline'])
 
 	if main_dict['beamline'] == 'DLS-I08':
 		make_maps_conf.use_det[0] = 1
@@ -244,20 +244,17 @@ def select_beamline(main_dict, make_maps_conf, this_beamline):
 		if make_maps_conf.dmaps_names[i] != 'dummy':
 			make_maps_conf.dmaps[i].use = 1
 
-		#print make_maps_conf.dmaps[i].name, make_maps_conf.dmaps[i].use
-
 # ------------------------------------------------------------------------------------------------
 
 
-def load_spectrum(filename, spectra, append=1):
-
+def load_spectrum(filename, spectra, logger, append=1):
 	us_amp = np.zeros((3))
 	ds_amp = np.zeros((3))
 
 	f = open_file_with_retry(filename, 'rt')
 	if f == None:
-		print 'load_spectrum(): Could not open file:', filename
-		return
+		logger.error('load_spectrum(): Could not open file: %s', filename)
+		return False
 
 	line = f.readline()  # 1. line is version
 	# print line
@@ -411,8 +408,8 @@ def load_spectrum(filename, spectra, append=1):
 	f.close()
 
 	if data.size == 0:
-		print 'Not a valid data file:', filename
-		return
+		logger.error('Not a valid data file: %s', filename)
+		return False
 
 	for i in range(8):
 		amp[i, 2] = amp[i, 0]
@@ -422,11 +419,11 @@ def load_spectrum(filename, spectra, append=1):
 		if amp[i, 1] == 3: amp[i, 2] = amp[i, 2] * 1000. * 1000. #mA/V
 
 	if counts_ds_ic == 0:
-		print 'warning downstream IC counts zero'
+		logger.warning('warning downstream IC counts zero')
 		counts_ds_ic = 1.
 
 	if counts_us_ic == 0:
-		print 'warning upstream IC counts zero'
+		logger.warning('warning upstream IC counts zero')
 		counts_us_ic = 1.
 
 	if append > 0:
@@ -486,7 +483,7 @@ def load_spectrum(filename, spectra, append=1):
 			test = date[minute_pos: minute_pos + 4]
 			minute = int(test)
 		except:
-			print ' Could not convert date.'
+			logger.warning(' Could not convert date.')
 
 	for l in range(n_detector_elements):
 		i = int(l)
@@ -550,12 +547,12 @@ def load_spectrum(filename, spectra, append=1):
 		else:
 			spectra[j].used_chan = 0L
 
-	return
+	return True
 
 # ------------------------------------------------------------------------------------------------
 
 
-def save_spectrum(main_dict, filename, sfilename):
+def save_spectrum(main_dict, filename, sfilename, logger):
 	# Get info from .h5 file
 	no_specs = 1
 	real_time = 0.0
@@ -610,15 +607,15 @@ def save_spectrum(main_dict, filename, sfilename):
 			ic1['sens_unit'] = float(temp[1])
 			ic1['sens_factor'] = float(temp[2])
 
-	ch5 = maps_hdf5.h5()
+	ch5 = maps_hdf5.h5(logger)
 
 	fh5 = call_function_with_retry(h5py.File, 5, 0.1, 1.1, (filename, 'r'))
 	if fh5 == None:
-		print 'Error opeing file ', filename
-		return		 
+		logger.error('Error opeing file %s', filename)
+		return False
 	if 'MAPS' not in fh5:
-		print 'error, hdf5 file does not contain the required MAPS group. I am aborting this action'
-		return
+		logger.error('error, hdf5 file does not contain the required MAPS group. I am aborting this action')
+		return False
 
 	maps_group_id = fh5['MAPS']
 
@@ -645,10 +642,10 @@ def save_spectrum(main_dict, filename, sfilename):
 
 	fh5.close()
 
-	print 'saving - ', sfilename
+	logger.info('saving - %s', sfilename)
 	f = open_file_with_retry(sfilename, 'w')
 	if f == None:
-		print '-------\nError opening file to write: ',sfilename
+		logger.error('-------\nError opening file to write: %s', sfilename)
 		return
 	#f = open(sfilename, 'w')
 	print>>f, 'VERSION:    3.1'
@@ -745,27 +742,27 @@ def save_spectrum(main_dict, filename, sfilename):
 		print>>f, '%.6f' %(int_spec[ie])
 	f.close()
 
-	return
+	return True
 
 # ------------------------------------------------------------------------------------------------
 
 
-def _option_a_(main_dict, maps_conf, cb_update_func=None):
-	print '\n Section A \n'
-	check_output_dirs(main_dict)
+def _option_a_(main_dict, maps_conf, logger):
+	logger.info('\n Section A \n')
+	check_output_dirs(main_dict, logger)
 	#maps_test_xrffly
 	maps_conf.use_fit = 0
 
-	make_maps.main(main_dict, force_fit=0, no_fit=True, cb_update_func=cb_update_func)
+	make_maps.main(main_dict, logger=logger, force_fit=0, no_fit=True)
 
 # ------------------------------------------------------------------------------------------------
 
 
-def _option_b_(main_dict, maps_conf, maps_def, total_number_detectors, info_elements, cb_update_func=None):
-	print '\n Section B \n'
+def _option_b_(main_dict, maps_conf, maps_def, total_number_detectors, info_elements, logger):
+	logger.info('\n Section B \n')
 	current_directory = main_dict['master_dir']
 	for this_detector_element in range(total_number_detectors):
-		print 'this_detector_element', this_detector_element, 'total_number_detectors', total_number_detectors
+		logger.info('this_detector_element %s total_number_detectors %s', this_detector_element , total_number_detectors)
 		if (total_number_detectors > 1):
 			suffix = str(this_detector_element)
 		else:
@@ -789,19 +786,18 @@ def _option_b_(main_dict, maps_conf, maps_def, total_number_detectors, info_elem
 				for ii in range(len(imgdat_filenames)):
 					fsize = os.path.getsize(os.path.join(main_dict['img_dat_dir'], imgdat_filenames[ii]))
 					imgdat_filesizes[ii] = fsize
-					#print imgdat_filenames[ii], imgdat_filesizes[ii]
 				sorted_index = np.argsort(np.array(imgdat_filesizes))
 				imgdat_filenames = [imgdat_filenames for (imgdat_filesizes, imgdat_filenames) in sorted(zip(imgdat_filesizes, imgdat_filenames))]
 				imgdat_filenames.reverse()
 
 				imgdat_filenames = imgdat_filenames[0:8]
 
-			print '8 largest h5 files:', imgdat_filenames
+			logger.info('8 largest h5 files: %s', imgdat_filenames)
 		else:
 			imgdat_filenames = [mdafile.replace('.mda', '.h5') + suffix for mdafile in main_dict['dataset_files_to_proc']]
 
 		main_dict['XRFmaps_names'] = imgdat_filenames
-		print 'option B processing h5 files:', imgdat_filenames
+		logger.info('option B processing h5 files: %s', imgdat_filenames)
 		main_dict['XRFmaps_id'] = 0
 
 		spectra_filenames = []
@@ -810,24 +806,24 @@ def _option_b_(main_dict, maps_conf, maps_def, total_number_detectors, info_elem
 			sfile = os.path.join(main_dict['XRFmaps_dir'], imgdat_filenames[ii])
 			this_filename = 'intspec' + imgdat_filenames[ii] + '.txt'
 			savefile = os.path.join(main_dict['output_dir'], this_filename)
-			if check_output_dirs(main_dict) == False:
+			if check_output_dirs(main_dict, logger) == False:
 				return None
-			save_spectrum(main_dict, sfile, savefile)
+			save_spectrum(main_dict, sfile, savefile, logger)
 			spectra_filenames.append(savefile)
 
 		# Load spectra into spectra structure
 		spectra = maps_def.define_spectra(main_dict['max_spec_channels'], main_dict['max_spectra'], main_dict['max_ICs'], mode='plot_spec')
 
 		if len(spectra_filenames) == 1:
-				load_spectrum(spectra_filenames[0], spectra, append=0)
+				load_spectrum(spectra_filenames[0], spectra, logger, append=0)
 
 		if len(spectra_filenames) > 1:
 			for iii in range(len(spectra_filenames)):
-				load_spectrum(spectra_filenames[iii], spectra)
+				load_spectrum(spectra_filenames[iii], spectra, logger)
 
-		calib = maps_calibration.calibration(main_dict, maps_conf)
+		calib = maps_calibration.calibration(main_dict, maps_conf, logger)
 		# now start the fitting of the integrated spectra we just loaded
-		fp = maps_fit_parameters.maps_fit_parameters()
+		fp = maps_fit_parameters.maps_fit_parameters(logger)
 		fitp = fp.define_fitp(main_dict['beamline'], info_elements)
 		fitp.g.no_iters = 4
 		#this_w_uname = "DO_FIT_ALL_W_TAILS"
@@ -848,21 +844,19 @@ def _option_b_(main_dict, maps_conf, maps_def, total_number_detectors, info_elem
 			#old_override_suffix_date_name = os.path.join(current_directory, 'old_' + strftime("%Y-%m-%d_%H-%M-%S", gmtime()) + '_maps_fit_parameters_override.txt' + suffix)
 			#maps_override_suffix_name = os.path.join(current_directory, 'maps_fit_parameters_override.txt' + suffix)
 			maps_override_name = os.path.join(current_directory, 'maps_fit_parameters_override.txt')
-			print 'total_num detectors = ', total_number_detectors
+			logger.info('total_num detectors = %s', total_number_detectors)
 			try:
 				if os.path.isfile(maps_override_name):
-					print 'renaming', maps_override_name, 'to', old_override_date_name
+					logger.info('renaming %s to %s', maps_override_name, old_override_date_name)
 					os.rename(maps_override_name, old_override_date_name)
 				if os.path.isfile(avg_res_override_name):
-					print 'renaming', avg_res_override_name, 'to', maps_override_name
+					logger.info('renaming %s to %s', avg_res_override_name, maps_override_name)
 					os.rename(avg_res_override_name, maps_override_name)
 			except:
-				print 'error renaming average_resulting_maps_fit_parameters_override to maps_fit_parameters_override'
-				pass
+				logger.error('error renaming average_resulting_maps_fit_parameters_override to maps_fit_parameters_override')
 
 	dirlist = os.listdir(current_directory)
 	if 'output_old' in dirlist:
-		#print ' delete files in output_old directory'
 		filelist = os.listdir(os.path.join(current_directory, 'output_old'))
 		for fl in filelist:
 			thisfile = os.path.join(os.path.join(current_directory, 'output_old'), fl)
@@ -872,7 +866,6 @@ def _option_b_(main_dict, maps_conf, maps_def, total_number_detectors, info_elem
 	#todo: create directory if it does not exist
 	#Copy files to output_fits
 	src_files = os.listdir(os.path.join(current_directory, 'output'))
-	print src_files
 	for fn in src_files:
 		full_file_name = os.path.join(os.path.join(current_directory, 'output'), fn)
 		if os.path.isfile(full_file_name):
@@ -882,16 +875,15 @@ def _option_b_(main_dict, maps_conf, maps_def, total_number_detectors, info_elem
 	return spectra
 
 # ------------------------------------------------------------------------------------------------
-def _option_c_(main_dict, cb_update_func=None):
-	print '\n Section C \n'
+def _option_c_(main_dict, logger):
+	logger.info('\n Section C \n')
 	current_directory = main_dict['master_dir']
-	check_output_dirs(main_dict)
+	check_output_dirs(main_dict, logger)
 	#Call make_maps and force fitting. Overrides USE_FIT in maps_setting.txt
-	make_maps.main(main_dict, force_fit=1, no_fit=False, cb_update_func=cb_update_func)
+	make_maps.main(main_dict, logger=logger, force_fit=1, no_fit=False)
 
 	dirlist = os.listdir(current_directory)
 	if 'output.fits' in dirlist:
-		#print ' delete files in output.fits directory'
 		filelist = os.listdir(os.path.join(current_directory, 'output.fits'))
 		for fl in filelist:
 			thisfile = os.path.join(os.path.join(current_directory, 'output.fits'), fl)
@@ -908,8 +900,8 @@ def _option_c_(main_dict, cb_update_func=None):
 			os.remove(full_file_name)
 
 # ------------------------------------------------------------------------------------------------
-def _option_d_(cb_update_func=None):
-	print 'Image extraction not implemented.'
+def _option_d_(logger):
+	logger.error('Image extraction not implemented.')
 	#		  main_dict['XRFmaps_dir'] = main_dict['img_dat_dir']
 	#		  files = os.listdir(main_dict['XRFmaps_dir'])
 	#		  imgdat_filenames = []
@@ -952,15 +944,11 @@ def _option_d_(cb_update_func=None):
 	#		  maps_tools.extract_all(main_dict, test_string)
 
 # ------------------------------------------------------------------------------------------------
-def maps_batch(wdir='', a=1,b=0,c=0,d=0,e=0, logger=None, cb_update_func=None):
 
+
+def maps_batch(wdir, option_a_roi_plus, option_b_extract_spectra, option_c_per_pixel, option_d_image_extract, option_e_exchange_format, logger):
 	verbose = True
 	time_started = strftime("%Y-%m-%d %H:%M:%S", gmtime())
-
-	if logger == None:
-		logger = setup_logger()
-
-	first_run = 1
 
 	# remove quotations marks if any in wdir
 	wdir.strip('"')
@@ -976,7 +964,7 @@ def maps_batch(wdir='', a=1,b=0,c=0,d=0,e=0, logger=None, cb_update_func=None):
 		logger.error('Error - Directory %s does not exist. Please specify working directory.', wdir)
 		raise ValueError('Directory %s does not exist')
 
-	#define main_dict
+	# define main_dict
 	main_dict = {'mapspy_version':'1.2',
 			'maps_date':'01. March, 2013',
 			'beamline':'2-ID-E', 
@@ -1061,46 +1049,46 @@ def maps_batch(wdir='', a=1,b=0,c=0,d=0,e=0, logger=None, cb_update_func=None):
 	except:
 		raise ValueError('maps_batch: Could not open maps_settings.txt.')
 
-	me = maps_elements.maps_elements()
+	me = maps_elements.maps_elements(logger)
 	info_elements = me.get_element_info()
 	
-	maps_def = maps_definitions.maps_definitions()
+	maps_def = maps_definitions.maps_definitions(logger)
 	maps_conf = maps_def.set_maps_definitions(main_dict['beamline'], info_elements)
 
 	logger.info('main_dict beamline: %s maps_config version: %s', main_dict['beamline'], str(main_dict['version']))
 
-	select_beamline(main_dict, maps_conf, main_dict['beamline'])
+	select_beamline(main_dict, maps_conf, main_dict['beamline'], logger)
 
-	logger.info('total number of detectors: %d', main_dict['total_number_detectors'])
+	logger.info('total number of detectors: %s', main_dict['total_number_detectors'])
 
 	# Section a converts mda to h5 and does ROI and ROI+ fits
-	if a > 0:
-		_option_a_(main_dict, maps_conf, cb_update_func)
+	if option_a_roi_plus > 0:
+		_option_a_(main_dict, maps_conf, logger)
 
 	# Section b loads 8 largest h5 files, fits them and saves fit parameters
-	if b > 0:
-		spectra = _option_b_(main_dict, maps_conf, maps_def, main_dict['total_number_detectors'], info_elements, cb_update_func)
+	if option_b_extract_spectra > 0:
+		spectra = _option_b_(main_dict, maps_conf, maps_def, main_dict['total_number_detectors'], info_elements, logger)
 
 	# Section c converts mda to h5 files and does ROI/ROI+/FITS
-	if c > 0:
-		_option_c_(main_dict, cb_update_func)
+	if option_c_per_pixel > 0:
+		_option_c_(main_dict, logger)
 
 	# Section d extracts images
-	if d > 0:
-		_option_d_(cb_update_func)
+	if option_d_image_extract > 0:
+		_option_d_(logger)
 
 	# Generate average images
-	if main_dict['total_number_detectors'] > 1 and b > 0 and spectra is not None:
+	if main_dict['total_number_detectors'] > 1 and (option_a_roi_plus > 0 or option_c_per_pixel > 0) and spectra is not None:
 		logger.info(' we are now going to create the maps_generate_average...')
 		n_channels = 2048
 		energy_channels = spectra[0].calib['off'] + spectra[0].calib['lin'] * np.arange((n_channels), dtype=np.float)
-		makemaps = maps_generate_img_dat.analyze(info_elements, main_dict, maps_conf)
+		makemaps = maps_generate_img_dat.analyze(logger, info_elements, main_dict, maps_conf)
 		makemaps.generate_average_img_dat(main_dict['total_number_detectors'], maps_conf, energy_channels)
 
 	# Section e adds exchange information
-	if e > 0:
+	if option_e_exchange_format > 0:
 		logger.info('Adding exchange information')
-		ch5 = maps_hdf5.h5()
+		ch5 = maps_hdf5.h5(logger)
 		ch5.add_exchange(main_dict, maps_conf)
 
 	logger.info('time started:  %s', time_started)
@@ -1109,7 +1097,11 @@ def maps_batch(wdir='', a=1,b=0,c=0,d=0,e=0, logger=None, cb_update_func=None):
 # ----------------------------------------------------------------------------
 if __name__ == '__main__':
 	dirct = sys.argv[1]
-	print dirct
+	print 'Processing directory ', dirct
+
+	global _log_name
+	_log_name = log_name = 'Job_' + datetime.strftime(datetime.now(), "%y_%m_%d_%H_%M_%S")
+	logger = setup_logger(_log_name + '.log')
 
 	a = 0
 	b = 0
@@ -1136,4 +1128,4 @@ if __name__ == '__main__':
 			d = 1
 			e = 1
 
-	maps_batch(wdir=dirct, a=a, b=b, c=c, d=d, e=e)
+	maps_batch(wdir=dirct, option_a_roi_plus=a, option_b_extract_spectra=b, option_c_per_pixel=c, option_d_image_extract=d, option_e_exchange_format=e, logger=logger)

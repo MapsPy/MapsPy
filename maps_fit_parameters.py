@@ -175,8 +175,8 @@ class fitp_info:
 
 #-----------------------------------------------------------------------------
 class maps_fit_parameters:
-	def __init__(self):   
-		pass
+	def __init__(self, logger):
+		self.logger = logger
 	
 #-----------------------------------------------------------------------------
 	def define_fitp(self, beamline, info_elements):
@@ -414,7 +414,7 @@ class maps_fit_parameters:
 		AVOGADRO = 6.02204531e23
 		HC_ANGSTROMS = 12398.52
 		RE = 2.817938070e-13		# in cm
-		henkedata = henke.henke()
+		henkedata = henke.henke(self.logger)
 		for k in range(2):
 			if k == 0 : 
 				name = 'Ge'
@@ -427,7 +427,7 @@ class maps_fit_parameters:
 			z_array, atwt = henkedata.compound(name, density)
 			wo = np.where(z_array == 1.)
 			if 1. not in z_array:
-				print  'encountered error, will return'
+				self.logger.error( 'encountered error, will return')
 
 			z = wo[0][0]+1
 			if atwt != 0.0:
@@ -525,37 +525,44 @@ class maps_fit_parameters:
 
 				elif tag == 'CAL_OFFSET_[E_OFFSET]':
 					temp = map(float,value.split(','))
-					if verbose: print tag, temp
+					if verbose:
+						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.s.val[keywords.energy_pos[0]] = temp[det]
 
 				elif tag == 'CAL_OFFSET_[E_OFFSET]_MAX':  
 					temp = map(float,value.split(','))
-					if verbose: print tag, temp
+					if verbose:
+						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.s.max[keywords.energy_pos[0]] = temp[det]
 		
 				elif tag == 'CAL_OFFSET_[E_OFFSET]_MIN':  
 					temp = map(float,value.split(','))
-					if verbose: print tag, temp
+					if verbose:
+						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.s.min[keywords.energy_pos[0]] = temp[det]
 
 				elif tag == 'CAL_SLOPE_[E_LINEAR]':
 					temp = map(float,value.split(','))
-					if verbose: print tag, temp
+					if verbose:
+						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.s.val[keywords.energy_pos[1]] = temp[det]
 
 				elif tag == 'CAL_SLOPE_[E_LINEAR]_MAX':
 					temp = map(float,value.split(','))
-					if verbose: print tag, temp
+					if verbose:
+						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.s.max[keywords.energy_pos[1]] = temp[det]
 
 				elif tag == 'CAL_SLOPE_[E_LINEAR]_MIN':
 					temp = map(float,value.split(','))
-					if verbose: print tag, temp
+					if verbose:
+						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.s.min[keywords.energy_pos[1]] = temp[det]
 
 				elif tag == 'CAL_QUAD_[E_QUADRATIC]':
 					temp = map(float,value.split(','))
-					if verbose: print tag, temp
+					if verbose:
+						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.s.val[keywords.energy_pos[2]] = temp[det]
 					# if this parameter is zero, do NOT fit 
 					if (fitp.s.val[keywords.energy_pos[2]]) == 0.0:
@@ -567,159 +574,190 @@ class maps_fit_parameters:
 
 				elif tag == 'CAL_QUAD_[E_QUADRATIC]_MAX':
 					temp = map(float,value.split(','))
-					if verbose: print tag, temp
+					if verbose:
+						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.s.max[keywords.energy_pos[2]] = temp[det]
 
 				elif tag == 'CAL_QUAD_[E_QUADRATIC]_MIN':
 					temp = map(float,value.split(','))
-					if verbose: print tag, temp
+					if verbose:
+						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.s.min[keywords.energy_pos[2]] = temp[det]
 
 				elif tag == 'FWHM_OFFSET':
 					temp = map(float,value.split(','))
-					if verbose: print tag, temp
+					if verbose:
+						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.s.val[keywords.fwhm_pos[0]] = temp[det]
 
 				elif tag == 'FWHM_FANOPRIME':
 					temp = map(float,value.split(','))
-					if verbose: print tag, temp
+					if verbose:
+						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.s.val[keywords.fwhm_pos[1]] = temp[det]
 
 				elif tag == 'COHERENT_SCT_ENERGY':
 					temp = float(value)
-					if verbose: print tag, temp
+					if verbose:
+						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.s.val[keywords.coherent_pos[0]] = temp
 
 				elif tag == 'COHERENT_SCT_ENERGY_MAX':
 					temp = float(value)
-					if verbose: print tag, temp
+					if verbose:
+						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.s.max[keywords.coherent_pos[0]] = temp
 
 				elif tag == 'COHERENT_SCT_ENERGY_MIN':
 					temp = float(value)
-					if verbose: print tag, temp
+					if verbose:
+						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.s.min[keywords.coherent_pos[0]] = temp
 
 				elif tag == 'COMPTON_ANGLE':
 					temp = map(float,value.split(','))
-					if verbose: print tag, temp
+					if verbose:
+						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.s.val[keywords.compton_pos[0]] = temp[det]
 
 				elif tag == 'COMPTON_ANGLE_MAX':
 					temp = map(float,value.split(','))
-					if verbose: print tag, temp
+					if verbose:
+						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.s.max[keywords.compton_pos[0]] = temp[det]
 
 				elif tag == 'COMPTON_ANGLE_MIN':
 					temp = map(float,value.split(','))
-					if verbose: print tag, temp
+					if verbose:
+						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.s.min[keywords.compton_pos[0]] = temp[det]
 
 				elif tag == 'COMPTON_FWHM_CORR':
 					temp = map(float,value.split(','))
-					if verbose: print tag, temp
+					if verbose:
+						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.s.val[keywords.compton_pos[1]] = temp[det]
 
 				elif tag == 'COMPTON_STEP':
 					temp = map(float,value.split(','))
-					if verbose: print tag, temp
+					if verbose:
+						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.s.val[keywords.compton_pos[3]] = temp[det]
 
 				elif tag == 'COMPTON_F_TAIL':
 					temp = map(float,value.split(','))
-					if verbose: print tag, temp
+					if verbose:
+						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.s.val[keywords.compton_pos[4]] = temp[det]
 
 				elif tag == 'COMPTON_GAMMA':
 					temp = map(float,value.split(','))
-					if verbose: print tag, temp
+					if verbose:
+						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.s.val[keywords.compton_pos[5]] = temp[det]
 					
 				elif tag == 'COMPTON_HI_F_TAIL' : 
 					temp = map(float,value.split(','))
-					if verbose: print tag, temp
+					if verbose:
+						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.s.val[keywords.compton_pos[6]] = temp[det]
 
 				elif tag == 'COMPTON_HI_GAMMA' : 
 					temp = map(float,value.split(','))
-					if verbose: print tag, temp
+					if verbose:
+						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.s.val[keywords.compton_pos[7]] = temp[det]
 
 				elif tag == 'STEP_OFFSET' :
 					temp = map(float,value.split(','))
-					if verbose: print tag, temp
+					if verbose:
+						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.s.val[keywords.tail_pos[0]] = temp[det]
 
 				elif tag == 'STEP_LINEAR' :  
 					temp = map(float,value.split(','))
-					if verbose: print tag, temp
+					if verbose:
+						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.s.val[keywords.tail_pos[1]] = temp[det]
 
 				elif tag == 'STEP_QUADRATIC' :	
 					temp = map(float,value.split(','))
-					if verbose: print tag, temp
+					if verbose:
+						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.s.val[keywords.tail_pos[2]] = temp[det]
 
 				elif tag == 'F_TAIL_OFFSET' :  
 					temp = map(float,value.split(','))
-					if verbose: print tag, temp
+					if verbose:
+						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.s.val[keywords.tail_pos[3]] = temp[det]
 
 				elif tag == 'F_TAIL_LINEAR' : 
 					temp = map(float,value.split(','))
-					if verbose: print tag, temp
+					if verbose:
+						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.s.val[keywords.tail_pos[4]] = temp[det]
 
 				elif tag == 'F_TAIL_QUADRATIC' : 
 					temp = map(float,value.split(','))
-					if verbose: print tag, temp
+					if verbose:
+						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.s.val[keywords.tail_pos[5]] = temp[det]
 
 				elif tag == 'KB_F_TAIL_OFFSET' :   
 					temp = map(float,value.split(','))
-					if verbose: print tag, temp
+					if verbose:
+						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.s.val[keywords.tail_pos[9]] = temp[det]
 			
 				elif tag == 'KB_F_TAIL_LINEAR' :   
 					temp = map(float,value.split(','))
-					if verbose: print tag, temp
+					if verbose:
+						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.s.val[keywords.tail_pos[10]] = temp[det]
 			
 				elif tag == 'KB_F_TAIL_QUADRATIC' :   
 					temp = map(float,value.split(','))
-					if verbose: print tag, temp
+					if verbose:
+						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.s.val[keywords.tail_pos[11]] = temp[det]
 			
 				elif tag == 'GAMMA_OFFSET' :   
 					temp = map(float,value.split(','))
-					if verbose: print tag, temp
+					if verbose:
+						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.s.val[keywords.tail_pos[6]] = temp[det]
 			
 				elif tag == 'GAMMA_LINEAR' :   
 					temp = map(float,value.split(','))
-					if verbose: print tag, temp
+					if verbose:
+						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.s.val[keywords.tail_pos[7]] = temp[det]
 			
 				elif tag == 'GAMMA_QUADRATIC' :   
 					temp = map(float,value.split(','))
-					if verbose: print tag, temp
+					if verbose:
+						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.s.val[keywords.tail_pos[8]] = temp[det]
 			
 				elif tag == 'SNIP_WIDTH' :	 
 					temp = map(float,value.split(','))
-					if verbose: print tag, temp
+					if verbose:
+						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.s.val[keywords.added_params[0]] = temp[det]
 			
 				elif tag == 'FIT_SNIP_WIDTH' :	 
 					temp = int(value)
-					if verbose: print tag, temp
+					if verbose:
+						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					if temp == 1 :	
 						fitp.s.use[keywords.added_params[0]] = 2
 						fitp.s.batch[keywords.added_params[0], 1:3] = 2
 
 				elif tag == 'DETECTOR_MATERIAL' :	
 					temp = int(value)
-					if verbose: print tag, temp
+					if verbose:
+						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.g.det_material = temp
 					parsdims = fitp.add_pars.shape
 					if fitp.g.det_material == 1 : 
@@ -733,27 +771,32 @@ class maps_fit_parameters:
 			
 				elif tag == 'BE_WINDOW_THICKNESS' :   
 					temp = float(value)
-					if verbose: print tag, temp
+					if verbose:
+						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.g.be_window_thick = float(temp)*1000.
 			
 				elif tag == 'DET_CHIP_THICKNESS' :	 
 					temp = float(value)
-					if verbose: print tag, temp
+					if verbose:
+						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.g.det_chip_thick = float(temp)*1000.
 			
 				elif tag == 'GE_DEAD_LAYER' :	
 					temp = float(value)
-					if verbose: print tag, temp
+					if verbose:
+						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.g.GE_dead_layer_thick = float(temp)*1000.
 			
 				elif tag == 'MAX_ENERGY_TO_FIT' :	
 					temp = float(value)
-					if verbose: print tag, temp
+					if verbose:
+						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.g.xmax = temp
 			
 				elif tag == 'MIN_ENERGY_TO_FIT' :	
 					temp = float(value)
-					if verbose: print tag, temp
+					if verbose:
+						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.g.xmin = temp
 			
 				elif tag == 'BRANCHING_FAMILY_ADJUSTMENT_L':
@@ -762,9 +805,9 @@ class maps_fit_parameters:
 					wo = np.where(fitp.s.name == temp_string[0])
 
 					if verbose:
-						print 'found BRANCHING_FAMILY_ADJUSTMENT_L', temp_string
+						self.logger.info('found BRANCHING_FAMILY_ADJUSTMENT_L %s', temp_string)
 
-					if (wo[0].size > 0) and ( len(temp_string) == 4) : 
+					if (wo[0].size > 0) and ( len(temp_string) == 4):
 						ii = wo[0][0] - np.amin(keywords.kele_pos) 
 						factor_l1 = float(temp_string[1])
 						factor_l2 = float(temp_string[2])
@@ -809,7 +852,7 @@ class maps_fit_parameters:
 					temp_string = [x.strip() for x in temp_string]
 					wo = np.where(fitp.s.name == temp_string[0])
 					if verbose:
-						print tag, temp_string
+						self.logger.debug('tag: %s, temp_string: %s', tag, temp_string)
 
 					if wo[0].size > 0 and len(temp_string) == 13:
 						ii = wo[0][0] - np.amin(keywords.kele_pos)
@@ -818,19 +861,20 @@ class maps_fit_parameters:
 
 						# adjust branching ratios within families, but all relative to La1
 						if len(temp_string) >= 13:
-							if verbose: print 'found BRANCHING_RATIO_ADJUSTMENT_L', temp_string
+							if verbose:
+								self.logger.debug('found BRANCHING_RATIO_ADJUSTMENT_L %s', temp_string)
 							for jj in range(12): 
 								old_value = add_pars[ii, jj].ratio
 								add_pars[ii, jj].ratio *= float(temp_string[(jj+1)])
 								if verbose:
-									print 'old_value: ', old_value, ' new value: ', add_pars[ii, jj].ratio
+									self.logger.debug('old_value: %s new value: %s', old_value, add_pars[ii, jj].ratio)
 
 				elif tag == 'BRANCHING_RATIO_ADJUSTMENT_K':
 					temp_string = value.split(',')
 					temp_string = [x.strip() for x in temp_string]
 					wo = np.where(fitp.s.name == temp_string[0])
 					if verbose:
-						print tag, temp_string
+						self.logger.debug('tag: %s, temp_string: %s', tag, temp_string)
 
 					if (wo[0].size > 0) and ( len(temp_string) == 5):
 						ii = wo[0][0] - np.amin(keywords.kele_pos)
@@ -853,44 +897,46 @@ class maps_fit_parameters:
 								old_value = add_pars[ii, jj].ratio	 
 								add_pars[ii, jj].ratio *= float(temp_string[(jj+1)])
 								if verbose:
-									print 'old_value: ', old_value, ' new value: ', add_pars[ii, jj].ratio
+									self.logger.debug('old_value: %s new value: %s', old_value, add_pars[ii, jj].ratio)
 
 				elif tag == 'TAIL_FRACTION_ADJUST_SI' : 
 					temp = float(value)
-					if verbose: print tag, temp
+					if verbose:
+						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					wo = np.where(fitp.s.name == 'Si')
 					ii = wo[0][0] - np.amin(keywords.kele_pos)
 					add_pars[ii, :].mu_fraction = value * add_pars[ii, :].mu_fraction
 
 				elif tag == 'TAIL_WIDTH_ADJUST_SI' :
 					temp = float(value)
-					if verbose: print tag, temp
+					if verbose:
+						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					wo = np.where(fitp.s.name == 'Si')
 					ii = wo[0][0] - np.amin(keywords.kele_pos)			   
 					add_pars[ii, 0:3].width_multi = value
 
-				elif tag == 'SI_ESCAPE_FACTOR' : 
+				elif tag == 'SI_ESCAPE_FACTOR':
 					temp = float(value)
 					if verbose:
-						print tag, temp
+						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.s.val[keywords.added_params[1]] = temp
 
-				elif tag == 'GE_ESCAPE_FACTOR' : 
+				elif tag == 'GE_ESCAPE_FACTOR':
 					temp = float(value)
 					if verbose:
-						print tag, temp
+						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.s.val[keywords.added_params[2]] = temp
 
 				elif tag == 'ESCAPE_LINEAR' :  
 					temp = float(value)
 					if verbose:
-						print tag, temp
+						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.s.val[keywords.added_params[3]] = temp
 
 				elif tag == 'SI_ESCAPE_ENABLE' : 
 					temp = float(value)
 					if verbose:
-						print tag, temp
+						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					if temp == 0.0:
 						fitp.s.use[keywords.added_params[1]] = 1
 						fitp.s.batch[keywords.added_params[1], 1:4] = 1
@@ -905,7 +951,7 @@ class maps_fit_parameters:
 				elif tag == 'GE_ESCAPE_ENABLE':
 					temp = float(value)
 					if verbose:
-						print tag, temp
+						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					if temp == 0.:
 						fitp.s.use[keywords.added_params[2]] = 1
 						fitp.s.batch[keywords.added_params[2], 1:4] = 1
@@ -924,7 +970,7 @@ class maps_fit_parameters:
 #-----------------------------------------------------------------------------	  
 	def write_fit_parameters(self, main_dict, fitp, filename, suffix=''):
 
-		print 'saving fit parameters ', filename
+		self.logger.info('saving fit parameters %s', filename)
 		
 		srcurrent = -1
 		us_ic = -1
@@ -955,7 +1001,7 @@ class maps_fit_parameters:
 		maps_overridefile = os.path.join(main_dict['master_dir'], 'maps_fit_parameters_override.txt')+suffix
 		try:
 			f = open(maps_overridefile, 'rt')	 
-			print maps_overridefile, ' exists.'
+			self.logger.info('maps override file %s exists',maps_overridefile)
 			f.close()
 		except :
 			# if i cannot find an override file specific per detector, assuming
@@ -965,7 +1011,7 @@ class maps_fit_parameters:
 		try:
 			f = open_file_with_retry(maps_overridefile, 'rt')
 			if f == None:
-				print 'Error opening file ', filename, 'to write to!'
+				self.logger.error('Error opening file %s to write to!', filename)
 				return
 			
 			for line in f:
@@ -1004,7 +1050,7 @@ class maps_fit_parameters:
 
 		f = open_file_with_retry(filename, 'w')
 		if f == None:
-			print 'Error opening file ', filename, 'to write to!'
+			self.logger.error('Error opening file %s to write to!', filename)
 			return
 	
 		print>>f, '   This file will override default fit settings for the maps program for a 3 element detector remove: removeme_*elementdetector_to make it work. '
@@ -1026,7 +1072,7 @@ class maps_fit_parameters:
 		filepath = os.path.join(main_dict['master_dir'], 'maps_fit_parameters_override.txt')
 		f2 = open_file_with_retry(filepath, 'rt')
 		if f2 == None:
-			print 'Error opening file ',filepath,'to write to!'
+			self.logger.error('Error opening file %s to write to!',filepath)
 			return 
 
 		for line in f2:
@@ -1275,10 +1321,9 @@ class maps_fit_parameters:
 				for i in range(len(pileup_elements)):
 					pileup_elements[i].strip()
 				n_pileup = len(pileup_elements)
-				print 'pileup elements:', pileup_elements
+				self.logger.info('pileup elements: %s', pileup_elements)
 				if n_pileup < 1:
-					message = 'WARNING: could not parse this element of the pileup string:' + pileup_string[jj] + ' if you do not see anything wrong with this string or the override file, please contact the supplier of this software'
-					print message
+					self.logger.warning('WARNING: could not parse this element of the pileup string: %s if you do not see anything wrong with this string or the override file, please contact the supplier of this software', pileup_string[jj])
 					continue 
 
 				for ii in range(n_pileup): 
@@ -1290,7 +1335,7 @@ class maps_fit_parameters:
 					for iel in range(len(info_elements)):
 						if info_elements[iel].name == element:
 							ind_pileup = iel
-							#print 'have element', element, iel
+							#self.logger.debug('have element', element, iel
 			
 						this_energy = info_elements[ind_pileup].xrf['ka1']
 						if len(temp) >= 2:
@@ -1308,8 +1353,7 @@ class maps_fit_parameters:
 							add_pars[max(keywords.mele_pos) - min(keywords.kele_pos) + 1 + jj, 0].energy = add_pars[max(keywords.mele_pos) - min(keywords.kele_pos) + 1 + jj, 0].energy + this_energy
 
 					if ind_pileup == -1:
-						message = 'WARNING: could not parse this element of the pileup string:' + pileup_string[jj] +' if you do not see anything wrong with this string or the override file, please contact the supplier of this software'
-						print message
+						self.logger.warning('WARNING: could not parse this element of the pileup string: %s if you do not see anything wrong with this string or the override file, please contact the supplier of this software', pileup_string[jj])
 						continue
 
 		return

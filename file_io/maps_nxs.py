@@ -30,19 +30,20 @@ class scan:
 		self.extra_pv = []
 		self.extra_pv_key_list = []
 		
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
+
+
 class nxs:
-	def __init__(self):
-		pass
+	def __init__(self, logger):
+		self.logger = logger
 	
-#----------------------------------------------------------------------
+	# ----------------------------------------------------------------------
 	def read_scan(self, filename):
-		
-		
+
 		# Open HDF5 file
 		f = call_function_with_retry(h5py.File, 5, 0.1, 1.1, (filename, 'r'))
 		if f == None:
-			print 'Error reading ',filename
+			self.logger.error('Error reading %s',filename)
 			return None
 		#f = h5py.File(filename, 'r') 
 	
@@ -66,7 +67,7 @@ class nxs:
 						values.append(child_of_root.text.strip())
 						
 					dScanPars = dict(zip(keys, values))
-					#print dScanPars
+					#self.logger.debug(dScanPars
 					
 				if 'OutputParameters' in xmlGrp:
 					outpars = xmlGrp['OutputParameters']
@@ -81,7 +82,7 @@ class nxs:
 						values.append(child_of_root.text.strip())
 						
 					dOutPars = dict(zip(keys, values))
-					#print dOutPars
+					#self.logger.debug( dOutPars
 										
 					
 				if 'DetectorParameters' in xmlGrp:
@@ -125,7 +126,7 @@ class nxs:
 
 				 
 					dDetPars = dict(zip(keys, values))
-					#print dDetPars
+					#self.logger.debug(dDetPars
 					
 				if 'SampleParameters' in xmlGrp:
 					samplepars = xmlGrp['SampleParameters']
@@ -148,7 +149,7 @@ class nxs:
 
 				 
 					dSamlePars = dict(zip(keys, values))
-					#print dSamlePars
+					#self.logger.debug(dSamlePars
 					
 
 			if 'xmapMca' in e1Grp:
@@ -225,7 +226,7 @@ class nxs:
 		# Open HDF5 file
 		f = call_function_with_retry(h5py.File, 5, 0.1, 1.1, (nfilename, 'r'))
 		if f == None:
-			print 'Error reading ',nfilename
+			self.logger.error('Error reading %s', nfilename)
 			return None
 		#f = h5py.File(nfilename, 'r') 
 	
@@ -249,7 +250,7 @@ class nxs:
 						values.append(child_of_root.text.strip())
 						
 					dScanPars = dict(zip(keys, values))
-					#print dScanPars
+					#self.logger.debug(dScanPars
 					
 				if 'OutputParameters' in xmlGrp:
 					outpars = xmlGrp['OutputParameters']
@@ -264,7 +265,7 @@ class nxs:
 						values.append(child_of_root.text.strip())
 						
 					dOutPars = dict(zip(keys, values))
-					#print dOutPars
+					#self.logger.debug(dOutPars
 										
 					
 				if 'DetectorParameters' in xmlGrp:
@@ -308,7 +309,7 @@ class nxs:
 
 				 
 					dDetPars = dict(zip(keys, values))
-					#print dDetPars
+					#self.logger.debug(dDetPars
 					
 				if 'SampleParameters' in xmlGrp:
 					samplepars = xmlGrp['SampleParameters']
@@ -331,7 +332,7 @@ class nxs:
 
 				 
 					dSamlePars = dict(zip(keys, values))
-					#print dSamlePars
+					#self.logger.debug(dSamlePars
 					
 
 			if 'xmapMca' in e1Grp:
@@ -383,18 +384,21 @@ class nxs:
 		try:
 			# Open HDF5 file
 			f = h5py.File(hfilename, 'r')
-			if verbose: print 'Have HDF5 file: ', hfilename
+			if verbose:
+				self.logger.debug('Have HDF5 file: %s', hfilename)
 			file_exists = 1
 			file_is_hdf = 1
 			file_status = 2		  
 			
 			#MAPS HDF5 group
 			if 'MAPS' in f:
-				if verbose: print 'MAPS group found in file: ', hfilename
+				if verbose:
+					self.logger.debug('MAPS group found in file: %s', hfilename)
 				mapsGrp = f['MAPS']
 				file_status = 3
 				if 'mca_arr' in mapsGrp:
-					if verbose: print 'MAPS\\mca_arr found in file: ', hfilename
+					if verbose:
+						self.logger.debug('MAPS\\mca_arr found in file: %s', hfilename)
 					file_status = 4
 				# at the moment, simply overwrite the mca_arr section of
 				# the file; in the future, may want to test, and only
@@ -403,13 +407,16 @@ class nxs:
 			f.close()
 
 		except:
-			if verbose: print 'Creating new file: ', hfilename
+			if verbose:
+				self.logger.debug('Creating new file: %s', hfilename)
 			
-		if verbose: print 'file_status: ', file_status
+		if verbose:
+			self.logger.debug('file_status: %s', file_status)
 		
-		if overwrite : file_status = 0
+		if overwrite:
+			file_status = 0
 		
-		print hfilename
+		self.logger.debug('hfilename: %s', hfilename)
 		if file_status <= 1 : 
 			f = h5py.File(hfilename, 'w')
 		else : 

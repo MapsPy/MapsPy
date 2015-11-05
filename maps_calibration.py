@@ -36,7 +36,7 @@ from __future__ import division
 import numpy as np
 import os
 import matplotlib as mplot
-
+import logging
 from fitting import leastsqbound
 import maps_definitions
 import maps_analyze
@@ -70,12 +70,13 @@ def find_str_idx(str_list, search_list):
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
 class calibration:
-	def __init__(self, main_dict, maps_conf):
+	def __init__(self, main_dict, maps_conf, logger):
 		self.maps_conf = maps_conf
 		self.main_dict = main_dict
+		self.logger = logger
 
 	def convert_mda_to_mca(self, mda_filename, mca_filename):
-		mda_scan = maps_mda.mda()
+		mda_scan = maps_mda.mda(self.logger)
 		scan = mda_scan.read_scan(mda_filename)
 		num_detectors = 1
 		det_shape_len = len(scan.detector_arr.shape)
@@ -183,7 +184,7 @@ class calibration:
 
 	def generage_std_info_for_axo(self):
 		maps_standardInfoFilename = os.path.join(self.main_dict['master_dir'], 'maps_standardinfo.txt')
-		print 'creating ', maps_standardInfoFilename
+		self.logger.info('creating %s', maps_standardInfoFilename)
 		standardInfoFile = open_file_with_retry(maps_standardInfoFilename, 'w')
 		if standardInfoFile != None:
 			standardInfoFile.write('\tThis file describes arbitrary standard reference materials\n')
@@ -200,15 +201,15 @@ class calibration:
 
 	def search_for_axo(self):
 		search_path = os.path.join(self.main_dict['master_dir'], 'axo_std.mca*')
-		print 'Searching for ', search_path
+		self.logger.info('Searching for %s', search_path)
 		file_list = glob.glob(search_path)
 		if len(file_list) < 1:
-			print 'Nothing found.'
+			self.logger.warning('Nothing found.')
 			search_path = os.path.join(self.main_dict['mda_dir'], 'axo_std.mda')
-			print 'Searching for ', search_path
+			self.logger.info('Searching for %s', search_path)
 			file_list = glob.glob(search_path)
 			if len(file_list) < 1:
-				print 'Nothing found.'
+				self.logger.warning('Nothing found.')
 				return None
 			else:
 				# create axo_std
@@ -220,34 +221,34 @@ class calibration:
 	def read_generic_calibration(self, this_detector, total_number_detectors, no_nbs, fitp, info_elements):
 		# read info from maps_standardinfo.txt
 		maps_standardInfoFilename = os.path.join(self.main_dict['master_dir'], 'maps_standardinfo.txt')
-		print 'opening ', maps_standardInfoFilename
+		self.logger.info('opening %s', maps_standardInfoFilename)
 		standardInfoFile = open_file_with_retry(maps_standardInfoFilename, 'rt') 
 		if standardInfoFile == None:
 			# try to look for axo mda and create std calib from it.
 			standardInfoFile = self.search_for_axo()
 			if standardInfoFile == None:
-				print 'Warning: Could not load maps_standardinfo.txt.'
+				self.logger.warning('Warning: Could not load maps_standardinfo.txt.')
 				return False
 		# parse the file for filename, elements, and weights
 		standardinfo_dict = dict()
 		line = standardInfoFile.readline()
 		while len(line) > 0:
-			# print 'line = ',line
+			# self.logger.debug( 'line = ',line
 			if line.find(':') > -1:
 				subline = line.split(':')
 				standardinfo_dict[subline[0].strip().rstrip()] = subline[1].strip().rstrip()
 			line = standardInfoFile.readline()
 		# check that all keys exist
 		if not 'FILENAME' in standardinfo_dict:
-			print 'Warning: Could not find key FILENAME in maps_standardinfo.txt, returning'
+			self.logger.warning('Warning: Could not find key FILENAME in maps_standardinfo.txt, returning')
 			return False
 		if not 'ELEMENTS_IN_STANDARD' in standardinfo_dict:
-			print 'Warning: Could not find key ELEMENTS_IN_STANDARD in maps_standardinfo.txt, returning'
+			self.logger.warning('Warning: Could not find key ELEMENTS_IN_STANDARD in maps_standardinfo.txt, returning')
 			return False
 		if not 'WEIGHT' in standardinfo_dict:
-			print 'Warning: Could not find key WEIGHT in maps_standardinfo.txt, returning'
+			self.logger.warning('Warning: Could not find key WEIGHT in maps_standardinfo.txt, returning')
 			return False
-		print standardinfo_dict
+		self.logger.debug('standardinfo_dict: %s', standardinfo_dict)
 		'''
 		#open standards file 
 		standardFilename = os.path.join(self.main_dict['master_dir'],standardinfo_dict['FILENAME'])
@@ -255,23 +256,24 @@ class calibration:
 			standardFilename += str(this_detector)
 		mca_dict = load_mca(standardFilename)
 		if mca_dict['success'] == False:
-			print 'Error loading',standardFilename
+			self.logger.error( 'Error loading',standardFilename
 			return False
 		'''
 		e_list = [x.strip().rstrip() for x in standardinfo_dict['ELEMENTS_IN_STANDARD'].split(',')]
 		weight_list = [float(x) for x in standardinfo_dict['WEIGHT'].split(',')]
-		print 'element list =', e_list
+		self.logger.debug('element list = %s', e_list)
 
 		suffix = ''
 
-		fit = maps_analyze.analyze()
+		fit = maps_analyze.analyze(self.logger)
 
-		print 'called calibration with these specifications: this detector: {0}; total_number_detectors: {1}.'.format(this_detector, total_number_detectors)
+		m_str = 'called calibration with these specifications: this detector: {0}; total_number_detectors: {1}.'.format(this_detector, total_number_detectors)
+		self.logger.info('%s', m_str)
 
 		if total_number_detectors > 0:
 			if total_number_detectors > 1:
 				suffix = str(this_detector)
-				print ' and suffix is: ', suffix
+				self.logger.info(' and suffix is: %s', suffix)
 
 		maxiter = 500
 		old_ratio = 0
@@ -289,7 +291,7 @@ class calibration:
 		maps_overridefile = os.path.join(self.main_dict['master_dir'], 'maps_fit_parameters_override.txt')
 		try:
 			f = open(maps_overridefile, 'rt')
-			print maps_overridefile, ' exists.'
+			self.logger.debug('maps override file: %s exists', maps_overridefile)
 			f.close()
 			overide_files_found = 1
 		except:
@@ -315,13 +317,13 @@ class calibration:
 			f.close()
 
 		if airpath > 0:
-			print 'airpath: ', airpath 
+			self.logger.info('airpath: %s', airpath)
 		else:
-			print 'no airpath absorption'
+			self.logger.info('no airpath absorption')
 		if len(srcurrent_name):
-			print 'srcurrent_name: ', srcurrent_name 
+			self.logger.info('srcurrent_name: %s', srcurrent_name)
 		else:
-			print 'default srcurrent_name'
+			self.logger.info('default srcurrent_name')
 
 		#xxo element list
 		#e_list = ['Ca', 'Fe', 'Cu']
@@ -333,16 +335,16 @@ class calibration:
 		if total_number_detectors > 0: 
 			if total_number_detectors > 1:
 				std.name = std.name + suffix
-				print ' and suffix is: ', suffix
+				self.logger.info(' and suffix is: %s', suffix)
 
 		have_standard = 0
 		try:
 			f = open(os.path.join(self.main_dict['master_dir'], std.name), 'rt')
 			f.close()
-			print 'this_standard_filename: ', std.name
+			self.logger.info('this_standard_filename: %s', std.name)
 			have_standard = 1
 		except: 
-			print 'Could not open standard: ', std.name
+			self.logger.error('Could not open standard: %s', std.name)
 			return False
 
 		if have_standard == 1:
@@ -356,7 +358,7 @@ class calibration:
 				return False
 
 			if data.size <=1 :
-				print 'error: standard does not contain data : ' + std.name
+				self.logger.error('error: standard does not contain data : %s', std.name)
 			no_mca_detectors = data.shape
 			if len(no_mca_detectors) == 1:
 				no_mca_detectors = 1 
@@ -381,7 +383,7 @@ class calibration:
 		#;; force always fitting of std standards
 		DO_fit = 1		
 
-		maps_defs = maps_definitions.maps_definitions()
+		maps_defs = maps_definitions.maps_definitions(self.logger)
 
 		chan_names = []
 		chan_calib = []
@@ -423,7 +425,7 @@ class calibration:
 
 				dofit_spec = 1
 				if dofit_spec == 0: 
-					#print 'keyword dofit_spec = 0'
+					#self.logger.debug( 'keyword dofit_spec = 0'
 					fit_this_spec = 0
 					current_spec = fit_this_spec
 					used_chan = spectra[current_spec].used_chan
@@ -436,7 +438,7 @@ class calibration:
 								first=first, matrix=True, maxiter=maxiter)
 
 					if u == None:
-						print 'Error calling fit_spectrum!. returning'
+						self.logger.error('Error calling fit_spectrum!. returning')
 						return False
 
 				fitp.g.no_iters = 4
@@ -495,7 +497,7 @@ class calibration:
 
 		else:			#IF keyword_set(DO_fit) THEN BEGIN	
 			# define fitp, as this also defines add_pars, which are needed below
-			fp = maps_fit_parameters.maps_fit_parameters()
+			fp = maps_fit_parameters.maps_fit_parameters(self.logger)
 			fitp = fp.define_fitp(self.main_dict['beamline'], info_elements)
 
 		# The result of the fit is
@@ -535,7 +537,7 @@ class calibration:
 				counts_temp = np.sum(data[left_roi:right_roi + 1, kk])
 				counts = counts+counts_temp
 
-			#print self.maps_conf.chan[wo].name, 'counts = ', counts
+			#self.logger.debug( self.maps_conf.chan[wo].name, 'counts = ', counts
 			e_cal[wo, 0, 0] = e_cal_factor[jj, 0] / counts
 			e_cal[wo, 0, 1] = e_cal_factor[jj, 1] / counts
 			e_cal[wo, 0, 2] = e_cal_factor[jj, 2] / counts
@@ -555,7 +557,7 @@ class calibration:
 			maps_overridefile = os.path.join(self.main_dict['master_dir'], 'maps_fit_parameters_override.txt') + suffix
 			try:
 				f = open(maps_overridefile, 'rt')
-				print maps_overridefile, ' exists.'
+				self.logger.info('maps override file %s exists', maps_overridefile)
 				f.close()
 			except :
 				# if i cannot find an override file specific per detector, assuming
@@ -566,9 +568,9 @@ class calibration:
 
 		try:
 			f = open(maps_overridefile, 'rt')	 
-			print 'this override filename: ', maps_overridefile, ' exists.'
+			self.logger.info('maps override file %s exists', maps_overridefile)
 		except :
-			print 'Warning: did not find the following file: ', maps_overridefile, '	Please make sure the file is present in the parent directory, and try again. For now, I am aborting this action.'
+			self.logger.warning('Warning: did not find the following file: %s Please make sure the file is present in the parent directory, and try again. For now, I am aborting this action.', maps_overridefile)
 			return False
 
 		for line in f:
@@ -661,7 +663,7 @@ class calibration:
 		
 				name =	self.maps_conf.chan[mm].name
 				k_yield = info_elements[element_temp].yieldD['k']		  
-				#print name, ' old_yield', yieldd, ' rel_yield', rel_yield, ' k_yield', k_yield, ' rel_yield * k_yield:', rel_yield* k_yield, ' newrel_yield', newrel_yield,  \
+				#self.logger.debug( name, ' old_yield', yieldd, ' rel_yield', rel_yield, ' k_yield', k_yield, ' rel_yield * k_yield:', rel_yield* k_yield, ' newrel_yield', newrel_yield,  \
 				#		  '[mm, 0] ', fitp.add_pars[mm, 0].ratio, '[mm, 1] ', fitp.add_pars[mm, 1].ratio, '[mm, 2] ', fitp.add_pars[mm, 2].ratio, '[mm, 3] ', fitp.add_pars[mm, 3].ratio, ' old_rel_yield/new_rel_yield:', rel_yield/newrel_yield
 				if self.maps_conf.incident_E > info_elements[element_temp].bindingE['K']: 
 					jump_factor = info_elements[element_temp].jump['K'] 
@@ -683,7 +685,7 @@ class calibration:
 					total_jump_factor = info_elements[element_temp].jump['L2']
 				if self.maps_conf.incident_E > info_elements[element_temp].bindingE['L1']:
 					total_jump_factor = total_jump_factor*info_elements[element_temp].jump['L1']
-				#print	name, ' L jump_factor: ', jump_factor
+				#self.logger.debug(	name, ' L jump_factor: ', jump_factor
 
 			if self.maps_conf.chan[mm].calib == 3:
 				ienames = []
@@ -698,7 +700,7 @@ class calibration:
 				jump_factor = info_elements[element_temp].jump['M5'] 
 				total_jump_factor = info_elements[element_temp].jump['M1'] * info_elements[element_temp].jump['M2'] * \
 									info_elements[element_temp].jump['M3'] * info_elements[element_temp].jump['M4']
-				#print	name, ' M jump_factor: ', jump_factor, ' yield ', yieldd, ' ev: ', ev, ' total_jump_factor: ', total_jump_factor
+				#self.logger.debug(	name, ' M jump_factor: ', jump_factor, ' yield ', yieldd, ' ev: ', ev, ' total_jump_factor: ', total_jump_factor
 
 			if element_temp == -1:
 				continue
@@ -718,10 +720,10 @@ class calibration:
 			# make sure name is known to henke routine, if not, skip
 			# in case this is Pu, use U instead
 			if (name == 'Pu') or (name == 'Np'):
-				print 'name was ', name, ' resetting it to uranium to work with henke data'
+				self.logger.info('name was %s resetting it to uranium to work with henke data', name)
 				name = 'U'
 				
-			Chenke = henke.henke()
+			Chenke = henke.henke(self.logger)
 			
 			test = []
 			test = Chenke.zcompound(name, test)
@@ -860,7 +862,7 @@ class calibration:
 				
 				temp_x = np.where(np.array(chan_calib) >= 1)[0]
 				curve = self.fit_calibrationcurve(temp_x, p1)
-				#print k, ' ', l, '   u:', p1[0], '   factor[I, IC] ', factor
+				#self.logger.debug( k, ' ', l, '   u:', p1[0], '   factor[I, IC] ', factor
 				e_cal[:, k, l] = 0.
 				for ic in range(len(self.maps_conf.chan)):
 					for iun in range(4):
@@ -982,7 +984,7 @@ class calibration:
 			if this_element == 'Pb_L'  : weight_ugr_cm = 16.42/1.0 #Pb-L
 
 		# if weight_ugr_cm == 0.0:
-		# print 'Warning, element ', this_element, ' weight = ', weight_ugr_cm
+		# self.logger.debug( 'Warning, element ', this_element, ' weight = ', weight_ugr_cm
 
 		return weight_ugr_cm
 
@@ -1001,25 +1003,25 @@ class calibration:
 
 		f = open_file_with_retry(filename, 'rt')
 		if f == None:
-			print 'Could not open file:', filename
+			self.logger.error('Could not open file: %s', filename)
 			return None, None, None, None, None, None, None, None, None, None
 
 		line = ''
 		line = f.readline() # 1. line is version
-		#print line
+		#self.logger.debug( line
 		line = f.readline() # 2. is # elements
 		slist = line.split(':')
 		tag = slist[0]
 		value = ''.join(slist[1:])
 		n_detector_elements  = int(value)  
-		#print 'n_detector_elements', n_detector_elements
+		#self.logger.debug( 'n_detector_elements', n_detector_elements
 		line = f.readline()
 		line = f.readline()
 		slist = line.split(':')
 		tag = slist[0]
 		value = ''.join(slist[1:])
 		n_channels = int(value)
-		#print 'n_channels', n_channels
+		#self.logger.debug( 'n_channels', n_channels
 		f.close()
 
 		amp = np.zeros((8, 3))		 # 8 amplifiers, each with a numerical value(0) and a unit(1), resulting in  a factor (3)
@@ -1058,7 +1060,7 @@ class calibration:
 					live_time = np.zeros((n_detector_elements))
 					value = value.split(' ')
 					valuelist = [float(x) for x in value if x != '']
-					#print 'live time', valuelist
+					#self.logger.debug( 'live time', valuelist
 					live_time[:] = valuelist
 				elif tag == 'CAL_OFFSET':
 					value = value.split(' ')
@@ -1120,7 +1122,7 @@ class calibration:
 					elif etag[5:] == 'A4sens_num.VAL':
 						amp[3, 0] = float(temp)			 
 					elif etag[5:] == 'A1sens_unit.VAL':
-						#print 'now:', temp
+						#self.logger.debug( 'now:', temp
 						if (temp == "nA/V") or	(temp == "pA/V") or (temp == "uA/V") or (temp == "mA/V"):
 							if (temp == "pA/V") : amp[0, 1] = 0
 							if (temp == "nA/V") : amp[0, 1] = 1
@@ -1178,7 +1180,7 @@ class calibration:
 					counts = float(line)
 					data[i, j] = counts
 		else:
-			print 'Not a valid data file:', filename
+			self.logger.error('Not a valid data file: %s', filename)
 			return
 
 		for i in range(8):
@@ -1211,11 +1213,11 @@ class calibration:
 			ds_amp[:] = amp[1, :]
 
 		if IC_DS == 0:
-			print 'warning downstream IC counts zero'
+			self.logger.warning('warning downstream IC counts zero')
 			IC_DS = 1.
 
 		if IC_US == 0:
-			print 'warning upstream IC counts zero'
+			self.logger.warning('warning upstream IC counts zero')
 			IC_US = 1.
 
 		return calibration, data, date, live_time, real_time, current, IC_US, IC_DS, us_amp, ds_amp
@@ -1227,7 +1229,7 @@ class calibration:
 		maps_overridefile = os.path.join(self.main_dict['master_dir'],'maps_fit_parameters_override.txt')
 		try:
 			f = open(maps_overridefile, 'rt')	 
-			print maps_overridefile, ' exists.'
+			self.logger.info('maps override file: %s exists', maps_overridefile)
 			f.close()
 			overide_files_found = 1
 		except :
@@ -1254,14 +1256,14 @@ class calibration:
 
 		try:
 			f = open(filename, 'rt')	
-			print filename, ' exists.'
+			self.logger.inof('filename: %s exists', filename)
 			f.close()
 			nbs_files_found = 1
 		except :
 			nbs_files_found = 0 
 
 		if nbs_files_found == 0: 
-			print 'Did not find NBS calibration file, returning'
+			self.logger.warning('Did not find NBS calibration file, returning')
 			return None
 		if nbs_files_found == 1:
 			filepath = os.path.join(self.main_dict['master_dir'], filename)
@@ -1274,8 +1276,7 @@ class calibration:
 				return None
 			if self.maps_conf.use_det.sum() > 0:
 				if current == 0:
-					warning_msg = 'Could not find synchrotron current in the NBS standard. Will proceed assuming a SRcurrent of 100 mA'
-					print warning_msg
+					self.logger.warning('Could not find synchrotron current in the NBS standard. Will proceed assuming a SRcurrent of 100 mA')
 					current = 100.
 
 				nbs = self.maps_conf.nbs32
@@ -1295,7 +1296,7 @@ class calibration:
 				lt_shape = live_time.shape[0]
 				
 				if lt_shape < self.maps_conf.use_det.sum():
-					print 'warning: number of selected detectors does NOT match number OF detectors found in the mca file'
+					self.logger.warning('warning: number of selected detectors does NOT match number OF detectors found in the mca file')
 
 				wo = np.where(self.maps_conf.use_det == 1)[0]
 				if len(wo) == 0:
@@ -1337,7 +1338,7 @@ class calibration:
 								aux_arr=0,
 								info_elements=0):
 
-		print 'Writing standard info'
+		self.logger.info('Writing standard info')
 
 		make_maps_conf = self.maps_conf
 
@@ -1351,7 +1352,7 @@ class calibration:
 		if not os.path.exists(directory):
 			os.makedirs(directory)
 			if not os.path.exists(directory):
-				print 'warning: did not find the output directory, and could not create a new output directory. Will abort this action'
+				self.logger.warning('warning: did not find the output directory, and could not create a new output directory. Will abort this action')
 				return
 
 		# determine no of maximal supported detectors	 n_max
@@ -1362,70 +1363,11 @@ class calibration:
 		try:
 			f = open_file_with_retry(filename, 'w')
 			if f == None:
-				print 'Could not open info_file:', filename
+				self.logger.error('Could not open info_file: %s', filename)
 				return
 		except :
-			print 'Could not open info_file:', filename
+			self.logger.error('Could not open info_file: %s', filename)
 			return
-
-		'''
-		# make_maps_conf
-		line = 'calibrated:, '+ t.strftime("%a, %d %b %Y %H:%M:%S")
-		print>>f, line.strip()
-		line = 'NBS1832:, '+make_maps_conf.nbs32.name
-		print>>f, line
-		line = str(make_maps_conf.nbs32.real_time[0]) +', '
-		for ii in range(n_max) :
-			line = line + str(make_maps_conf.nbs32.real_time[ii])+', '
-		print>>f, 'realtime[s]:,  '+ line.strip()
-		line = str(make_maps_conf.nbs32.live_time[0])+', '
-		for ii in range(n_max) :
-			line = line + str(make_maps_conf.nbs32.live_time[ii])+', '
-		print>>f, 'livetime[s]:,  '+ line.strip()
-		line = str(make_maps_conf.nbs32.current)
-		print>>f, 'I_[mA]:,  '+ line.strip()
-		line = str(make_maps_conf.nbs32.us_ic)
-		print>>f, 'US_IC[cts/s]:,  '+ line.strip()
-		line = str(make_maps_conf.nbs32.ds_ic)
-		print>>f, 'DS_IC[cts/s]:,  '+ line.strip()
-		line = str(make_maps_conf.nbs32.us_amp[0])+', '
-		for ii in range(2):
-			line = line + str(make_maps_conf.nbs32.us_amp[ii])+', '
-		print>>f, 'US_AMP[sensitivity/units/factor]:,  '+ line.strip()
-		line = str(make_maps_conf.nbs32.ds_amp[0])+', '
-		for ii in range(2):
-			line = line + str(make_maps_conf.nbs32.ds_amp[ii])+', '
-		print>>f,  'DS_AMP[sensitivity/units/factor]:,	'+ line.strip()
-		line =	' '
-		print>>f,  line 
-	
-		line = 'NBS1833:, '+make_maps_conf.nbs33.name
-		print>>f, line 
-		line = str(make_maps_conf.nbs33.real_time[0]) +', '
-		for ii in range(n_max) :
-			line = line + str(make_maps_conf.nbs33.real_time[ii])+', '
-		print>>f,  'realtime[s]:,  '+ line.strip()
-		line = str(make_maps_conf.nbs33.live_time[0])+', '
-		for ii in range(n_max) :
-			line = line + str(make_maps_conf.nbs33.live_time[ii])+', '
-		print>>f,  'livetime[s]:,  '+ line.strip()
-		line = str(make_maps_conf.nbs33.current)
-		print>>f,  'I_[mA]:,  '+ line.strip()
-		line = str(make_maps_conf.nbs33.us_ic)
-		print>>f,  'US_IC[cts/s]:,	'+ line.strip()
-		line = str(make_maps_conf.nbs33.ds_ic)
-		print>>f,  'DS_IC[cts/s]:,	'+ line.strip()
-		line = str(make_maps_conf.nbs33.us_amp[0])+', '
-		for ii in range(2) :
-			line = line + str(make_maps_conf.nbs33.us_amp[ii])+', '
-		print>>f,  'US_AMP[sensitivity/units/factor]:,	'+ line.strip()
-		line = str(make_maps_conf.nbs33.ds_amp[0])+', '
-		for ii in range(2) :
-			line = line + str(make_maps_conf.nbs33.ds_amp[ii])+', '
-		print>>f,  'DS_AMP[sensitivity/units/factor]:,	'+ line.strip()
-		line =	' '
-		print>>f,  line 
-		'''
 
 		line = 'Standard:, ' + make_maps_conf.element_standard.name
 		print>>f, line
@@ -1570,11 +1512,11 @@ class calibration:
 		'''
 		f.close()
 
-		print "Saved calibration info file"
+		self.logger.info("Saved calibration info file")
 
 		wo = np.where(np.array(chan_calib) == 1)[0]
 		if len(wo) > 0:
-			print 'ploting spectrum'
+			self.logger.info('ploting spectrum')
 
 			from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 			mplot.rcParams['pdf.fonttype'] = 42
@@ -1652,7 +1594,7 @@ class calibration:
 						'''
 						if e_list.count(make_maps_conf.chan[wo[ii]].name) > 0:
 							weight_ugr_cm = weight_list[e_list.index(make_maps_conf.chan[wo[ii]].name)]
-						#print "chan name = ",make_maps_conf.chan[wo[ii]].name, 'weight', weight_ugr_cm
+						#self.logger.debug( "chan name = ",make_maps_conf.chan[wo[ii]].name, 'weight', weight_ugr_cm
 						'''
 						if weight_ugr_cm == 0.:
 							continue
@@ -1748,10 +1690,10 @@ class calibration:
 
 						axes.text(0.97, -0.08, 'mapspy', color = foreground_color, transform = axes.transAxes) 
 						image_filename = 'calib'+str(l)+'_'+str(k)+'standard.png'
-						print 'saving standard png', os.path.join(directory,image_filename)
+						self.logger.info('saving standard png %s', os.path.join(directory,image_filename))
 						fig.savefig(os.path.join(directory, image_filename), dpi=dpi, facecolor=background_color, edgecolor=None)
 					except:
-						print 'Warning: Could not save standard calibration plot.'
+						self.logger.warning('Warning: Could not save standard calibration plot.')
 
 		return
 
@@ -1760,7 +1702,7 @@ class calibration:
 		beamline = self.main_dict['beamline']
 		keywords = fitp.keywords
 
-		fp = maps_fit_parameters.maps_fit_parameters()
+		fp = maps_fit_parameters.maps_fit_parameters(self.logger)
 		avg_fitp = fp.define_fitp(beamline, info_elements)
 
 		avg_fitp.s.val[:] = 0.
@@ -1784,7 +1726,7 @@ class calibration:
 			used_chan.append(spectra[i].used_chan)
 		wo = np.where(np.array(used_chan) > 0)[0]
 		tot_wo = len(wo)
-		#print 'fiting n spectra', tot_wo
+		#self.logger.debug( 'fiting n spectra', tot_wo
 		if tot_wo == 0:
 			return 0, 0, spectra
 		names = ['none']
@@ -1794,7 +1736,7 @@ class calibration:
 
 		#n_names = len(names)
 		# now go one by one through all spectra loaded into the plot_spec window
-		print 'tot_wo', tot_wo
+		self.logger.debug('tot_wo: %s', tot_wo)
 		for i in range(tot_wo):
 			old_fitp = fp.define_fitp(beamline, info_elements)
 			old_fitp.s.val[:] = fitp.s.val[:]
@@ -1819,7 +1761,7 @@ class calibration:
 
 			# now enable selected elements, either from read file, or from
 			# knowning it is an nbs standard
-			#print 'spectra[wo[i]].name', spectra[wo[i]].name
+			#self.logger.debug( 'spectra[wo[i]].name', spectra[wo[i]].name
 			if 'nbs' in spectra[wo[i]].name:
 				if '32' in spectra[wo[i]].name:
 					test_string = ['Al', 'Si', 'Ar', 'Ca', 'V', 'Mn', 'Co', 'Cu']
@@ -1837,14 +1779,14 @@ class calibration:
 							fitp.s.use[jj] = 5
 
 			else: 
-				print 'fitting spectrum'
+				self.logger.info('fitting spectrum')
 				# if not NBS standard then look here
 				det = 0
 				try:
 					fitp, test_string, pileup_string = fp.read_fitp(maps_overridefile, info_elements, det=det)
-					print 'found override file (maps_fit_parameters_override.txt). Using the contained parameters.', test_string
+					self.logger.info('found override file (maps_fit_parameters_override.txt). Using the contained parameters. %s', test_string)
 				except:
-					print 'warning: did not find override file (maps_fit_parameters_override.txt). Will abort this action'
+					self.logger.warning('warning: did not find override file (maps_fit_parameters_override.txt). Will abort this action')
 					return 0, 0, spectra
 				for jj in range(fitp.g.n_fitp) : 
 					if fitp.s.name[jj] in test_string:
@@ -1855,21 +1797,21 @@ class calibration:
 			# temp_fitp_use = fitp.s.use[np.amin(fitp.keywords.kele_pos):np.amax(fitp.keywords.mele_pos)+1]
 			# temp_fitp_name = fitp.s.name[np.amin(fitp.keywords.kele_pos):np.amax(fitp.keywords.mele_pos)+1]
 			# which_elements_to_fit = (np.nonzero(temp_fitp_use != 1))[0]
-			# print 'elements to fit:'
-			# print temp_fitp_name[which_elements_to_fit]
+			# self.logger.debug( 'elements to fit:'
+			# self.logger.debug( temp_fitp_name[which_elements_to_fit]
 
 			det = 0
 			pileup_string = ''
 			# try:
 			# 	fitp, test_string, pileup_string = fp.read_fitp(maps_overridefile, info_elements, det=det)
 			# except:
-			# 	print 'error reading fit paramenters'
+			# 	self.logger.debug( 'error reading fit paramenters'
 
 			if avg_n_fitp == 0 :
 				# make sure that avg_fitp gets redefined here, so that changes,
 				# etc, in the override file get translateed into the avg file on
 				# the first round
-				fp = maps_fit_parameters.maps_fit_parameters()
+				fp = maps_fit_parameters.maps_fit_parameters(self.logger)
 				avg_fitp = fp.define_fitp(beamline, info_elements)
 				avg_fitp.s.val[:] = 0.
 
@@ -1897,14 +1839,13 @@ class calibration:
 			temp_fitp_use = fitp.s.use[np.amin(fitp.keywords.kele_pos):np.amax(fitp.keywords.mele_pos)+1]
 			temp_fitp_name = fitp.s.name[np.amin(fitp.keywords.kele_pos):np.amax(fitp.keywords.mele_pos)+1]
 			which_elements_to_fit = (np.nonzero(temp_fitp_use != 1))[0]
-			print 'elements to fit:'
-			print temp_fitp_name[which_elements_to_fit]
+			self.logger.debug('elements to fit: %s', temp_fitp_name[which_elements_to_fit])
 
-			fit = maps_analyze.analyze()
+			fit = maps_analyze.analyze(self.logger)
 			u, fitted_spec, background, xmin, xmax, perror = fit.fit_spectrum(fitp, spectra[wo[i]].data, spectra[wo[i]].used_chan, spectra[wo[i]].calib, 
 							first=first, matrix=matrix, maxiter=maxiter)
 			if u == None:
-				print 'Error calling fit_spectrum!. returning'
+				self.logger.error('Error calling fit_spectrum!. returning')
 				return None, None, None
 
 			#counts_background = fit.counts_background
@@ -1926,7 +1867,7 @@ class calibration:
 				u, fitted_spec, background, xmin, xmax, perror = fit.fit_spectrum(fitp, spectra[wo[i]].data, spectra[wo[i]].used_chan, spectra[wo[i]].calib, 
 																				first=first, matrix=matrix, maxiter=maxiter)
 				if u == None:
-					print 'Error calling fit_spectrum!. returning'
+					self.logger.error('Error calling fit_spectrum!. returning')
 					return None, None, None
 
 				#counts_background = fit.counts_background
@@ -2000,14 +1941,15 @@ class calibration:
 									ps=0,
 									fitp=fitp,
 									filename=filename,
-									outdir=self.main_dict['output_dir'])
+									outdir=self.main_dict['output_dir'],
+									logger=self.logger)
 
 			if per_pix == 0:
 				dirt = self.main_dict['output_dir']
 				if not os.path.exists(dirt):
 					os.makedirs(dirt)
 					if not os.path.exists(dirt):
-						print 'warning: did not find the output directory, and could not create a new output directory. Will abort this action'
+						self.logger.warning('warning: did not find the output directory, and could not create a new output directory. Will abort this action')
 						return 0, 0, spectra
 			else:
 				if generate_img > 0:
@@ -2024,7 +1966,7 @@ class calibration:
 		avgfilename = os.path.join(self.main_dict['master_dir'], 'average_resulting_maps_fit_parameters_override.txt')
 		fp.write_fit_parameters(self.main_dict, avg_fitp, avgfilename, suffix=suffix)
 
-		#print 'fitp',fitp, 'avg_fitp',  avg_fitp, 'spectra', spectra
+		#self.logger.debug( 'fitp',fitp, 'avg_fitp',  avg_fitp, 'spectra', spectra
 		return fitp, avg_fitp, spectra
 
 	# -----------------------------------------------------------------------------
@@ -2073,5 +2015,6 @@ class calibration:
 if __name__ == '__main__':
 	m_dict = dict()
 	m_dict['master_dir'] = '/tmp'
-	c = calibration(m_dict, None)
+	logger = logging.getLogger('calibrationtest')
+	c = calibration(m_dict, None, logger)
 	c.read_generic_calibration(None, None, None, None, None)

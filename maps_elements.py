@@ -66,16 +66,15 @@ class element_info:
 					 'M1':0., 'M2':0., 'M3':0., 'M4':0., 'M5':0., 
 					 'N1':0., 'N2':0., 'N3':0., 'N4':0., 'N5':0., 
 					 'O1':0., 'O2':0., 'O3':0. }
-			  
-			  
-			  
-#-----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
+
+
 class maps_elements:
-	def __init__(self):   
-		
-		pass
-  
-#-----------------------------------------------------------------------------	
+	def __init__(self, logger):
+		self.logger = logger
+
+	# -----------------------------------------------------------------------------
 	def get_element_info(self): 
 		   
 		#Number of elements in table
@@ -92,8 +91,7 @@ class maps_elements:
 				f = open(els_file, 'r')
 				csvf = csv.reader(f, delimiter=',')
 			except:
-				print 'Error: Could not find xrf_library.csv file! Please get the library file (e.g., from runtime maps at'
-				print 'http://www.stefan.vogt.net/downloads.html) and make sure it is in the Python path'
+				self.logger.error('Error: Could not find xrf_library.csv file! Please get the library file (e.g., from runtime maps at http://www.stefan.vogt.net/downloads.html) and make sure it is in the Python path')
 				return None
 		
 		version = 0.
@@ -102,23 +100,19 @@ class maps_elements:
 				version = float(row[1])
 				break
 		if version != 1.2:
-			print 'Warning: the only xrf_library.csv file that was found is out of date.  Please use the latest file.'
-			print 'A copy can be downloaded, e.g., as part of the runtime maps release available at '
-			print 'http://www.stefan.vogt.net/downloads.html'
+			self.logger.warning('Warning: the only xrf_library.csv file that was found is out of date.  Please use the latest file. A copy can be downloaded, e.g., as part of the runtime maps release available at http://www.stefan.vogt.net/downloads.html')
 
 		element = []
 		for i in range(nels):
 				element.append(element_info())
 
-				
-		rownum = 1 #skip header
 		for row in csvf:
-			if (row[0]=='version:') or (row[0]=='') or \
-				(row[0]=='aprrox intensity') or (row[0]=='transition') or \
-				(row[0]=='Z') :
+			if (row[0] == 'version:') or (row[0] == '') or \
+				(row[0] == 'aprrox intensity') or (row[0] == 'transition') or \
+				(row[0] == 'Z'):
 				continue
 
-			i = int(row[0])-1
+			i = int(row[0]) - 1
 			
 			element[i].z = int(float(row[0]))
 			element[i].name = row[1]
@@ -168,7 +162,7 @@ class maps_elements:
 			element[i].xrf_abs_yield['mb'] = float(row[45]) 
 			element[i].xrf_abs_yield['mg'] = float(row[46]) 
 			
-			if len(row) > 46 : 
+			if len(row) > 46:
 				element[i].density = float(row[47]) 
 				element[i].mass = float(row[48]) 
 
@@ -200,9 +194,9 @@ class maps_elements:
 
 				element[i].bindingE['P1'] = float(row[70]) 
 				element[i].bindingE['P2'] = float(row[71]) 
-				element[i].bindingE['P3'] = float(row[72]) 
+				element[i].bindingE['P3'] = float(row[72])
 
-
+				#
 				element[i].jump['K'] = float(row[73]) 
 
 				element[i].jump['L1'] = float(row[74]) 
@@ -224,14 +218,7 @@ class maps_elements:
 				element[i].jump['O1'] = float(row[87]) 
 				element[i].jump['O2'] = float(row[88]) 
 				element[i].jump['O3'] = float(row[89]) 
-		  
-		  
+
 		f.close()
 
 		return element
-		
-		
-		
-		
-		
-			  

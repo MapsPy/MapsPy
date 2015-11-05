@@ -38,7 +38,7 @@ import os
 import time
 import glob
 
-from file_util import open_file_with_retry, call_function_with_retry
+from file_util import call_function_with_retry
 
 try:
 	import scipy.io.netcdf
@@ -52,13 +52,14 @@ except ImportError:
 
 import maps_mda
 
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
+
+
 class nc:
-	def __init__(self):
-		pass
-		
+	def __init__(self, logger):
+		self.logger = logger
 	
-#----------------------------------------------------------------------
+	# ----------------------------------------------------------------------
 	def read_combined_nc_scans(self, filename, path, header, this_detector, extra_pvs = True):
 
 		#the following variables are created or read with this routine:
@@ -77,7 +78,7 @@ class nc:
 		binning = 0
 
 
-		mda = maps_mda.mda()
+		mda = maps_mda.mda(self.logger)
 		scan = mda.read_scan(filename, threeD_only=threeD_only, invalid_file=invalid_file, extra_pvs=True)
 		if scan == None:
 			return None
@@ -87,7 +88,7 @@ class nc:
 		maps_mda.convert_pv_names(filename, scan)
 
 		if invalid_file > 0:		
-			print 'not a valid mda flyscan file, error number: ', str(invalid_file), '	filename: ', filename
+			self.logger.error('not a valid mda flyscan file, error number: %s filename: %s', str(invalid_file), filename)
 			return None
 
 		n_ev = 0
@@ -121,7 +122,7 @@ class nc:
 			else:
 				continue
 
-			xmapdat = read_xmap_netcdf(ncfile, True)
+			xmapdat = read_xmap_netcdf(ncfile, self.logger, True)
 			if xmapdat == None:
 				return None
 			for ix in range(n_cols): 
@@ -208,12 +209,12 @@ class xMAPData(object):
 		self.inputCounts  = np.zeros((npix, ndet), dtype='i4')
 		self.outputCounts = np.zeros((npix, ndet), dtype='i4')
 
-def read_xmap_netcdf(fname, verbose=False):
+def read_xmap_netcdf(fname, logger, verbose=False):
 	# Reads a netCDF file created with the DXP xMAP driver
 	# with the netCDF plugin buffers
 
 	if verbose:
-		print ' reading ', fname
+		logger.debug('reading %s', fname)
 
 	t0 = time.time()
 	# read data from array_data variable of netcdf file
@@ -247,8 +248,8 @@ def read_xmap_netcdf(fname, verbose=False):
 			bh	= xMAPBufferHeader(d)
 			#if verbose and array==0:
 			#print	' nc data shape: ', d.shape, d.size
-			# print modpixs, (d.size-256), (d.size-256)/modpixs
-			# print modpixs*(d.size-256)/(1.0*modpixs)
+			# logger.debug(modpixs, (d.size-256), (d.size-256)/modpixs
+			# logger.debug(modpixs*(d.size-256)/(1.0*modpixs)
 			dat = d[256:].reshape(modpixs, (d.size-256)/modpixs )
 
 			npix = bh.numPixels
@@ -258,44 +259,44 @@ def read_xmap_netcdf(fname, verbose=False):
 					# first time through, (array,module)=(0,0) we
 					# read mapping mode, set up how to slice the
 					# data, and build data arrays in xmapdat
-					mapmode = dat[0,3]
+					mapmode = dat[0, 3]
 					if mapmode == 1:  # mapping, full spectra
 						nchans = d[20]
-						data_slice = slice(256,8448)
-					elif mapmode == 2:	# ROI mode
+						data_slice = slice(256, 8448)
+					elif mapmode == 2:  # ROI mode
 						# Note:  nchans = number of ROIS !!
-						nchans	   = max(d[264:268])
-						data_slice = slice(64,64+8*nchans)
+						nchans = max(d[264:268])
+						data_slice = slice(64, 64 + 8 * nchans)
 					xmapdat = xMAPData(narrays*modpixs, nmodules, nchans)
 					xmapdat.firstPixel = bh.startingPixel
 
 			# acquistion times and i/o counts data are stored
 			# as longs in locations 32:64
-			t_times = aslong(dat[:npix,32:64]).reshape(npix,4,4)
+			t_times = aslong(dat[:npix, 32:64]).reshape(npix, 4, 4)
 			p1 = npix_total - npix
 			p2 = npix_total
-			xmapdat.realTime[p1:p2,:]	  = t_times[:,:,0]
-			xmapdat.liveTime[p1:p2,:]	  = t_times[:,:,1]
-			xmapdat.inputCounts[p1:p2,:]  = t_times[:,:,2]
-			xmapdat.outputCounts[p1:p2,:] = t_times[:,:,3]
+			xmapdat.realTime[p1:p2, :] = t_times[:, :, 0]
+			xmapdat.liveTime[p1:p2, :] = t_times[:, :, 1]
+			xmapdat.inputCounts[p1:p2, :] = t_times[:, :, 2]
+			xmapdat.outputCounts[p1:p2, :] = t_times[:, :, 3]
 
 			# the data, extracted as per data_slice and mapmode
-			t_data = dat[:npix,data_slice]
+			t_data = dat[:npix, data_slice]
 			if mapmode == 2:
 				t_data = aslong(t_data)
-			xmapdat.data[p1:p2,:,:] = t_data.reshape(npix,4,nchans)
+			xmapdat.data[p1:p2, :, :] = t_data.reshape(npix, 4, nchans)
 
 	t2 = time.time()
 	xmapdat.numPixels = npix_total
 	xmapdat.data = xmapdat.data[:npix_total]
 	xmapdat.realTime = clocktick * xmapdat.realTime[:npix_total]
 	xmapdat.liveTime = clocktick * xmapdat.liveTime[:npix_total]
-	xmapdat.inputCounts  = xmapdat.inputCounts[:npix_total]
+	xmapdat.inputCounts = xmapdat.inputCounts[:npix_total]
 	xmapdat.outputCounts = xmapdat.outputCounts[:npix_total]
 	if verbose:
-		print '   time to read file    = %5.1f ms' % ((t1-t0)*1000)
-		print '   time to extract data = %5.1f ms' % ((t2-t1)*1000)
-		print '   read %i pixels ' %  npix_total
-		print '   data shape:	 ' ,  xmapdat.data.shape
+		logger.debug('   time to read file    = %5.1f ms', ((t1 - t0) * 1000))
+		logger.debug('   time to extract data = %5.1f ms', ((t2 - t1) * 1000))
+		logger.debug('   read %i pixels ', npix_total)
+		logger.debug('   data shape:	%s', xmapdat.data.shape)
 	fh.close()
 	return xmapdat

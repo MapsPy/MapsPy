@@ -47,6 +47,7 @@ import signal
 import psutil
 import multiprocessing
 from datetime import datetime
+from RestBase import RestBase
 from plugins.DatabasePlugin import DatabasePlugin
 from plugins.SQLiteDB import SQLiteDB
 from handlers.ProcessNodeHandlers import ProcessNodeHandler, ProcessNodeJobsWebService
@@ -54,13 +55,14 @@ import maps_batch
 import math
 import Constants
 
-class ProcessNode(object):
+class ProcessNode(RestBase):
 	def __init__(self, settings):
+		RestBase.__init__(self)
 		self.settings = settings
 		serverSettings = settings.getSetting(Settings.SECTION_SERVER)
 		pnSettings = settings.getSetting(Settings.SECTION_PROCESS_NODE)
-		print 'Server settings ', serverSettings
-		print 'ProcessNode Settings ', pnSettings
+		#print 'Server settings ', serverSettings
+		#print 'ProcessNode Settings ', pnSettings
 		self.pn_info = {Constants.PROCESS_NODE_COMPUTERNAME: pnSettings[Settings.PROCESS_NODE_NAME],
 					Constants.PROCESS_NODE_NUM_THREADS: pnSettings[Settings.PROCESS_NODE_THREADS],
 					Constants.PROCESS_NODE_HOSTNAME: serverSettings[Settings.SERVER_HOSTNAME],
@@ -76,8 +78,8 @@ class ProcessNode(object):
 		cherrypy.config.update({
 			'server.socket_host': serverSettings[Settings.SERVER_HOSTNAME],
 			'server.socket_port': int(serverSettings[Settings.SERVER_PORT]),
-			#'log.access_file': "logs/" + str(pnSettings[Settings.PROCESS_NODE_NAME]) + "_access.log",
-			#'log.error_file': "logs/" + str(pnSettings[Settings.PROCESS_NODE_NAME]) + "_error.log"
+			'log.access_file': "logs/" + str(pnSettings[Settings.PROCESS_NODE_NAME]) + "_access.log",
+			'log.error_file': "logs/" + str(pnSettings[Settings.PROCESS_NODE_NAME]) + "_error.log"
 		})
 
 		self.conf = {
@@ -98,7 +100,7 @@ class ProcessNode(object):
 		}
 		self.logger = logging.getLogger(__name__)
 		self._setup_logging_(self.logger, "rot_file", "logs/" + self.pn_info[Constants.PROCESS_NODE_COMPUTERNAME] + "_pn.log", True)
-		self.logger.warning('pnSettings %s', pnSettings)
+		self.logger.info('pnSettings %s', pnSettings)
 		self.new_job_event = threading.Event()
 		self.status_event = threading.Event()
 		self.logger.info('Setup signal handler')
@@ -130,32 +132,12 @@ class ProcessNode(object):
 		self.status_thread = None
 		self.this_process = psutil.Process(os.getpid())
 
-	def _setup_logging_(self, log, logtype, logname, stream_to_console=False, is_cherrypy=False):
-		maxBytes = getattr(log, "rot_maxBytes", 20971520) # 20Mb
-		backupCount = getattr(log, "rot_backupCount", 10)
-		fname = getattr(log, logtype, logname)
-		h = logging.handlers.RotatingFileHandler(fname, 'a', maxBytes, backupCount)
-		h.setLevel(logging.DEBUG)
-		formatter = logging.Formatter('%(asctime)s | %(levelname)s | PID[%(process)d] | %(funcName)s(): %(message)s')
-		if is_cherrypy:
-			h.setFormatter(cherrypy._cplogging.logfmt)
-			log.error_log.addHandler(h)
-		else:
-			log.setLevel(logging.DEBUG)
-			h.setFormatter(formatter)
-			log.addHandler(h)
-		if stream_to_console:
-			ch = logging.StreamHandler()
-			ch.setFormatter(formatter)
-			ch.setLevel(logging.ERROR)
-			log.addHandler(ch)
-
 	def unix_handle_sigint(self, sig, frame):
-		self.logger.info('unix_handle_sigint %d %d', sig, frame)
+		self.logger.info('unix_handle_sigint %s %s', sig, frame)
 		self.stop()
 
 	def win_handle_sigint(self, sig):
-		self.logger.info('win_handle_sigint %d', sig)
+		self.logger.info('win_handle_sigint %s', sig)
 		self.stop()
 
 	def create_directories(self):
@@ -189,10 +171,10 @@ class ProcessNode(object):
 		webapp = ProcessNodeHandler()
 		self.db.subscribe()
 		self.db.create_tables()
-		webapp.job_queue = ProcessNodeJobsWebService(self.db)
+		webapp.job_queue = ProcessNodeJobsWebService(self.db, self.logger)
 		app = cherrypy.tree.mount(webapp, '/', self.conf)
-		self._setup_logging_(app.log, "rot_error_file", "logs/" + self.pn_info[Constants.PROCESS_NODE_COMPUTERNAME] + "_error.log", False, True)
-		self._setup_logging_(app.log, "rot_access_file", "logs/" + self.pn_info[Constants.PROCESS_NODE_COMPUTERNAME] + "_access.log", False, True)
+		#self._setup_logging_(app.log, "rot_error_file", "logs/" + self.pn_info[Constants.PROCESS_NODE_COMPUTERNAME] + "_error.log", False, True)
+		#self._setup_logging_(app.log, "rot_access_file", "logs/" + self.pn_info[Constants.PROCESS_NODE_COMPUTERNAME] + "_access.log", False, True)
 		cherrypy.engine.start()
 		try:
 			self.logger.info('posting to scheduler %s', self.scheduler_pn_url)
@@ -292,8 +274,9 @@ class ProcessNode(object):
 				self.this_process = psutil.Process(proc.pid)
 				proc.join()
 				self.this_process = psutil.Process(os.getpid())
+				self.logger.debug("Process finished with exitcode %s", proc.exitcode)
 				job_dict[Constants.JOB_FINISH_PROC_TIME] = datetime.ctime(datetime.now())
-				if proc.exitcode < 0:
+				if proc.exitcode != 0:
 					self.logger.info('finished processing job with status ERROR')
 					job_dict[Constants.JOB_STATUS] = Constants.JOB_STATUS_GENERAL_ERROR
 				else:

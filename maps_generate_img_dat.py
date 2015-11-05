@@ -37,6 +37,7 @@ import string
 import datetime
 import time as tm
 import numpy as np
+import logging
 import os
 import struct
 import matplotlib as mplot
@@ -92,13 +93,13 @@ def rebin(a, *args):
 	return eval(''.join(evList))
 
 # ----------------------------------------------------------------------
-def fit_line_threaded(i_fit, data_line, output_dir, n_rows,  matrix, spectral_binning, elt_line,
+def fit_line_threaded(logger, i_fit, data_line, output_dir, n_rows,  matrix, spectral_binning, elt_line,
 				values_line, bkgnd_line, tfy_line,
 				info_elements, fitp, old_fitp, add_pars, keywords, add_matrixfit_pars, xrf_bin, calib):
 
-	print 'fitting row number ', i_fit
+	logger.info('fitting row number %s', i_fit)
 
-	fit = maps_analyze.analyze()
+	fit = maps_analyze.analyze(logger)
 	fitted_line, ka_line, l_line, bkground_line,  values_line, bkgnd_line, tfy_line, xmin, xmax = fit.fit_line(data_line, 
 						output_dir, n_rows, matrix, spectral_binning, elt_line, values_line, bkgnd_line, tfy_line, 
 						info_elements, fitp, old_fitp, add_pars, keywords, add_matrixfit_pars, xrf_bin, calib )    
@@ -107,11 +108,11 @@ def fit_line_threaded(i_fit, data_line, output_dir, n_rows,  matrix, spectral_bi
 
 # ----------------------------------------------------------------------
 class analyze:
-	def __init__(self, info_elements, main_dict, maps_conf, beamline='2-ID-E', use_fit=0):
+	def __init__(self, logger, info_elements, main_dict, maps_conf, beamline='2-ID-E', use_fit=0):
 
 		self.info_elements = info_elements
 		self.beamline = beamline
-		
+		self.logger = logger
 		self.integrate = 0
 		
 		self.main_dict = main_dict
@@ -129,7 +130,7 @@ class analyze:
 		
 		self.which_par_str = 0
 
-		self.maps_def = maps_definitions.maps_definitions()
+		self.maps_def = maps_definitions.maps_definitions(self.logger)
 		#self.maps_conf = self.maps_def.set_maps_definitions(beamline, info_elements)
 		self.maps_conf = maps_conf
 		
@@ -148,7 +149,7 @@ class analyze:
 
 	# ----------------------------------------------------------------------
 	def __binning__(self, scan, xrf_bin, n_cols, n_rows, mca_arr_dimensions, elt1_arr):
-		print 'binning the data'
+		self.logger.info('binning the data')
 
 		this_mca_arr_dimensions = scan.mca_arr.shape
 		this_n_channels = min(mca_arr_dimensions[2], self.main_dict['max_spec_channels'])
@@ -273,10 +274,10 @@ class analyze:
 	# ----------------------------------------------------------------------
 	def maps_core_generate_fly_dat(self, header, mdafilename, this_detector, total_number_detectors):
 		n_ev, n_rows, n_cols, n_energy, energy, energy_spec, scan_time_stamp, dataset_orig = self.change_xrf_resetvars()
-		mda_scan = maps_mda.mda()
+		mda_scan = maps_mda.mda(self.logger)
 		scan = mda_scan.read_scan(mdafilename, threeD_only=2)
 		if len(scan.detector_description_arr) < 3:
-			print 'Not a valid mda flyscan file, returning: ', mdafilename
+			self.logger.info('Not a valid mda flyscan file, returning: %s', mdafilename)
 			return
 
 		new_detector_description_arr = ['us_ic', 'ds_ic', 'sum_mcs', 'H_dpc', 'V_dpc', 'dia1_dpc', 'dia2_dpc', 'sca1',
@@ -311,7 +312,7 @@ class analyze:
 						  '8bmb:3820:mca29.VAL']
 
 		if time_idx == -1:
-			print 'an error occured, cannot read dwell time in fly scan; returning'
+			self.logger.error('an error occured, cannot read dwell time in fly scan; returning')
 			n_ev, n_rows, n_cols, n_energy, energy, energy_spec, scan_time_stamp, dataset_orig = self.change_xrf_resetvars()
 			return
 
@@ -323,7 +324,7 @@ class analyze:
 				scan.detector_arr[:, :, b_pos[n]] = scan.detector_arr[:, :, b_pos[n]] / time[:, :]  # time_norm[*, *]
 				# dataset_orig(*, *, n) = (detector_arr(*, *, idx[0])-32768.)/3276.8
 			except:
-				print 'wo = -1; @ ', n, ' temp_a_arr = ', temp_a_arr[n]
+				self.logger.debug('wo = -1; @ %s temp_a_arr[n] = %s', n, temp_a_arr[n])
 
 		dataset_orig[:, :, 11] = time[:, :] / 25000
 
@@ -367,7 +368,7 @@ class analyze:
 			no_int = 1
 		else:
 			no_int = 0
-		anl = maps_analyze.analyze()
+		anl = maps_analyze.analyze(self.logger)
 		nrml, ntmb, rdt = anl.maps_simple_dpc_integration(nrml, ntmb, no_int=no_int)
 		# notem nrml, ntmb, now normalized (what comes up ust go down)
 		# first pad dataset with mean value, so that non assigned pixels are not
@@ -415,7 +416,7 @@ class analyze:
 
 		data_file = open_file_with_retry(str(filename), 'wb')
 		if data_file == None:
-			print 'Error: (maps_core_generate_fly_dat) failed to open file to write to :', filename
+			self.logger.error('Error: (maps_core_generate_fly_dat) failed to open file to write to : %s', filename)
 			return None
 		data_file.write(struct.pack('>iiiii', 0, XRFmaps_info.version, n_channels, scan.x_pixels, scan.y_pixels))
 		data_file.write(struct.pack('>iiii', len(energy), no_detectors, dataset_size, self.maps_conf.n_used_chan))
@@ -426,27 +427,26 @@ class analyze:
 	# ----------------------------------------------------------------------
 	def read_and_parse_scan(self, header, mdafilename, beamline, this_detector, total_number_detectors):
 
+		self.logger.info('beamline: %s', beamline)
 		if beamline == 'Bio-CAT':
-			print 'beamline: ', beamline
-			print 'cannot read biocat scans'
+			self.logger.warning('cannot read biocat scans')
 			return None
 
 		if beamline == 'GSE-CARS':
-			print 'beamline: ', beamline
-			print 'cannot read GSE-CARS scans'
+			self.logger.warning('cannot read GSE-CARS scans')
 			return None
 
 		if (beamline == '2-ID-E') or (beamline == '2-ID-D') or (beamline == '2-ID-B') or (beamline == '2-BM') or (beamline == 'Bionanoprobe'):
 
 			# read scan info
-			mda = maps_mda.mda()
+			mda = maps_mda.mda(self.logger)
 			info = mda.read_scan_info(mdafilename)
 			if info == None:
-				print 'Warning: skipping file : ', mdafilename, ' , due to maps_scan_info error'
+				self.logger.warning('Warning: skipping file : %s, due to maps_scan_info error', mdafilename)
 				return None
 
 			if np.amin(info.spectrum) == -1:
-				print 'skipping file : ', mdafilename, ' , due to maps_scan_info error'
+				self.logger.warning('Warning: skipping file : %s, due to maps_scan_info error', mdafilename)
 				return None
 
 			if (info.rank == 2) and (info.spectrum[info.rank - 1] == 1):
@@ -455,16 +455,16 @@ class analyze:
 				self.xanes = 0
 
 			if self.verbose == 1:
-				print 'info.rank	: ', info.rank
-				print 'info.dims	: ', info.dims
-				print 'info.spectrum: ', info.spectrum
-				print 'xanes		: ', self.xanes
+				self.logger.debug('info.rank	: %s', info.rank)
+				self.logger.debug('info.dims	: %s', info.dims)
+				self.logger.debug('info.spectrum: %s', info.spectrum)
+				self.logger.debug('xanes		: %s', self.xanes)
 
 			test_textfile = 0
 			combined_file_info = os.path.join(self.main_dict['master_dir'], 'lookup', header + '.txt')
 			if os.path.isfile(combined_file_info):
 				test_textfile = 1
-			print 'testing test_textfile ', test_textfile
+			self.logger.debug('testing test_textfile %s', test_textfile)
 
 			test_netcdf = FLYSACN_TYPE_NONE
 			file_path = os.path.join(self.main_dict['master_dir'], os.path.join('flyXRF.h5', header))
@@ -472,33 +472,21 @@ class analyze:
 			num_files_found = len(hdf_files)
 			if num_files_found != 1:
 				if num_files_found > 1:
-					print 'Error: too many files found, ', hdf_files
+					self.logger.error('Error: too many files found, %s', hdf_files)
 				else:
-					print 'Could not file hdf5 file associated with mda file: ', mdafilename
+					self.logger.info('Could not file hdf5 file associated with mda file: %s', mdafilename)
 			else:
 				test_netcdf = FLYSCAN_TYPE_HDF
 
 			if test_netcdf == FLYSACN_TYPE_NONE:
-				print 'testing presence of converted flyscans', test_netcdf
+				self.logger.info('testing presence of converted flyscans %s', test_netcdf)
 				file_path = os.path.join(self.main_dict['master_dir'], os.path.join('flyXRF', header))
 				nc_files = glob.glob(file_path + '*.nc')
 				num_files_found = len(nc_files)
 				if num_files_found < 1:
-					print 'Could not find netcdf files associated with mda: ', mdafilename
+					self.logger.info('Could not find netcdf files associated with mda: %s', mdafilename)
 				else:
 					test_netcdf = FLYSCAN_TYPE_NETCDF
-
-			'''
-			if test_netcdf == FLYSACN_TYPE_NONE:
-				if os.path.isfile(os.path.join(self.main_dict['master_dir'], 'flyXRF', header + '_2xfm3__0.nc')):
-					test_netcdf = FLYSCAN_TYPE_2ID_NETCDF
-				print 'testing presence of netCDF flyscans', test_netcdf
-
-			if test_netcdf == FLYSACN_TYPE_NONE:
-				if os.path.isfile(os.path.join(self.main_dict['master_dir'], 'flyXRF', header + '_DP3__0.nc')):
-					test_netcdf = FLYSCAN_TYPE_8BM_NETCDF
-				# use test_netCDF = 2 to indicate this is a fly scan from 8bm
-			'''
 
 			if test_netcdf == FLYSACN_TYPE_NONE:
 				# bnp_fly_18_001.nc
@@ -511,67 +499,67 @@ class analyze:
 						test_netCDF = FLYSCAN_TYPE_BIONANOPROBE
 					# use test_netCDF = 3 to indicate this is a fly scan from bionanoprobe
 				except:
-					print 'This is not a scan file - returning.'
+					self.logger.error('This is not a scan file.')
 
 			if (info.rank == 2) and (np.sum(info.spectrum) == 0 and (test_textfile == 0) and (test_netcdf == FLYSACN_TYPE_NONE)):
-				print 'This is a fly scan, without XRF.'
+				self.logger.info('This is a fly scan, without XRF.')
 				self.maps_core_generate_fly_dat(header, mdafilename, this_detector, total_number_detectors)
 				return None
 
 			elif (info.rank == 2) and (np.sum(info.spectrum) == 0 and (test_textfile > 0)):
 				# this is a fly scan, but i found a text file, which should contain
 				# the filename of the XRF file
-				print 'This scan has the combined file with info stored in a text file which is not yet supported - returning.'
+				self.logger.warning( 'This scan has the combined file with info stored in a text file which is not yet supported - returning.')
 				return None
 
 			elif (info.rank == 2) and (np.sum(info.spectrum) == 0 and (test_netcdf == FLYSCAN_TYPE_2ID_NETCDF or test_netcdf == FLYSCAN_TYPE_NETCDF)):
 				# this is a fly scan, but i found a netcdf file with matching
 				# name. this should be a fly scna with XRF
-				print 'trying to do the combined file'
-				nc = maps_nc.nc()
+				self.logger.info('trying to do the combined file')
+				nc = maps_nc.nc(self.logger)
 				scan = nc.read_combined_nc_scans(mdafilename, self.main_dict['master_dir'], header, this_detector, extra_pvs=True)
 
-				print 'Finished reading combined nc scan'
+				self.logger.info('Finished reading combined nc scan')
 				self.netcdf_fly_scan = 1
 
 			elif (info.rank == 2) and (np.sum(info.spectrum) == 0 and (test_netcdf == FLYSCAN_TYPE_8BM_NETCDF)):
 				# this is a fly scan, but i found a netcdf file with matching
 				# name. this should be a fly scan with XRF from 8bm
-				print 'This scan with XRF from 8bm which is not yet supported - returning.'
+				self.logger.warning('This scan with XRF from 8bm which is not yet supported - returning.')
 				return None
 
 			elif (info.rank == 2) and (np.sum(info.spectrum) == 0 and (test_netcdf == FLYSCAN_TYPE_BIONANOPROBE)):
 				# this is a fly scan, but i found a netcdf file with matching
 				# name. this should be a fly scan with XRF from the bionanoprobe
-				print 'This scan with with XRF from the bionanoprobe which is not yet supported - returning.'
+				self.logger.warning('This scan with with XRF from the bionanoprobe which is not yet supported - returning.')
 				return None
 
 			elif (info.rank == 2) and (np.sum(info.spectrum) == 0 and (test_netcdf == FLYSCAN_TYPE_HDF)):
 				# this is a fly scan, but i found a netcdf file with matching
 				# name. this should be a fly scan with XRF
-				print 'trying to do the combined file'
+				self.logger.warning('trying to do the combined file')
 
 				scan = mda.read_combined_flyscan(self.main_dict['master_dir'], mdafilename, this_detector)
 
 				self.netcdf_fly_scan = 1
 
 			elif self.xanes == 1:
-				print 'xanes scans not supported - returning'
+				self.logger.warning('xanes scans not supported - returning')
 				return None
 
 			else:
 				# Read mda scan:
-				print 'Reading scan from ', mdafilename
+				self.logger.info('Reading scan from %s', mdafilename)
 				scan = mda.read_scan(mdafilename, extra_pvs=True)
-				print 'Finished reading scan from ', mdafilename
+				self.logger.info('Finished reading scan from %s', mdafilename)
 
 		if beamline == 'DLS-I08':
-			print 'beamline: ', beamline
-			print 'reading DLS-I08 scan from /img.dat/*.h5'
+			self.logger.info('beamline: %s', beamline)
+			self.logger.info('reading DLS-I08 scan from /img.dat/*.h5')
 			filenameh5 = os.path.basename(str(mdafilename))
 			h5filename = os.path.join(os.path.join(self.main_dict['master_dir'], 'img.dat'), filenameh5)
-			print 'filename=', h5filename
-			h5 = maps_hdf5.h5()
+			self.logger.debug('filename= %s', h5filename)
+			h5 = maps_hdf5.h5(self.logger)
 			scan = h5.read_scan(h5filename)
 			self.save_h5 = 0
 			self.xanes = 0
@@ -604,11 +592,11 @@ class analyze:
 		if total_number_detectors > 1:
 			overide_files_found = 0
 			suffix = str(this_detector)
-			print 'suff=', suffix
+			self.logger.debug('suff= %s', suffix)
 			maps_overridefile = os.path.join(self.main_dict['master_dir'], 'maps_fit_parameters_override.txt') + suffix
 			try:
 				f = open(maps_overridefile, 'rt')
-				print maps_overridefile, ' exists.'
+				self.logger.debug('maps override file %s exists',maps_overridefile)
 				f.close()
 			except :
 				# if i cannot find an override file specific per detector, assuming
@@ -639,7 +627,7 @@ class analyze:
 			scan_date = datetime.date(year, month, day)
 
 		# Read in detector calibration
-		maps_detector.get_detector_calibration(make_maps_conf, beamline, info_elements, scan, maps_overridefile)
+		maps_detector.get_detector_calibration(make_maps_conf, beamline, info_elements, scan, maps_overridefile, self.logger)
 
 		amp = np.zeros((8, 3), dtype=np.float)
 
@@ -682,7 +670,7 @@ class analyze:
 					amp[3, :] = amp[1, :]
 					amp[1, :] = amp[0, :]
 			except:
-				print 'Warning: amp[] is 0 - could not read override file'
+				self.logger.warning('Warning: amp[] is 0 - could not read override file')
 
 		for i in range(8):
 			if amp[i, 0] == 0.0: amp[i, 2] = 1.
@@ -716,14 +704,14 @@ class analyze:
 
 		try:
 			if scan.mca_arr.size < 1:
-				print 'skipping file : ', scan.scan_name, ' , was not able to read a valid 3D array'
+				self.logger.warning( 'Skipping file : %s, was not able to read a valid 3D array', scan.scan_name)
 				return
 		except:
-			print 'skipping file : ', scan.scan_name, ' , was not able to read a valid 3D array'
+			self.logger.warning('skipping file : %s, was not able to read a valid 3D array', scan.scan_name)
 			return
 
 		if scan.mca_arr.sum() == 0:
-			print 'skipping file : ', scan.scan_name, ' , contains 3D array with all elements EQ 0'
+			self.logger.warning('skipping file : %s, contains 3D array with all elements EQ 0', scan.scan_name)
 			return
 
 		mca_arr_dimensions = scan.mca_arr.shape
@@ -775,11 +763,11 @@ class analyze:
 		else:
 			no_detectors = 1
 
-		h5 = maps_hdf5.h5()
+		h5 = maps_hdf5.h5(self.logger)
 		if self.save_h5 == 1:
 			# Save full spectra to HDF5 file
 			h5file = os.path.join(self.main_dict['img_dat_dir'], header + xrf_bin_ext + '.h5' + suffix)
-			print 'now trying to write the mca spectra into the HDF5 file', h5file
+			self.logger.info('now trying to write the mca spectra into the HDF5 file %s', h5file)
 			h5.write_mca_hdf5(h5file, scan.mca_arr)
 
 		max_chan_spec = np.zeros((n_channels, 5))
@@ -825,7 +813,7 @@ class analyze:
 			self.maps_def.xrfmaps_add_extra(scan.extra_pv, extra_pv_order = scan.extra_pv_key_list)
 
 		wo = np.where(make_maps_conf.use_det == 1)
-		print 'wo len', len(wo), 'raw_spec len', len(thisdata.raw_spec), 'no_detectors', no_detectors
+		self.logger.debug('wo len %s raw_spec len %s no_detectors %s', len(wo), len(thisdata.raw_spec), no_detectors)
 		for ii in range(no_detectors-1):
 			thisdata.raw_spec[0:len(spec_all), ii] = raw_spec[:, wo[ii]]
 
@@ -873,7 +861,7 @@ class analyze:
 		# generate direct maps, such as SR current, ICs, life time in subroutine
 		dmaps_set = maps_detector.find_detector_name(det_descr, scan_date, scan.detector_arr, scan.detector_description_arr,
 																 make_maps_conf, scan.x_coord_arr, scan.y_coord_arr, beamline,
-																 n_cols, n_rows, maps_overridefile)
+																 n_cols, n_rows, maps_overridefile, self.logger)
 
 
 		dmaps_names = []
@@ -894,7 +882,7 @@ class analyze:
 			elt1_arr = dmaps_set[:, :, dmaps_names.index('ELT1')]
 		elt1_arr = np.array(elt1_arr)
 		if np.sum(elt1_arr) == 0.0:
-			print 'WARNING: did not find elapsed life time. Will continue assuming ELT1 was 1s, but this is just an ARBITRARY value'
+			self.logger.warning('WARNING: did not find elapsed life time. Will continue assuming ELT1 was 1s, but this is just an ARBITRARY value')
 			elt1_arr[:, :] = 1.
 
 		elt2_arr = []
@@ -902,7 +890,7 @@ class analyze:
 			elt2_arr = dmaps_set[:, :, dmaps_names.index('ELT2')]
 			elt2_arr = np.array(elt2_arr)
 			if np.sum(elt2_arr) == 0.0:
-				print 'WARNING: did not find elapsed life time. Will continue assuming ELT2 was 1s, but this is just an ARBITRARY value'
+				self.logger.warning('WARNING: did not find elapsed life time. Will continue assuming ELT2 was 1s, but this is just an ARBITRARY value')
 				elt2_arr[:, :] = 1.
 
 		elt3_arr = []
@@ -910,7 +898,7 @@ class analyze:
 			elt3_arr = dmaps_set[:, :, dmaps_names.index('ELT3')]
 			elt3_arr = np.array(elt3_arr)
 			if np.sum(elt3_arr) == 0.0:
-				print 'WARNING: did not find elapsed life time. Will continue assuming ELT3 was 1s, but this is just an ARBITRARY value'
+				self.logger.warning('WARNING: did not find elapsed life time. Will continue assuming ELT3 was 1s, but this is just an ARBITRARY value')
 				elt3_arr[:, :] = 1.
 
 		# Bin the data if required
@@ -922,7 +910,6 @@ class analyze:
 		if 'ELT3' in dmaps_names:
 			elt3_arr = dmaps_set[:, :, dmaps_names.index('ELT3')]
 
-		# print 'calculate elemental maps using XRF	'
 		# calculate elemental maps using XRF
 		temp_elementsuse = []
 		for item in make_maps_conf.chan:
@@ -934,7 +921,7 @@ class analyze:
 			return
 		spectra = self.maps_def.define_spectra(self.max_spec_channels, self.main_max_spectra, self.max_ICs, mode='plot_spec')
 
-		fp = maps_fit_parameters.maps_fit_parameters()
+		fp = maps_fit_parameters.maps_fit_parameters(self.logger)
 		fitp = fp.define_fitp(beamline, info_elements)
 
 		text = ' spec_name, inner_coord, outer_coord, '
@@ -1009,7 +996,7 @@ class analyze:
 
 		# below is the routine for using matrix math to calculate elemental
 		# content with overlap removal
-		print 'now using matrix math for analysis'
+		self.logger.info('now using matrix math for analysis')
 
 		kk = 0
 		#element_pos = [fitp.keywords.kele_pos, fitp.keywords.lele_pos, fitp.keywords.mele_pos]
@@ -1078,23 +1065,22 @@ class analyze:
 		#saveddatafile = np.load(filepath)
 		saveddatafile = call_function_with_retry(np.load, 5, 0.1, 1.1, (filepath,))
 		if saveddatafile == None:
-			print 'Error opening ', filepath
+			self.logger.error('Error opening %s', filepath)
 		else:
 			sol_intermediate = saveddatafile['sol_intermediate']
 			fitmatrix_reduced = saveddatafile['fitmatrix_reduced']
 			saveddatafile.close()
 
-		print 'elements to use as per make_maps_conf'
+		self.logger.info('elements to use as per make_maps_conf')
 		maps_conf_chan_elstouse_names = []
 		for iel in range(len(elements_to_use)):
 			maps_conf_chan_elstouse_names.append(make_maps_conf.chan[elements_to_use[iel]].name)
-		print maps_conf_chan_elstouse_names
+		self.logger.debug('maps_conf_chan_elstouse_names %s',  maps_conf_chan_elstouse_names)
 
 		temp_fitp_use = fitp.s.use[np.amin(fitp.keywords.kele_pos):np.amax(fitp.keywords.mele_pos)+1]
 		temp_fitp_name = fitp.s.name[np.amin(fitp.keywords.kele_pos):np.amax(fitp.keywords.mele_pos)+1]
 		which_elements_to_fit = (np.nonzero(temp_fitp_use != 1))[0]
-		print 'elements to fit as per fitp:'
-		print temp_fitp_name[which_elements_to_fit]
+		self.logger.info('elements to fit as per fitp: %s', temp_fitp_name[which_elements_to_fit])
 
 		element_lookup_in_reduced = np.zeros((len(elements_to_use)), dtype=int)
 		element_lookup_in_reduced[:] = -1
@@ -1109,7 +1095,7 @@ class analyze:
 			if 's_e' == make_maps_conf.chan[elements_to_use[i_temp]].name:
 				element_lookup_in_reduced[i_temp] = len(wo_use_this_par) + 0
 
-		print 'c', tm.time()
+		self.logger.debug('c %s', tm.time())
 
 		if nnls == 0:
 			for i_temp in range(n_cols):
@@ -1129,9 +1115,9 @@ class analyze:
 			results_line = np.zeros((n_rows, len(elements_to_use)))
 			if (no_processors_to_use > 1):
 
-				print 'no_processors_to_use = ', no_processors_to_use
-				print 'cpu_count() = %d\n' % multiprocessing.cpu_count()
-				print 'Creating pool with %d processes\n' % no_processors_to_use
+				self.logger.info('no_processors_to_use = %s', no_processors_to_use)
+				self.logger.info('cpu_count() = %d\n', multiprocessing.cpu_count())
+				self.logger.info('Creating pool with %d processes\n', no_processors_to_use)
 				pool = multiprocessing.Pool(no_processors_to_use)
 
 				count = n_cols
@@ -1142,14 +1128,14 @@ class analyze:
 
 					# Single processor version for debugging
 					#  for i_fit in range(count):
-					#	  print 'Doing line ', i_fit, ' of ', count
+					#	  self.logger.debug( 'Doing line ', i_fit, ' of ', count
 					#	  results_line = maps_tools.maps_nnls_line(data_lines[:, :, i_fit], n_channels, fitmatrix_reduced, n_mca_channels,
 					#											   elements_to_use, element_lookup_in_reduced, n_rows)
 
 				results_pool = [pool.apply_async(maps_tools.maps_nnls_line, (data_lines[:, :, i_fit], n_channels, fitmatrix_reduced, n_mca_channels,
 												elements_to_use, element_lookup_in_reduced, n_rows)) for i_fit in range(count)]
 
-				print 'Ordered results using pool.apply_async():'
+				self.logger.info('Ordered results using pool.apply_async():')
 				results = []
 				for r in results_pool:
 					results.append(r.get())
@@ -1178,7 +1164,7 @@ class analyze:
 						if element_lookup_in_reduced[mm] != -1:
 							thisdata.dataset_orig[i_fit, :, mm, 2] = results_line[:, mm]
 
-		print 'd', tm.time()
+		self.logger.debug('d %s', tm.time())
 
 		if ('s_a' in maps_conf_chan_elstouse_names) and \
 			('s_i' in maps_conf_chan_elstouse_names) and \
@@ -1194,7 +1180,7 @@ class analyze:
 
 		fitp = fp.define_fitp(beamline, info_elements)
 
-		print 'make_maps_conf.use_fit = ', make_maps_conf.use_fit
+		self.logger.debug('make_maps_conf.use_fit = %s', make_maps_conf.use_fit)
 		sys.stdout.flush()
 
 		# Spectrum fitting goes here if enabled
@@ -1220,7 +1206,7 @@ class analyze:
 
 		if (make_maps_conf.use_fit > 0) and (xrfflyscan == 0):
 
-			fit = maps_analyze.analyze()
+			fit = maps_analyze.analyze(self.logger)
 
 			seconds_fit_start = tm.time()
 			# note: spectral binning needs to be even !!
@@ -1286,8 +1272,8 @@ class analyze:
 					det = kk
 					pileup_string = ''
 					test_string = ''
-					print 'maps_overridefile', maps_overridefile
-					#for ie in range(len(info_elements)): print info_elements[ie].xrf_abs_yield
+					self.logger.debug('maps_overridefile %s', maps_overridefile)
+					#for ie in range(len(info_elements)): self.logger.debug( info_elements[ie].xrf_abs_yield
 					fitp, test_string, pileup_string = fp.read_fitp(maps_overridefile, info_elements, det)
 
 					for jj in range(fitp.g.n_fitp):
@@ -1319,10 +1305,10 @@ class analyze:
 				old_fitp.s.val[:]=fitp.s.val[:]
 
 				if no_processors_to_use > 1:
-					print 'Multi-threaded fitting started'
-					print 'no_processors_to_use = ', no_processors_to_use
-					print 'cpu_count() = %d\n' % multiprocessing.cpu_count()
-					print 'Creating pool with %d processes\n' % no_processors_to_use
+					self.logger.info('Multi-threaded fitting started')
+					self.logger.info('no_processors_to_use = %s', no_processors_to_use)
+					self.logger.info('cpu_count() = %s\n', multiprocessing.cpu_count())
+					self.logger.info('Creating pool with %s processes\n', no_processors_to_use)
 					pool = multiprocessing.Pool(no_processors_to_use)
 
 					count = n_cols
@@ -1334,7 +1320,7 @@ class analyze:
 
 					output_dir = self.main_dict['output_dir']
 
-					print 'Started fitting'
+					self.logger.info('Started fitting')
 					sys.stdout.flush()
 
 					results_pool = []
@@ -1344,7 +1330,7 @@ class analyze:
 					start = 0
 					for i_fit in range(count):
 						data_line = data_lines[:, :, i_fit]
-						#print 'fitting row number ', i_fit, ' of ', count
+						#self.logger.info('fitting row number ', i_fit, ' of ', count)
 						elt_line[:] = elt1_arr[i_fit, :]
 
 						fitp.s.val[:]=old_fitp.s.val[:]
@@ -1361,10 +1347,10 @@ class analyze:
 						for jj in range(n_rows):
 							raw_temp[:, kk] = raw_temp[:, kk] + data_line[:, jj]
 
-						results_pool.append(pool.apply_async(fit_line_threaded, (i_fit, data_line,
+						results_pool.append(pool.apply_async(fit_line_threaded, (self.logger, i_fit, data_line,
 										output_dir, n_rows, matrix, spectral_binning, elt_line, values_line, bkgnd_line, tfy_line,
 										info_elements, fitp, old_fitp, fitp.add_pars, keywords, add_matrixfit_pars, xrf_bin, calib)) )
-					#print '------ Waiting for fitting to finish ------'
+					#self.logger.info( '------ Waiting for fitting to finish ------')
 					#del data_lines
 					pool.close()
 					pool.join()
@@ -1374,7 +1360,7 @@ class analyze:
 
 					for iline in range(count):
 						results_line = results[iline]
-						#print 'results_line=', results_line
+						#self.logger.info( 'results_line=', results_line)
 						fitted_line = results_line[0]
 						ka_line = results_line[1]
 						l_line = results_line[2]
@@ -1398,21 +1384,23 @@ class analyze:
 							bkground_temp[xmin:xmax+1, kk] = bkground_temp[xmin:xmax+1, kk] + bkground_line[xmin:xmax+1, jj]
 							#raw_temp[:, kk] = raw_temp[:, kk] + data_line[:, jj]
 
-					print 'before', thisdata.energy_fit[0, kk]
+					self.logger.debug('before %s', thisdata.energy_fit[0, kk])
 
 					thisdata.energy_fit[0, kk] = calib['off']
 					thisdata.energy_fit[1, kk] = calib['lin']
 					thisdata.energy_fit[2, kk] = calib['quad']
 
-					print 'after', thisdata.energy_fit[0, kk]
+					self.logger.debug('after %s', thisdata.energy_fit[0, kk])
 
-					# import matplotlib.pyplot as plt
-					# plt.plot(x,test)
-					# #plt.plot(x,y)
-					# #plt.semilogy(x,y+0.1)
-					# #plt.show()
-					# #plt.semilogy(x,fit+0.1)
-					# plt.show()
+					'''
+					import matplotlib.pyplot as plt
+					plt.plot(x,test)
+					#plt.plot(x,y)
+					#plt.semilogy(x,y+0.1)
+					#plt.show()
+					#plt.semilogy(x,fit+0.1)
+					plt.show()
+					'''
 
 				else:
 					#count = 4
@@ -1420,7 +1408,7 @@ class analyze:
 					count = n_cols
 					for i_fit in range(count):
 
-						print 'fitting row number ', i_fit, ' of ', count
+						self.logger.info('fitting row number %s of %s', i_fit, count)
 
 						if (xrf_bin > 0) and (i_fit < count -2) :
 							if (xrf_bin == 2) and (n_cols > 5) and (n_rows > 5) :
@@ -1457,13 +1445,13 @@ class analyze:
 						bkgnd[i_fit, :] = bkgnd_line[:]
 						tfy[i_fit, :] = tfy_line[:]
 
-					print 'before', thisdata.energy_fit[0, kk]
+					self.logger.debug('before %s', thisdata.energy_fit[0, kk])
 
 					thisdata.energy_fit[0, kk] = calib['off']
 					thisdata.energy_fit[1, kk] = calib['lin']
 					thisdata.energy_fit[2, kk] = calib['quad']
 
-					print 'after', thisdata.energy_fit[0, kk]
+					self.logger.info('after %s', thisdata.energy_fit[0, kk])
 
 			for i_fit in range(n_cols):
 				for j_fit in range(n_rows):
@@ -1489,7 +1477,7 @@ class analyze:
 							thisdata.dataset_orig[i_fit, j_fit, ie, 1] = bkgnd[i_fit, j_fit]
 
 			seconds_fit_end = tm.time()
-			print 'fitting of this scan  finished in ', seconds_fit_end-seconds_fit_start, ' seconds'
+			self.logger.info('fitting of this scan  finished in %s seconds', seconds_fit_end-seconds_fit_start)
 
 			if make_maps_conf.use_fit == 2:
 				kk_loop_length = no_detectors + 1
@@ -1569,7 +1557,7 @@ class analyze:
 				for i_a in range(this_dimensions[2]):
 					for i_b in	range(this_dimensions[3]):
 						temp_congrid = congrid_arr[:, :, i_a, i_b]
-						temp_congrid = maps_tools.congrid(temp_congrid, (n_cols, n_rows))
+						temp_congrid = maps_tools.congrid(temp_congrid, (n_cols, n_rows), self.logger)
 						thisdata.dataset_orig[:, :, i_a, i_b] = temp_congrid[:, :]
 
 		#begin pca part:
@@ -1577,7 +1565,7 @@ class analyze:
 			seconds_PCA_start = tm.time()
 			input_arr = np.zeros((n_cols*n_rows, n_channels))
 			l = 0
-			for i_x_pixels in range(n_cols) :
+			for i_x_pixels in range(n_cols):
 				for i_y_pixels in range(n_rows-1):
 					input_arr[l, :] = scan.mca_arr[i_x_pixels, i_y_pixels, :]
 					l = l + 1
@@ -1594,7 +1582,7 @@ class analyze:
 
 			f = call_function_with_retry(h5py.File, 5, 0.1, 1.1, (filename, 'w'))
 			if f == None:
-				print 'maps_generate_img_dat: Error opening file ', filename
+				self.logger.error('maps_generate_img_dat: Error opening file %s', filename)
 			else:
 				# create a group for maps to hold the data
 				pcaGrp = f.create_group('PCA')
@@ -1619,9 +1607,10 @@ class analyze:
 				f.close()
 
 			seconds_PCA_end = tm.time()
-			print 'PCA part of the analysis took : ', str(seconds_PCA_end-seconds_PCA_start), \
-					' seconds	corresponding to  ', str((seconds_PCA_end-seconds_PCA_start) / 60.), \
-					' minutes	corresponding to  ', str((seconds_PCA_end-seconds_PCA_start) / 60. / 24.), ' hours'
+			delta_sec = str(seconds_PCA_end-seconds_PCA_start)
+			delta_min = str((seconds_PCA_end-seconds_PCA_start) / 60.)
+			delta_hour = str((seconds_PCA_end-seconds_PCA_start) / 60. / 24.)
+			self.logger.info('PCA part of the analysis took : %s  seconds corresponding to %s minutes corresponding to %s hours', delta_sec, delta_min, delta_hour)
 
 		#########################################################################################
 
@@ -1672,25 +1661,26 @@ class analyze:
 
 		if self.xanes == 0:
 			h5file = os.path.join(self.main_dict['img_dat_dir'], header + xrf_bin_ext + '.h5' + suffix)
-			print 'now trying to write HDF5 file', h5file
+			self.logger.info('now trying to write HDF5 file %s', h5file)
 			energy_channels = spectra[0].calib['off'] + spectra[0].calib['lin'] * np.arange((n_channels), dtype=np.float)
 			h5.write_hdf5(thisdata, h5file, scan.mca_arr, energy_channels, extra_pv=extra_pv, extra_pv_order=scan.extra_pv_key_list, update=True)
 		'''
 		#Generate average images
 		if (total_number_detectors > 1):
-			print ' we are now going to create the maps_generate_average...'
+			self.logger.info( ' we are now going to create the maps_generate_average...'
 			if this_detector == total_number_detectors -1:
-				print 'now doing maps_generate_average_img_dat, total_number_detectors: ', total_number_detectors, '	this_detector: ', this_detector, ' this_file = ', mdafilename
+				self.logger.info( 'now doing maps_generate_average_img_dat, total_number_detectors: ', total_number_detectors, '	this_detector: ', this_detector, ' this_file = ', mdafilename
 				energy_channels = spectra[0].calib['off'] + spectra[0].calib['lin'] * np.arange((n_channels), dtype=np.float)
 				self.generate_average_img_dat(total_number_detectors, make_maps_conf, energy_channels, this_file=mdafilename, extra_pv=extra_pv)
 		'''
 		return
 
-#----------------------------------------------------------------------
-	def generate_average_img_dat(self, total_number_detectors, make_maps_conf, energy_channels, this_file= '', extra_pv=None):
-		print "Generating average image"
+	# ----------------------------------------------------------------------
 
-		h5p = maps_hdf5.h5()
+	def generate_average_img_dat(self, total_number_detectors, make_maps_conf, energy_channels, this_file= '', extra_pv=None):
+		self.logger.info("Generating average image")
+
+		h5p = maps_hdf5.h5(self.logger)
 
 		imgdat_filenames = []
 		if this_file != '':
@@ -1698,13 +1688,13 @@ class analyze:
 			basename, extension = os.path.splitext(temp_filename)
 			imgdat_filenames.append(temp_filename)
 		else:
-			#print 'XRFmaps_dir', self.main_dict['XRFmaps_dir']
+			#self.logger.debug('XRFmaps_dir %s', self.main_dict['XRFmaps_dir'])
 			dirList=os.listdir(self.main_dict['XRFmaps_dir'])
 			for fname in dirList:
 				if fname[-4:] == '.h50':
 					imgdat_filenames.append(fname)
 
-		#print imgdat_filenames
+		#self.logger.debug('imgdat_filename %s', imgdat_filenames)
 		no_files = len(imgdat_filenames)
 		for i_temp in range(no_files):
 			basename, extension = os.path.splitext(imgdat_filenames[i_temp])
@@ -1719,26 +1709,26 @@ class analyze:
 				added_number_detectors = 0
 				for this_detector_element in range(total_number_detectors):
 					sfile = os.path.join(self.main_dict['XRFmaps_dir'], imgdat_filenames[n_filenumber] + '.h5' + str(this_detector_element).strip())
-					#print sfile
+					#self.logger.debug('sfile %s', sfile)
 					n_ev, n_rows, n_cols, n_energy, energy, energy_spec, scan_time_stamp, dataset_orig = self.change_xrf_resetvars()
 					#temp = max([sfile.split('/'), sfile.split('\\')])
 					#if temp == -1:
 					#	temp = 0
 
 					if not os.path.isfile(sfile) :
-						print 'WARNING: did not find :', sfile, ' skipping to next'
+						self.logger.warning('WARNING: did not find :%s skipping to next',sfile)
 						continue
 
 					XRFmaps_info, n_cols, n_rows, n_channels, valid_read = h5p.maps_change_xrf_read_hdf5(sfile, make_maps_conf)
 					if valid_read == 0:
-						print 'Error calling h5p.maps_change_xrf_read_hdf5(', sfile, make_maps_conf, ')'
+						self.logger.error('Error calling h5p.maps_change_xrf_read_hdf5(%s,%s)', sfile, make_maps_conf)
 						break
 					f = call_function_with_retry(h5py.File, 5, 0.1, 1.1, (sfile, 'r'))
 					if f == None:
-						print 'Error opening file ', sfile
+						self.logger.error('Error opening file %s', sfile)
 						break
 					if 'MAPS' not in f:
-						print 'error, hdf5 file does not contain the required MAPS group. I am aborting this action'
+						self.logger.error('error, hdf5 file does not contain the required MAPS group. I am aborting this action')
 						break
 
 					maps_group_id = f['MAPS']
@@ -1748,7 +1738,7 @@ class analyze:
 					mca_arr = np.transpose(mca_arr)
 
 					if valid_read == 0:
-						print 'warning: did not find the valid mca array in dataset. cannot extract spectra'
+						self.logger.warning('warning: did not find the valid mca array in dataset. cannot extract spectra')
 						break
 
 					f.close()
@@ -1757,7 +1747,7 @@ class analyze:
 
 						avg_XRFmaps_info, n_cols, n_rows, n_channels, valid_read = h5p.maps_change_xrf_read_hdf5(sfile, make_maps_conf)
 						if valid_read == 0:
-							print 'Error calling h5p.maps_change_xrf_read_hdf5(', sfile, make_maps_conf, ')'
+							self.logger.error('Error calling h5p.maps_change_xrf_read_hdf5(%s, %s)', sfile, make_maps_conf)
 							break
 						avg_mca_arr = mca_arr.copy()
 
@@ -1774,7 +1764,7 @@ class analyze:
 					added_number_detectors = added_number_detectors+1
 
 				if not os.path.isfile(sfile):
-					print 'WARNING: did not find any of these:', sfile, ' skipping to next level'
+					self.logger.warning('WARNING: did not find any of these: %s skipping to next level', sfile)
 					continue
 
 				avg_XRFmaps_info.dmaps_set[:, :, :] = avg_XRFmaps_info.dmaps_set[:, :, :] / added_number_detectors
@@ -1785,10 +1775,9 @@ class analyze:
 				avg_XRFmaps_info.max_chan_spec[:, :] = avg_XRFmaps_info.max_chan_spec[:, :] / added_number_detectors
 				avg_XRFmaps_info.raw_spec[:, :] = avg_XRFmaps_info.raw_spec[:, :] / added_number_detectors
 
-				h5p.write_hdf5(avg_XRFmaps_info, os.path.join(self.main_dict['XRFmaps_dir'], imgdat_filenames[n_filenumber]+'.h5'), avg_mca_arr, energy_channels, extra_pv=extra_pv)
+				h5p.write_hdf5(avg_XRFmaps_info, os.path.join(self.main_dict['XRFmaps_dir'], imgdat_filenames[n_filenumber] + '.h5'), avg_mca_arr, energy_channels, extra_pv=extra_pv)
 			except:
-				exc_str = traceback.format_exc()
-				print datetime.datetime.now(), exc_str
+				self.logger.exception('exception occured')
 		return
 
 	# ----------------------------------------------------------------------
@@ -1807,7 +1796,7 @@ class analyze:
 
 	# ----------------------------------------------------------------------
 	def plot_fit_spec(self, info_elements, spectra=0, add_plot_spectra=0, add_plot_names=0, ps=0, fitp=0, perpix=0, save_csv=1):
-		print 'ploting spectrum'
+		self.logger.info('ploting spectrum')
 
 		from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 		mplot.rcParams['pdf.fonttype'] = 42
@@ -1951,7 +1940,7 @@ class analyze:
 			axes.set_ylim((ymin, ymax))
 
 			axes.set_position([0.10,0.18,0.85,0.75])
-			print 'spectra[droplist_spectrum].name', spectra[droplist_spectrum].name
+			self.logger.debug('spectra[droplist_spectrum].name %s', spectra[droplist_spectrum].name)
 
 			axes.text(-0.10, -0.12, spectra[droplist_spectrum].name,color=foreground_color, transform=axes.transAxes)
 
@@ -1994,7 +1983,7 @@ class analyze:
 					axes.text(0.97, -0.23, 'mapspy', color=foreground_color, transform=axes.transAxes)
 					if (png == 1) or (png == 2):
 						image_filename = filename + '.png'
-						print 'saving png ', os.path.join(self.main_dict['output_dir'], image_filename)
+						self.logger.info('saving png %s', os.path.join(self.main_dict['output_dir'], image_filename))
 						fig.savefig(os.path.join(self.main_dict['output_dir'], image_filename), dpi=dpi, facecolor=background_color, edgecolor=None)
 
 					if ps > 0:
@@ -2016,7 +2005,7 @@ class analyze:
 
 						file_ptr = open_file_with_retry(file_csv, 'wb')
 						if file_ptr == None:
-							print 'Error opening file:', file_csv
+							self.logger.error('Error opening file: %s', file_csv)
 						else:
 							writer = csv.writer(file_ptr)
 							writer.writerow(spectra_names)

@@ -229,8 +229,8 @@ class spectrum:
 
 # -----------------------------------------------------------------------------
 class maps_definitions:
-	def __init__(self):
-		pass
+	def __init__(self, logger):
+		self.logger = logger
 
 	# -----------------------------------------------------------------------------
 	def set_maps_definitions(self, beamline, info_elements, version=9, latest=True):
@@ -270,7 +270,8 @@ class maps_definitions:
 						  'deadT', 'x_coord', 'y_coord',
 						  'dummy', 'dummy', 'dummy', 'dummy']
 
-		if beamline == '2-ID-D': print 'main beamline is 2iDD'
+		if beamline == '2-ID-D':
+			self.logger.info('main beamline is 2iDD')
 
 		mcfg = maps_conf()
 		if version == 9:
@@ -349,14 +350,16 @@ class maps_definitions:
 					mcfg.chan[list.index(item.name)].z = item.z
 					mcfg.chan[list.index(item.name)].center = item.xrf['ka1']
 					mcfg.chan[list.index(item.name)].calib = 1
-					if verbose: print item.name, item.z, item.xrf['ka1']
+					if verbose:
+						self.logger.debug('item.name: %s, item.z: %s, item.xrf: %s',item.name, item.z, item.xrf['ka1'])
 
 				elname = string.join([item.name, '_L'], '')
 				if elname in list:
 					mcfg.chan[list.index(elname)].z = item.z
 					mcfg.chan[list.index(elname)].center = item.xrf['la1']
 					mcfg.chan[list.index(elname)].calib = 2
-					if verbose: print elname, item.z, item.xrf['la1']
+					if verbose:
+						self.logger.debug('elname: %s, item.z: %s, item.xrf: %s', elname, item.z, item.xrf['la1'])
 
 				elname = 'Pb_M'
 				if elname in list:
@@ -386,8 +389,8 @@ class maps_definitions:
 					np.sqrt(energy_res_offset ** 2 + (mcfg.chan[ii].center * energy_res_sqrt) ** 2) / 4.)
 				mcfg.chan[ii].bkground_right = np.int(
 					np.sqrt(energy_res_offset ** 2 + (mcfg.chan[ii].center * energy_res_sqrt) ** 2) / 4.)
-				if verbose: print 'width, bckg_left, bckg_right = ', mcfg.chan[ii].width, \
-					mcfg.chan[ii].bkground_left, mcfg.chan[ii].bkground_right
+				if verbose:
+					self.logger.debug('width: %s bckg_left: %s bckg_right: %s ', mcfg.chan[ii].width, mcfg.chan[ii].bkground_left, mcfg.chan[ii].bkground_right)
 
 			return mcfg
 
@@ -414,7 +417,7 @@ class maps_definitions:
 					  'userStringCalc10.EE']
 
 		for item in extra_pv:
-			# print item, extra_pv[item]
+			# self.logger.debug(item, extra_pv[item]
 			for si in range(len(stringlist)):
 				if stringlist[si] in item:
 					ind = si
@@ -539,7 +542,7 @@ class maps_definitions:
 				test = date[minute_pos: minute_pos + 4]
 				minute = int(test)
 			except:
-				print 'push_spectrum(): Could not convert date.'
+				self.logger.exception('push_spectrum(): Could not convert date.')
 
 		if len(data.shape) > 1:
 			for k in range(n_spatial_rois):

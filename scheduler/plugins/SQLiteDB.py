@@ -215,7 +215,7 @@ class SQLiteDB:
 			return False
 
 	def save(self, entry):
-		print 'saving',entry
+		pass
 
 	def reset_process_nodes_status(self):
 		con = sql.connect(self.uri)

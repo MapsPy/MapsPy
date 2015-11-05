@@ -65,7 +65,8 @@ import string
 
 #-----------------------------------------------------------------------------
 class henke:
-	def __init__(self):   
+	def __init__(self, logger):
+		self.logger = logger
 		
 		self.compound_name = [ 'water' , 'protein', 'lipid', 'nucleosome', 'dna', 'helium', 'chromatin', 
 							   'air', 'pmma', 'nitride', 'graphite', 'nickel', 'beryl', 'copper', 
@@ -107,7 +108,7 @@ class henke:
 		
 		verbose = False
 		if verbose:
-			print 'compound_string', compound_string
+			self.logger.debug('compound_string: %s', compound_string)
 		if paren_multiplier == False:
 			z_array = np.zeros(92)
 			paren_multiplier=1.
@@ -137,7 +138,8 @@ class henke:
 				this_element_name = this_element_name + ' '
 				num_start_index = 1
 
-		if verbose: print 'this_element_name:', this_element_name, ', num_start_index:', num_start_index
+		if verbose:
+			self.logger.debug('this_element_name: %s num_start_index: %s', this_element_name, num_start_index)
 		
 		this_z=0
 		if	 this_element_name == 'H ': this_z=1
@@ -235,7 +237,7 @@ class henke:
 		else: this_z=0
 
 		if (this_z == 0):
-			print 'zcompound is confused: ', compound_string
+			self.logger.info('zcompound is confused: %s', compound_string)
 			compound_string=''
 			return np.zeros(0)
 
@@ -264,7 +266,7 @@ class henke:
 			number_string=compound_string[num_start_index:postnum_index]
 			num_multiplier = 1.
 			if verbose:
-				print 'Trying to interpret ', number_string, ' as a number.'
+				self.logger.debug('Trying to interpret %s as a number.', number_string)
 			if len(number_string) != 0:
 				num_multiplier = float(number_string)
 		else:
@@ -275,7 +277,7 @@ class henke:
 		if (this_z <= max_z_index) :
 			z_array[this_z - 1] = z_array[this_z - 1] + num_multiplier
 		else:
-			print 'zcompound: z_array smaller than ', max_z_index
+			self.logger.debug('zcompound: z_array smaller than %s', max_z_index)
 			return np.zeros(0)
 
 		# And deal with what's left
@@ -430,11 +432,11 @@ class henke:
 				filename = '../reference/henke.xdr'
 				file = open(str(filename), 'rb')
 			except:
-				print 'Could not open file ', filename
+				self.logger.error('Could not open file %s', filename)
 				return None, None, None, None, None, None, None
 		
 		if verbose:
-			print 'File: ', filename   
+			self.logger.debug('File: %s', filename)
 	
 		buf = file.read()		 
 		u = Unpacker(buf)
@@ -444,15 +446,15 @@ class henke:
 			n_energies = u.unpack_int()
 		
 			if verbose:
-				print 'n_energies: ', n_energies  
-				print 'n_elements: ', n_elements	
+				self.logger.debug('n_energies: %s', n_energies)
+				self.logger.debug('n_elements: %s', n_elements)
 				expected_pos = expected_pos + 2 * 4
-				print 'Actual, expected file position before reading energies: ' , u.get_position(), expected_pos
+				self.logger.debug('Actual, expected file position before reading energies: %s %s', u.get_position(), expected_pos)
 
 			energies = u.unpack_farray(n_energies, u.unpack_float)
 			energies = np.array(energies) 
 			if verbose:
-				print 'energies: ', energies  
+				self.logger.debug('energies: %s', energies)
 			
 			f1 = np.zeros((n_elements, n_energies))
 			f2 = np.zeros((n_elements, n_energies))
@@ -461,7 +463,7 @@ class henke:
 
 			if verbose:		   
 				expected_pos = expected_pos + 4 * n_energies
-				print 'Actual, expected file position before reading elements: ', u.get_position(), expected_pos
+				self.logger.debug('Actual, expected file position before reading elements: %s %s', u.get_position(), expected_pos)
 		
 			for i_element in range(n_elements):
 				this_f1 = u.unpack_farray(n_energies, u.unpack_float)
@@ -469,19 +471,19 @@ class henke:
 				f1[i_element, :] = this_f1
 				f2[i_element, :] = this_f2
 			
-				#print f1
+				#self.logger.debug( f1
 
 			if verbose:		   
 				expected_pos = expected_pos + n_elements * n_energies * 2 * 4
-				print 'Actual, expected file position before reading n_extra_energies: ', u.get_position(), expected_pos
+				self.logger.debug('Actual, expected file position before reading n_extra_energies: %s %s', u.get_position(), expected_pos)
 
 			n_extra_energies  = u.unpack_int()
 			if verbose:
-				print 'n_extra_energies: ', n_extra_energies 
+				self.logger.debug('n_extra_energies: %s', n_extra_energies)
 			
 			if verbose:		   
 				expected_pos = expected_pos + 4
-				print 'Actual, expected file position before reading extras: ', u.get_position(), expected_pos
+				self.logger.debug('Actual, expected file position before reading extras: %s %s', u.get_position(), expected_pos)
 
 			n_extra = np.zeros((n_elements), dtype = np.int)
 			extra_energies = np.zeros((n_elements, n_extra_energies))
@@ -509,7 +511,7 @@ class henke:
 			energies = u.unpack_farray(n_energies, u.unpack_float)	 
 			energies = np.array(energies)  
 			if verbose:
-				print 'energies: ', energies  
+				self.logger.debug('energies: %s', energies)
 			
 			byte_offset = 4 + 4 + 4 * n_energies + 8 * ielement * n_energies
 			u.set_position(byte_offset)
@@ -522,7 +524,7 @@ class henke:
 			
 			n_extra_energies = u.unpack_int()
 			if verbose:
-				print 'n_extra_energies ', n_extra_energies
+				self.logger.debug('n_extra_energies %s', n_extra_energies)
 
 			# Now we have the above plus i_element times the quantity:
 			#	(2 for n_extra, and n_extra_energies each of three floats)
@@ -558,7 +560,7 @@ class henke:
 				energies, this_f1, this_f2, n_extra, extra_energies, extra_f1, extra_f2 = self.read(ielement=i)
 				if energies == None:
 					continue
-				print this_f1.shape
+				self.logger.debug('this_f1.shape: %s', this_f1.shape)
 				if first_time == 1:
 					f1 = z_array[i] * this_f1
 					f2 = z_array[i] * this_f2
@@ -626,10 +628,7 @@ class henke:
 	# -----------------------------------------------------------------------------
 	def get_henke(self, compound_name, density, energy):
 		if len(compound_name) == 0:
-			print 'henke, compound_name, density, energy, f1, f2, delta, beta, '
-			print '    graze_mrad, reflect, inverse_mu=inverse_mu'
-			print '  inverse_mu is 1/e absorption length in microns. '
-			print '  atwt is the atom-averaged atomic weight for the compound'
+			self.logger.warning('henke, compound_name, density, energy, f1, f2, delta, beta, graze_mrad, reflect, inverse_mu=inverse_mu inverse_mu is 1/e absorption length in microns. atwt is the atom-averaged atomic weight for the compound')
 			return None, None, None, None, None, None, None, None
 
 		enarr, f1arr, f2arr, deltaarr, betaarr, graze_mrad, reflect_arr, inverse_mu, atwt, alpha = self.array(compound_name, density)		   
@@ -689,7 +688,7 @@ class henke:
 		wo = np.where(z_array == 1)[0]
 
 		if len(wo) == 0 : 
-			print 'Warning: get_henke_single() name=', name, ' encountered error, will return'
+			self.logger.warning('Warning: get_henke_single() name=%s encountered error, will return', name)
 			return 0, 0, 0, 0
 		
 		z = wo+1

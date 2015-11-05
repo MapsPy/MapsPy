@@ -44,11 +44,11 @@ import maps_mda
 
 #-----------------------------------------------------------------------------
 class h5:
-	def __init__(self):  
-		pass
+	def __init__(self, logger):
+		self.logger = logger
 
 #-----------------------------------------------------------------------------	 
-	def write_mca_hdf5(self, filename, mca_arr, overwrite = True):
+	def write_mca_hdf5(self, filename, mca_arr, overwrite=True):
 		
 		# set compression level where applicable:
 		gzip = 5
@@ -61,18 +61,21 @@ class h5:
 		try:
 			# Open HDF5 file
 			f = h5py.File(filename, 'r')
-			if verbose: print 'Have HDF5 file: ', filename
+			if verbose:
+				self.logger.debug('Have HDF5 file: %s', filename)
 			file_exists = 1
 			file_is_hdf = 1
 			file_status = 2		  
 			
 			#MAPS HDF5 group
 			if 'MAPS' in f:
-				if verbose: print 'MAPS group found in file: ', filename
+				if verbose:
+					self.logger.debug('MAPS group found in file: %s', filename)
 				mapsGrp = f['MAPS']
 				file_status = 3
 				if 'mca_arr' in mapsGrp:
-					if verbose: print 'MAPS\\mca_arr found in file: ', filename
+					if verbose:
+						self.logger.debug('MAPS/mca_arr found in file: %s', filename)
 					file_status = 4
 				# at the moment, simply overwrite the mca_arr section of
 				# the file; in the future, may want to test, and only
@@ -81,13 +84,16 @@ class h5:
 			f.close()
 
 		except:
-			if verbose: print 'Creating new file: ', filename
+			if verbose:
+				self.logger.debug('Creating new file: %s', filename)
 			
-		if verbose: print 'file_status: ', file_status
+		if verbose:
+			self.logger.debug('file_status: %s', file_status)
 		
-		if overwrite : file_status = 0
+		if overwrite:
+			file_status = 0
 		
-		if file_status <= 1 : 
+		if file_status <= 1:
 			f = call_function_with_retry(h5py.File, 5, 0.1, 1.1, (filename, 'w'))
 			#f = h5py.File(filename, 'w')
 		else : 
@@ -153,7 +159,7 @@ class h5:
 			f = call_function_with_retry(h5py.File, 5, 0.1, 1.1, (filename, 'a'))
 			#f = h5py.File(filename, 'a')
 			if 'MAPS' not in f:
-				print 'error, hdf5 file does not contain the required MAPS group. I am aborting this action'
+				self.logger.error('error, hdf5 file does not contain the required MAPS group. I am aborting this action')
 				return 
 			mapsGrp = f['MAPS']
 
@@ -168,8 +174,8 @@ class h5:
 		chunk_dimensions = (1, dimensions[1], dimensions[2])
 		ds_data = mapsGrp.create_dataset(entryname, data=data, chunks=chunk_dimensions, compression='gzip', compression_opts=gzip)
 		ds_data.attrs['comments'] = comment
-		#print 'total of data 0', np.sum(data)
-		
+		#self.logger.debug('total of data 0', np.sum(data)
+
 		if 'XRF_fits' in mapsGrp:
 			del mapsGrp['XRF_fits']		   
 		entryname = 'XRF_fits'
@@ -199,7 +205,7 @@ class h5:
 		if contains_roiplus_data :
 			ds_data = mapsGrp.create_dataset(entryname, data=data, chunks=chunk_dimensions, compression='gzip', compression_opts=gzip)
 			ds_data.attrs['comments'] = comment
-		print 'total of data 2', np.sum(data)
+		self.logger.debug('total of data 2: %s', np.sum(data))
 
 		entryname = 'scalers'
 		comment = 'these are scaler information acquired during the scan'
@@ -288,7 +294,7 @@ class h5:
 			ds_data = mapsGrp.create_dataset(entryname, data=data)
 			ds_data.attrs['comments'] = comment
 		except:
-			print 'Error: HDF5: Could not write energy calibration'
+			self.logger.exception('Error: HDF5: Could not write energy calibration')
 
 		entryname = 'version'
 		comment = 'this is the version number of the file structure'
@@ -303,7 +309,7 @@ class h5:
 			ds_data = mapsGrp.create_dataset(entryname, data=data)
 			ds_data.attrs['comments'] = comment
 		except:
-			print 'HDF5: Could not write scan_time_stamp'
+			self.logger.exception('HDF5: Could not write scan_time_stamp')
 
 		entryname = 'write_date'
 		comment = 'time this analysis was carried out'
@@ -363,7 +369,7 @@ class h5:
 		ds_data.attrs['comments'] = comment  
 		
 		if update == False: 
-			print 'saving full spectra to hdf5'
+			self.logger.info('saving full spectra to hdf5')
 			# now save full spectra
 			entryname = 'mca_arr'
 			comment = 'these are the full spectra at each pixel of the dataset'
@@ -505,7 +511,7 @@ class h5:
 			entryname = 'extra_pvs'
 			comment = 'additional process variables saved in the original dataset'
 			data = []
-			print extra_pv
+			self.logger.debug('extra_pv: %s', extra_pv)
 			if extra_pv_order:
 				for k in extra_pv_order:
 					v = extra_pv[k]
@@ -537,11 +543,11 @@ class h5:
 
 		f = call_function_with_retry(h5py.File, 5, 0.1, 1.1, (sfile, 'r'))
 		if f == None:
-			print 'Error could not open file ', sfile
+			self.logger.error('Error could not open file %s', sfile)
 			return None, None, None, None, 0
 
 		if 'MAPS' not in f:
-			print 'error, hdf5 file does not contain the required MAPS group. I am aborting this action'
+			self.logger.error('error, hdf5 file does not contain the required MAPS group. I am aborting this action')
 			return None, None, None, None, 0
 
 		maps_group_id = f['MAPS']
@@ -549,7 +555,7 @@ class h5:
 		entryname = 'XRF_roi'
 		this_xrfdata, valid_read = self.read_hdf5_core(maps_group_id, entryname)
 		if valid_read == 0:
-			print 'error, reading', entryname
+			self.logger.error('error, reading: %s', entryname)
 			return None, None, None, None, 0
 		this_xrfdata = np.transpose(this_xrfdata)
 		dimensions = this_xrfdata.shape
@@ -562,7 +568,7 @@ class h5:
 		entryname = 'scalers'
 		this_scalers, valid_read = self.read_hdf5_core(maps_group_id, entryname)
 		if valid_read == 0:
-			print 'error, reading', entryname
+			self.logger.error('error, reading: %s', entryname)
 			return None, None, None, None, 0
 		this_scalers = this_scalers.transpose()
 		dimensions = this_scalers.shape
@@ -571,7 +577,7 @@ class h5:
 		entryname = 'energy'
 		this_energy, valid_read = self.read_hdf5_core(maps_group_id, entryname)
 		if valid_read == 0:
-			print 'error, reading', entryname
+			self.logger.error('error, reading: %s', entryname)
 			return None, None, None, None, 0
 		dimensions = this_energy.shape
 		n_channels = dimensions[0]
@@ -711,9 +717,7 @@ class h5:
 
 		if entryname not in gid:
 			if verbose:
-				print 'read error: '
-				print 'did not find the entry: ', entryname, 'in:'
-				print gid
+				self.logger.error('read error: did not find the entry: %s in %s', entryname, gid)
 			return this_data, valid_read
 
 		dataset_id = gid[entryname]
@@ -726,7 +730,7 @@ class h5:
 	def read_hdf5(self, filename):
 		
 		import maps_elements
-		me = maps_elements.maps_elements()
+		me = maps_elements.maps_elements(self.logger)
 		info_elements = me.get_element_info()
 	
 		maps_def = maps_definitions.maps_definitions()
@@ -757,17 +761,17 @@ class h5:
 		for n_filenumber in range(no_files):
 			sFile = os.path.join(main['XRFmaps_dir'], imgdat_filenames[n_filenumber])
 			
-			print 'Adding exchange to ', sFile
+			self.logger.info('Adding exchange to %s', sFile)
 		
 			XRFmaps_info, n_cols, n_rows, n_channels, valid_read = self.maps_change_xrf_read_hdf5(sFile, make_maps_conf)
 			if valid_read == 0:
-				print 'Error calling h5p.maps_change_xrf_read_hdf5(', sFile, make_maps_conf, ')'
+				self.logger.error('Error calling h5p.maps_change_xrf_read_hdf5(%s, %s)', sFile, make_maps_conf)
 				return
 
 			f = call_function_with_retry(h5py.File, 5, 0.1, 1.1, (sFile, 'a'))
 			#f = h5py.File(sFile, 'a')
 			if 'MAPS' not in f:
-				print 'error, hdf5 file does not contain the required MAPS group. I am aborting this action'
+				self.logger.error('error, hdf5 file does not contain the required MAPS group. I am aborting this action')
 				return 
 			mapsGrp = f['MAPS']
 
@@ -836,7 +840,7 @@ class h5:
 				dataset_id[...] = data
 
 			units = ['-' for x in range(XRFmaps_info.n_used_dmaps+XRFmaps_info.n_used_chan)]
-			print 'len units  =', len(units)
+			self.logger.debug('len units = %s', len(units))
 			units[0:XRFmaps_info.n_used_dmaps] = XRFmaps_info.dmaps_units[:]
 			units[XRFmaps_info.n_used_dmaps:XRFmaps_info.n_used_dmaps + XRFmaps_info.n_used_chan] = XRFmaps_info.chan_units[: 2-drop_vtwo]
 
@@ -885,15 +889,15 @@ class h5:
 				if (len(data),) == dataset_id.shape:
 					dataset_id[...] = data		   
 				else:
-					print 'Error: could not update ', dataset_id.name, ' dataset shapes are different! dataset(', dataset_id.shape, ') : data(', len(data), ')'
+					self.logger.error('Error: could not update %s dataset shapes are different! dataset(%s) : data(%s)', dataset_id.name, dataset_id.shape, len(data))
 
 			f.close()
 			time.sleep(1.0)
 
-		print '---------------------'
-		print 'done adding exchange information'
-		print '---------------------'
-		print ' '
+		self.logger.info('---------------------')
+		self.logger.info('done adding exchange information')
+		self.logger.info('---------------------')
+		self.logger.info(' ')
 
 #-----------------------------------------------------------------------------	 
 	def read_scan(self, filename):
@@ -902,12 +906,12 @@ class h5:
 		
 		scan_data = maps_mda.scan() 
 				
-		print filename
+		self.logger.info('filename: %s', filename)
 		f = call_function_with_retry(h5py.File, 5, 0.1, 1.1, (filename, 'r'))
 		#f = h5py.File(filename, 'r') 
 				
 		if 'MAPS' not in f:
-			print 'error, hdf5 file does not contain the required MAPS group. I am aborting this action'
+			self.logger.error('error, hdf5 file does not contain the required MAPS group. I am aborting this action')
 			return 
 
 		maps_group_id = f['MAPS']
@@ -918,7 +922,7 @@ class h5:
 
 		mca_arr = mca_arr.T
 		dimensions = mca_arr.shape
-		print 'mca_arr dims: ', dimensions
+		self.logger.debug('mca_arr dims: %s', dimensions)
 		# if this is a 2D (x, y) scan dimensions should be 3  
 		x_pixels = dimensions[0]
 		y_pixels = dimensions[1]

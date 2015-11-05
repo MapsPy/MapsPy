@@ -43,6 +43,7 @@ import cherrypy
 import traceback
 import logging
 import logging.handlers
+from RestBase import RestBase
 import threading
 from datetime import datetime
 import Constants
@@ -53,8 +54,9 @@ import scipy.misc
 db = DatabasePlugin(cherrypy.engine, SQLiteDB)
 
 
-class Scheduler(object):
+class Scheduler(RestBase):
 	def __init__(self, settings):
+		RestBase.__init__(self)
 		self.all_settings = settings
 		self.settings = settings.getSetting(Settings.SECTION_SERVER)
 		self.job_lock = threading.RLock()
@@ -68,6 +70,8 @@ class Scheduler(object):
 								self.settings[Settings.SERVER_FROM_ADDRESS],
 								self.settings[Settings.SERVER_MAIL_USERNAME],
 								self.settings[Settings.SERVER_MAIL_PASSWORD])
+		self.logger = logging.getLogger(__name__)
+		self._setup_logging_(self.logger, "rot_file", "logs/MapsPy.log", True)
 		cherrypy.engine.subscribe("new_job", self.callback_new_job)
 		cherrypy.engine.subscribe("update_job", self.callback_update_job)
 		cherrypy.engine.subscribe("delete_job", self.callback_delete_job)
@@ -97,7 +101,7 @@ class Scheduler(object):
 		}
 
 	def callback_new_job(self, job):
-		print datetime.now(), 'callback got new job', job
+		self.logger.info('callback got new job %s', job)
 		try:
 			self.job_lock.acquire(True)
 			p_node = None
@@ -105,7 +109,7 @@ class Scheduler(object):
 				p_node = db.get_process_node_by_id(int(job[Constants.JOB_PROCESS_NODE_ID]))
 			else:
 				node_list = db.get_all_process_nodes()
-				print datetime.now(), 'searching for idle node'
+				self.logger.info('searching for idle node')
 				for node in node_list:
 					if node[Constants.PROCESS_NODE_STATUS] == Constants.PROCESS_NODE_STATUS_IDLE:
 						p_node = node
@@ -113,20 +117,21 @@ class Scheduler(object):
 			if p_node != None:
 				job[Constants.JOB_PROCESS_NODE_ID] = p_node[Constants.PROCESS_NODE_ID]
 				url = 'http://' + str(p_node[Constants.PROCESS_NODE_HOSTNAME]) + ':' + str(p_node[Constants.PROCESS_NODE_PORT]) + '/job_queue'
-				print datetime.now(), 'sending job to ', p_node[Constants.PROCESS_NODE_COMPUTERNAME], 'url', url
+				self.logger.info('sending job to %s, url: %s', p_node[Constants.PROCESS_NODE_COMPUTERNAME], url)
 				s = requests.Session()
 				r = s.post(url, data=json.dumps(job))
-				print datetime.now(), 'result', r.status_code, ':', r.text
+				self.logger.info('result %s , %s', r.status_code, r.text)
 			self.job_lock.release()
 		except:
 			self.job_lock.release()
 			exc_str = traceback.format_exc()
+			self.logger.error(exc_str)
 			return exc_str
 
 	def callback_update_job(self, job):
 		if Constants.JOB_STATUS in job and Constants.JOB_EMAILS in job:
 			if job[Constants.JOB_STATUS] > Constants.JOB_STATUS_PROCESSING and len(job[Constants.JOB_EMAILS]) > 0:
-				print datetime.now(), 'sending completed emails'
+				self.logger.info('sending completed emails')
 				if job[Constants.JOB_STATUS] == Constants.JOB_STATUS_COMPLETED:
 					subject = Constants.EMAIL_SUBJECT_COMPLETED
 					mesg = Constants.EMAIL_MESSAGE_COMPLETED
@@ -139,8 +144,7 @@ class Scheduler(object):
 				try:
 					self.mailman.send(job[Constants.JOB_EMAILS], subject, mesg, image_dict)
 				except:
-					exc_str = traceback.format_exc()
-					print datetime.now(), exc_str
+					self.logger.exception("Error")
 
 	def callback_delete_job(self, job):
 		try:
@@ -161,52 +165,50 @@ class Scheduler(object):
 				if job[Constants.JOB_PROCESS_NODE_ID] > -1:
 					self.call_delete_job(job)
 				else:
-					print 'Warning: callback_delete_job - No Process Node Id to send cancel to.'
+					self.logger.warning('Warning: callback_delete_job - No Process Node Id to send cancel to.')
 		except:
 			self.job_lock.release()
-			exc_str = traceback.format_exc()
-			print datetime.now(), exc_str
+			self.logger.exception("Error")
 
 	def callback_process_node_update(self, node):
-		print datetime.now(), 'callback', node[Constants.PROCESS_NODE_COMPUTERNAME]
+		self.logger.info('callback %s', node[Constants.PROCESS_NODE_COMPUTERNAME])
 		try:
 			self.job_lock.acquire(True)
 			if not Constants.PROCESS_NODE_ID in node:
-				print datetime.now(), 'getting id for node', node
+				self.logger.info('getting id for node %s', node)
 				new_node = db.get_process_node_by_name(node[Constants.PROCESS_NODE_COMPUTERNAME])
 				node[Constants.PROCESS_NODE_ID] = new_node[Constants.PROCESS_NODE_ID]
-				print datetime.now(), 'updated node', node
+				self.logger.info('updated node %s', node)
 				s = requests.Session()
 				url = 'http://' + str(node[Constants.PROCESS_NODE_HOSTNAME]) + ':' + str(node[Constants.PROCESS_NODE_PORT]) + '/update_id'
 				r = s.post(url, data={Constants.PROCESS_NODE_ID: node[Constants.PROCESS_NODE_ID]})
-				print datetime.now(), 'update result', r.status_code, ':', r.text
+				self.logger.info('update result: %s, %s', r.status_code, r.text)
 			if node[Constants.PROCESS_NODE_STATUS] == Constants.PROCESS_NODE_STATUS_IDLE:
 				job_list = db.get_all_unprocessed_jobs_for_pn_id(int(node[Constants.PROCESS_NODE_ID]))
 				if len(job_list) < 1:
 					job_list = db.get_all_unprocessed_jobs_for_any_node()
 				for job in job_list:
-					print datetime.now(), 'checking job', job
+					self.logger.info('checking job %s', job)
 					if job[Constants.JOB_PROCESS_NODE_ID] < 0 or job[Constants.JOB_PROCESS_NODE_ID] == node[Constants.PROCESS_NODE_ID]:
 						job[Constants.JOB_PROCESS_NODE_ID] = node[Constants.PROCESS_NODE_ID]
 						url = 'http://' + str(node[Constants.PROCESS_NODE_HOSTNAME]) + ':' + str(node[Constants.PROCESS_NODE_PORT]) + '/job_queue'
-						print datetime.now(), '_sending job to ', node[Constants.PROCESS_NODE_COMPUTERNAME], 'url', url
+						self.logger.info('_sending job to %s, url: %s', node[Constants.PROCESS_NODE_COMPUTERNAME], url)
 						s = requests.Session()
 						r = s.post(url, data=json.dumps(job))
-						print datetime.now(), 'result', r.status_code, ':', r.text
+						self.logger.info('result %s, %s', r.status_code, r.text)
 						break
 			self.job_lock.release()
 		except:
 			self.job_lock.release()
-			exc_str = traceback.format_exc()
-			print datetime.now(), exc_str
+			self.logger.exception('Error')
 
 	def call_delete_job(self, job):
 		p_node = db.get_process_node_by_id(int(job[Constants.JOB_PROCESS_NODE_ID]))
 		url = 'http://' + str(p_node[Constants.PROCESS_NODE_HOSTNAME]) + ':' + str(p_node[Constants.PROCESS_NODE_PORT]) + '/job_queue'
-		print datetime.now(), 'sending job to ', p_node[Constants.PROCESS_NODE_COMPUTERNAME], 'url', url
+		self.logger.info('sending job to %s, url:%s', p_node[Constants.PROCESS_NODE_COMPUTERNAME], url)
 		s = requests.Session()
 		r = s.delete(url, data=json.dumps(job))
-		print datetime.now(), 'update result', r.status_code, ':', r.text
+		self.logger.info('update result %s, %s', r.status_code, r.text)
 
 	def _get_images_from_hdf(self, job):
 		images_dict = None
@@ -218,12 +220,12 @@ class Scheduler(object):
 			file_dir = os.path.join(job[Constants.JOB_DATA_PATH], Constants.DIR_IMG_DAT)
 			# will only check one file for images
 			if job[Constants.JOB_DATASET_FILES_TO_PROC] == 'all':
-				print 'Warning: Too many datasets to parse images from'
+				self.logger.warning('Warning: Too many datasets to parse images from')
 				return None
 			else:
 				temp_names = job[Constants.JOB_DATASET_FILES_TO_PROC].split(',')
 				if len(temp_names) > 1:
-					print 'Warning: Can only parse one dataset for images, dataset list is', job[Constants.JOB_DATASET_FILES_TO_PROC]
+					self.logger.warning('Warning: Can only parse one dataset for images, dataset list is %s', job[Constants.JOB_DATASET_FILES_TO_PROC])
 					return None
 				temp_name = job[Constants.JOB_DATASET_FILES_TO_PROC]
 				hdf_file_name = temp_name.replace('.mda', '.h5')
@@ -237,12 +239,12 @@ class Scheduler(object):
 			elif proc_mask & 4 == 4:
 				xrf_roi_dataset = maps_group[Constants.HDF5_GRP_XRF_FITS]
 			else:
-				print 'Warning: ', file_name, ' did not process XRF_ROI or XRF_FITS'
+				self.logger.warning('Warning: %s did not process XRF_ROI or XRF_FITS', file_name)
 				return None
 
 			channel_names = maps_group[Constants.HDF5_GRP_CHANNEL_NAMES]
 			if channel_names.shape[0] != xrf_roi_dataset.shape[0]:
-				print 'Warning: ', file_name, ' Datasets', Constants.HDF5_GRP_XRF_ROI, '[', xrf_roi_dataset.shape[0], '] and ', Constants.HDF5_GRP_CHANNEL_NAMES, '[' , channel_names.shape[0], '] length missmatch'
+				self.logger.warning('Warning: file %s : Datasets: %s [%s] and %s [%s] length missmatch', file_name, Constants.HDF5_GRP_XRF_ROI, xrf_roi_dataset.shape[0], Constants.HDF5_GRP_CHANNEL_NAMES, channel_names.shape[0])
 				return None
 
 			for i in range(channel_names.size):
@@ -255,15 +257,6 @@ class Scheduler(object):
 			images_dict = None
 		return images_dict
 
-	def _setup_logging_(self, log, logtype, logname):
-		max_bytes = getattr(log, "rot_maxBytes", 20971520)  # 20Mb
-		backup_count = getattr(log, "rot_backupCount", 10)
-		fname = getattr(log, logtype, logname)
-		h = logging.handlers.RotatingFileHandler(fname, 'a', max_bytes, backup_count)
-		h.setLevel(logging.DEBUG)
-		h.setFormatter(cherrypy._cplogging.logfmt)
-		log.error_log.addHandler(h)
-
 	def run(self):
 		db.subscribe()
 		db.create_tables()
@@ -272,8 +265,11 @@ class Scheduler(object):
 		webapp.process_node = SchedulerProcessNodeWebService(db)
 		webapp.job = SchedulerJobsWebService(db)
 		app = cherrypy.tree.mount(webapp, '/', self.conf)
-		self._setup_logging_(app.log, "rot_error_file", "logs/scheduler_error.log")
-		self._setup_logging_(app.log, "rot_access_file", "logs/scheduler_access.log")
+		#self._setup_logging_(app.log, "rot_error_file", "logs/scheduler_error.log")
+		#self._setup_logging_(app.log, "rot_access_file", "logs/scheduler_access.log")
 		cherrypy.engine.start()
 		cherrypy.engine.block()
-		print datetime.now(), 'done blocking'
+		self.logger.info(datetime.now(), 'done blocking')
+
+	def stop(self):
+		pass

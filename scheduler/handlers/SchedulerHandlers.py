@@ -148,7 +148,7 @@ class SchedulerHandler(object):
 		img_path = os.path.join(job_path, 'output_old/*.png')
 		txt_path = os.path.join(job_path, 'output_old/*.txt')
 		if process_type is not None:
-			print 'proc type = ',process_type
+			#print 'proc type = ',process_type
 			if process_type == 'PER_PIXEL':
 				img_path = os.path.join(job_path, 'output.fits/*.png')
 				txt_path = os.path.join(job_path, 'output.fits/*.txt')
@@ -162,7 +162,7 @@ class SchedulerHandler(object):
 		for link in glob.glob(txt_path):
 			strLink = unicodedata.normalize('NFKD', link).encode('ascii', 'ignore')
 			subname = strLink.split('/')
-			print subname
+			#print subname
 			name = subname[len(subname) -1]
 			retstr += '<li><a href=/get_spectrum_txt?path=' + strLink.replace('+', '%2b') + ' click=display_image link=' + strLink.replace('+', '%2b') + '>' + name + '</a></li>\n'
 		retstr += '</ul>\n</body>\n</html>'
@@ -207,7 +207,7 @@ class SchedulerHandler(object):
 			found = False
 			job_roots_dict = self.settings.getSetting(Settings.SECTION_JOB_DIR_ROOTS)
 			for job_path in job_roots_dict.values():
-				print job_path, path
+				#print job_path, path
 				if path.startswith(job_path):
 					found = True
 					break
@@ -363,7 +363,7 @@ class SchedulerProcessNodeWebService(object):
 		cl = cherrypy.request.headers['Content-Length']
 		rawbody = cherrypy.request.body.read(int(cl))
 		proc_node = json.loads(rawbody)
-		print proc_node
+		#print proc_node
 		self.db.insert_process_node(proc_node)
 		cherrypy.engine.publish('process_node_update', proc_node)
 		return 'updated process node'

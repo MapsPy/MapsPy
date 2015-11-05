@@ -273,8 +273,8 @@ def convert_pv_names(mda_filename, scan):
 # ----------------------------------------------------------------------
 
 class mda:
-	def __init__(self):
-		pass
+	def __init__(self, logger):
+		self.logger = logger
 		#self.scan = scan_data.scan()
 
 	# ----------------------------------------------------------------------
@@ -305,7 +305,7 @@ class mda:
 			return None
 		
 		if verbose:
-			print 'File: ', filename
+			self.logger.debug('File: %s', filename)
 			
 		scan_info = scanInfo()
 			
@@ -334,12 +334,12 @@ class mda:
 		scan_info.time = [''] * rank
 
 		if verbose:
-			print 'Version: ', version
-			print 'Scan no: ', scan_number
-			print 'Rank:	', rank
-			print 'Dims:	', dimensions
-			print 'Scan is Regular:', isRegular
-			print 'Pointer to extra pvs:', extra_pv_ptr
+			self.logger.debug('Version: %s', version)
+			self.logger.debug('Scan no: %s', scan_number)
+			self.logger.debug('Rank:	%s', rank)
+			self.logger.debug('Dims:	%s', dimensions)
+			self.logger.debug('Scan is Regular: %s', isRegular)
+			self.logger.debug('Pointer to extra pvs: %s', extra_pv_ptr)
 
 		remaining_ranks = np.arange(1, rank + 1)
 		
@@ -357,9 +357,9 @@ class mda:
 			scan_cpt = u.unpack_int()
 
 			if verbose:
-				print 'Scan rank:', scan_rank
-				print 'Scan npts:', scan_npts
-				print 'Scan cpt: ', scan_cpt	
+				self.logger.debug('Scan rank: %s', scan_rank)
+				self.logger.debug('Scan npts: %s', scan_npts)
+				self.logger.debug('Scan cpt: %s', scan_cpt)
 
 			# if the rank of this scan is *new* store the into and read on otherwise just skip to the next scan
 			rank_i = (remaining_ranks == scan_rank).nonzero()
@@ -367,7 +367,7 @@ class mda:
 						
 			if rank_i != -1:
 				if verbose:
-					print 'NEW scan type found: ', scan_rank
+					self.logger.debug('NEW scan type found: %s', scan_rank)
 				
 				# read the ptr to the sub-scans of this scan, and introduce it to the ptr array
 				if scan_rank > 1:
@@ -380,7 +380,7 @@ class mda:
 						tmp_ptr=np.array(tmp_ptr)
 						ptr = tmp_ptr.copy()
 					if verbose:
-						print 'ptr = ', ptr
+						self.logger.debug('ptr = %s', ptr)
 					
 				# The aim is to determine which (if any) of the scan dimensions is an MCA scan.
 				# AT PRESENT, a scan is determined to be an MCA scan if it satisfies:
@@ -403,11 +403,11 @@ class mda:
 				scan_no_triggers = u.unpack_int()
 
 				if verbose:
-					print 'Scan name: ', scan_name
-					print 'Scan time: ', scan_time
-					print 'no_positioners ', scan_no_positioners
-					print 'no_detectors ', scan_no_detectors
-					print 'no_triggers ', scan_no_triggers
+					self.logger.debug('Scan name: %s', scan_name)
+					self.logger.debug('Scan time: %s', scan_time)
+					self.logger.debug('no_positioners %s', scan_no_positioners)
+					self.logger.debug('no_detectors %s', scan_no_detectors)
+					self.logger.debug('no_triggers %s', scan_no_triggers)
 				
 				# test to determine whether scan is a spectrum or not
 				test_string = scan_name.split('scan')
@@ -418,11 +418,11 @@ class mda:
 					test_string = ' '
 				if (test_string == 'H') and (scan_no_positioners == 0):
 					if verbose:
-						print 'Found an MCA scan'
+						self.logger.debug('Found an MCA scan')
 					scan_spectrum = 1
 				else:
 					if verbose:
-						print 'Not a MCA scan'
+						self.logger.debug('Not a MCA scan')
 					scan_spectrum = 0
 					
 				scan_info.no_positioners[rank - scan_rank] = scan_no_positioners
@@ -436,7 +436,7 @@ class mda:
 					remaining_ranks = remaining_ranks[indx[0]]
 				else:
 					if verbose:
-						print 'All ranks located.'
+						self.logger.debug('All ranks located.')
 					break
 
 			# move the file pointer to the next position if it exists
@@ -453,18 +453,18 @@ class mda:
 		self.no_extra_pv = u.unpack_int()
 		
 		if verbose:
-			print 'No extra pvs: ', self.no_extra_pv
+			self.logger.debug('No extra pvs: %s', self.no_extra_pv)
 			
 		if (self.no_extra_pv > 10000l) or (self.no_extra_pv < 0l):
 			# if the number of extra PVs is very large, it is likely that there is going to
 			# be a problem with the file. attempting to read the extra pvs can then cause
 			# the program to crash. 
-			print 'error: cannot read the number of extra PVs accurately. set them to zero to be on the safe side'
+			self.logger.error('error: cannot read the number of extra PVs accurately. set them to zero to be on the safe side')
 			self.no_extra_pv = 0L
 		
 		data_file.close()
 		if verbose:
-			print 'Finished reading scan info.'
+			self.logger.debug('Finished reading scan info.')
 		
 		return scan_info
 
@@ -472,100 +472,116 @@ class mda:
 
 	def read_scan_data(self, file):
 		
-		v=0
+		verbose=0
 		scan = scanClass()
 		
 		buf = file.read(5000) # enough to read scan header
 		u = Unpacker(buf)
 		
 		scan.rank = u.unpack_int()
-		if v: print "scan.rank = ", `scan.rank`
+		if verbose:
+			self.logger.debug("scan.rank = %s", scan.rank)
 		scan.npts = u.unpack_int()
-		if v: print "scan.npts = ", `scan.npts`
+		if verbose:
+			self.logger.debug("scan.npts = %s", scan.npts)
 		scan.curr_pt = u.unpack_int()
-		if v: print "scan.curr_pt = ", `scan.curr_pt`
+		if verbose:
+			self.logger.debug("scan.curr_pt = %s", scan.curr_pt)
 		if (scan.rank > 1):
 			# if curr_pt < npts, plower_scans will have garbage for pointers to
 			# scans that were planned for but not written
 			scan.plower_scans = u.unpack_farray(scan.npts, u.unpack_int)
-			if v: print "scan.plower_scans = ", `scan.plower_scans`
+			if verbose:
+				self.logger.debug("scan.plower_scans = %s", scan.plower_scans)
 		namelength = u.unpack_int()
 		scan.name = u.unpack_string()
-		if v: print "scan.name = ", `scan.name`
+		if verbose:
+			self.logger.debug("scan.name = %s", scan.name)
 		timelength = u.unpack_int()
 		scan.time = u.unpack_string()
-		if v: print "scan.time = ", `scan.time`
+		if verbose:
+			self.logger.debug("scan.time = %s", scan.time)
 		scan.no_positioners = u.unpack_int()
-		if v: print "scan.no_positioners = ", `scan.no_positioners`
+		if verbose:
+			self.logger.debug("scan.no_positioners = %s", scan.no_positioners)
 		scan.no_detectors = u.unpack_int()
-		if v: print "scan.no_detectors = ", `scan.no_detectors`
+		if verbose:
+			self.logger.debug("scan.no_detectors = %s", scan.no_detectors)
 		scan.no_triggers = u.unpack_int()
-		if v: print "scan.no_triggers = ", `scan.no_triggers`
+		if verbose:
+			self.logger.debug("scan.no_triggers = %s", scan.no_triggers)
 		
 		for j in range(scan.no_positioners):
 			scan.p.append(scanPositioner())
 			scan.p[j].number = u.unpack_int()
 			scan.p[j].fieldName = posName(scan.p[j].number)
-			if v: print "positioner ", j
+			if verbose:
+				self.logger.debug("positioner %s", j)
 			length = u.unpack_int() # length of name string
 			if length: scan.p[j].name = u.unpack_string()
-			if v: print "scan.p[%d].name = %s" % (j, `scan.p[j].name`)
+			if verbose:
+				self.logger.debug("scan.p[%d].name = %s", j, scan.p[j].name)
 			length = u.unpack_int() # length of desc string
 			if length: scan.p[j].desc = u.unpack_string()
-			if v: print "scan.p[%d].desc = %s" % (j, `scan.p[j].desc`)
+			if verbose:
+				self.logger.debug("scan.p[%d].desc = %s", j, scan.p[j].desc)
 			length = u.unpack_int() # length of step_mode string
 			if length: scan.p[j].step_mode = u.unpack_string()
-			if v: print "scan.p[%d].step_mode = %s" % (j, `scan.p[j].step_mode`)
+			if verbose:
+				self.logger.debug("scan.p[%d].step_mode = %s", j, scan.p[j].step_mode)
 			length = u.unpack_int() # length of unit string
 			if length: scan.p[j].unit = u.unpack_string()
-			if v: print "scan.p[%d].unit = %s" % (j, `scan.p[j].unit`)
+			if verbose:
+				self.logger.debug("scan.p[%d].unit = %s", j, scan.p[j].unit)
 			length = u.unpack_int() # length of readback_name string
 			if length: scan.p[j].readback_name = u.unpack_string()
-			if v: print "scan.p[%d].readback_name = %s" % (j, `scan.p[j].readback_name`)
+			if verbose:
+				self.logger.debug("scan.p[%d].readback_name = %s", j, scan.p[j].readback_name)
 			length = u.unpack_int() # length of readback_desc string
 			if length: scan.p[j].readback_desc = u.unpack_string()
-			if v: print "scan.p[%d].readback_desc = %s" % (j, `scan.p[j].readback_desc`)
+			if verbose:
+				self.logger.debug("scan.p[%d].readback_desc = %s", j, scan.p[j].readback_desc)
 			length = u.unpack_int() # length of readback_unit string
 			if length:
 				scan.p[j].readback_unit = u.unpack_string()
-			if v:
-				print "scan.p[%d].readback_unit = %s" % (j, `scan.p[j].readback_unit`)
+			if verbose:
+				self.logger.debug("scan.p[%d].readback_unit = %s", j, scan.p[j].readback_unit)
 
 		for j in range(scan.no_detectors):
 			scan.d.append(scanDetector())
 			scan.d[j].number = u.unpack_int()
 			scan.d[j].fieldName = detName(scan.d[j].number)
-			if v:
-				print "detector ", j
+			if verbose:
+				self.logger.debug("detector %s", j)
 			length = u.unpack_int() # length of name string
 			if length:
 				scan.d[j].name = u.unpack_string()
-			if v:
-				print "scan.d[%d].name = %s" % (j, `scan.d[j].name`)
+			if verbose:
+				self.logger.debug("scan.d[%d].name = %s", j, scan.d[j].name)
 			length = u.unpack_int() # length of desc string
 			if length:
 				scan.d[j].desc = u.unpack_string()
-			if v:
-				print "scan.d[%d].desc = %s" % (j, `scan.d[j].desc`)
+			if verbose:
+				self.logger.debug("scan.d[%d].desc = %s", j, scan.d[j].desc)
 			length = u.unpack_int() # length of unit string
 			if length:
 				scan.d[j].unit = u.unpack_string()
-			if v:
-				print "scan.d[%d].unit = %s" % (j, `scan.d[j].unit`)
+			if verbose:
+				self.logger.debug("scan.d[%d].unit = %s", j, scan.d[j].unit)
 
 		for j in range(scan.no_triggers):
 			scan.t.append(scanTrigger())
 			scan.t[j].number = u.unpack_int()
-			if v:
-				print "trigger ", j
+			if verbose:
+				self.logger.debug("trigger %s", j)
 			length = u.unpack_int() # length of name string
 			if length:
 				scan.t[j].name = u.unpack_string()
-			if v:
-				print "scan.t[%d].name = %s" % (j, `scan.t[j].name`)
+			if verbose:
+				self.logger.debug("scan.t[%d].name = %s", j, scan.t[j].name)
 			scan.t[j].command = u.unpack_float()
-			if v:
-				print "scan.t[%d].command = %s" % (j, `scan.t[j].command`)
+			if verbose:
+				self.logger.debug("scan.t[%d].command = %s", j, scan.t[j].command)
 
 		### read data
 		# positioners
@@ -573,11 +589,11 @@ class mda:
 		buf = file.read(scan.no_positioners * scan.npts * 8)
 		u = Unpacker(buf)
 		for j in range(scan.no_positioners):
-			if v:
-				print "read %d pts for pos. %d at buf loc %x" % (scan.npts, j, u.get_position())
+			if verbose:
+				self.logger.debug("read %d pts for pos. %d at buf loc %x", scan.npts, j, u.get_position())
 			scan.p[j].data = u.unpack_farray(scan.npts, u.unpack_double)	
-			if v:
-				print "scan.p[%d].data = %s" % (j, `scan.p[j].data`)
+			if verbose:
+				self.logger.debug("scan.p[%d].data = %s", j, scan.p[j].data)
 		
 		# detectors
 		file.seek(file.tell() - (len(buf) - u.get_position()))
@@ -585,8 +601,8 @@ class mda:
 		u = Unpacker(buf)
 		for j in range(scan.no_detectors):
 			scan.d[j].data = u.unpack_farray(scan.npts, u.unpack_float)
-			if v:
-				print "scan.d[%d].data = %s" % (j, `scan.d[j].data`)
+			if verbose:
+				self.logger.debug("scan.d[%d].data = %s", j, scan.d[j].data)
 
 		return scan
 
@@ -601,7 +617,7 @@ class mda:
 			1 corresponds to innermost loop, 2 to the next outer loop, 3 typically to the
 			outermost loop '''
 		if scan_info == None or scan_info.rank >= 4:
-			print 'This file has too deep dimensions, I cannot read it and will skip'
+			self.logger.warning('This file has too deep dimensions, I cannot read it and will skip')
 			return -1
 
 		file = open_file_with_retry(str(filename), 'rb')
@@ -715,7 +731,7 @@ class mda:
 						for k in range(s.no_positioners): dim[2].p[k].data[i].append(s.p[k].data)
 						for k in range(s.no_detectors): dim[2].d[k].data[i].append(s.d[k].data)
 
-		print 'read 3d data'
+		self.logger.info('read 3d data')
 		# Collect scan-environment variables into a dictionary
 		tmp_dict = dict()
 		tmp_dict['sampleEntry'] = ("description", "unit string", "value")
@@ -772,53 +788,53 @@ class mda:
 		dim.append(tmp_dict)
 		dim.reverse()
 		if verbose:
-			print "%s is a %d-D file; %d dimensions read in." % (filename, dim[0]['rank'], len(dim) - 1)
-			print "dim[0] = dictionary of %d scan-environment PVs" % (len(dim[0]))
-			print "   usage: dim[0]['sampleEntry'] ->", dim[0]['sampleEntry']
+			self.logger.debug("%s is a %d-D file; %d dimensions read in.", filename, dim[0]['rank'], len(dim) - 1)
+			self.logger.debug("dim[0] = dictionary of %d scan-environment PVs", len(dim[0]))
+			self.logger.debug("   usage: dim[0]['sampleEntry'] ->", dim[0]['sampleEntry'])
 			for i in range(1,len(dim)):
-				print "dim[%d] = %s" % (i, str(dim[i]))
-			print "   usage: dim[1].p[2].data -> 1D array of positioner 2 data"
-			print "   usage: dim[2].d[7].data -> 2D array of detector 7 data"
+				self.logger.debug("dim[%d] = %s", i, str(dim[i]))
+			self.logger.debug("   usage: dim[1].p[2].data -> 1D array of positioner 2 data")
+			self.logger.debug("   usage: dim[2].d[7].data -> 2D array of detector 7 data")
 
 		file.close()
 		
 		return dim
 
 #	 if help:
-#		 print " "
-#		 print "   each dimension (e.g., dim[1]) has the following fields: "
-#		 print "	  time		- date & time at which scan was started: %s" % (dim[1].time)
-#		 print "	  scan_name - name of scan record that acquired this dimension: '%s'" % (dim[1].scan_name)
-#		 print "	  curr_pt	- number of data points actually acquired: %d" % (dim[1].curr_pt)
-#		 print "	  npts		- number of data points requested: %d" % (dim[1].npts)
-#		 print "	  nd		- number of detectors for this scan dimension: %d" % (dim[1].nd)
-#		 print "	  d[]		- list of detector-data structures"
-#		 print "	  np		- number of positioners for this scan dimension: %d" % (dim[1].np)
-#		 print "	  p[]		- list of positioner-data structures"
-#		 print "	  nt		- number of detector triggers for this scan dimension: %d" % (dim[1].nt)
-#		 print "	  t[]		- list of trigger-info structures"
+#		 self.logger.debug(" "
+#		 self.logger.debug("   each dimension (e.g., dim[1]) has the following fields: "
+#		 self.logger.debug("	  time		- date & time at which scan was started: %s" % (dim[1].time)
+#		 self.logger.debug("	  scan_name - name of scan record that acquired this dimension: '%s'" % (dim[1].scan_name)
+#		 self.logger.debug("	  curr_pt	- number of data points actually acquired: %d" % (dim[1].curr_pt)
+#		 self.logger.debug("	  npts		- number of data points requested: %d" % (dim[1].npts)
+#		 self.logger.debug("	  nd		- number of detectors for this scan dimension: %d" % (dim[1].nd)
+#		 self.logger.debug("	  d[]		- list of detector-data structures"
+#		 self.logger.debug("	  np		- number of positioners for this scan dimension: %d" % (dim[1].np)
+#		 self.logger.debug("	  p[]		- list of positioner-data structures"
+#		 self.logger.debug("	  nt		- number of detector triggers for this scan dimension: %d" % (dim[1].nt)
+#		 self.logger.debug("	  t[]		- list of trigger-info structures"
 #
 #	 if help:
-#		 print " "
-#		 print "   each detector-data structure (e.g., dim[1].d[0]) has the following fields: "
-#		 print "	  desc		- description of this detector"
-#		 print "	  data		- data list"
-#		 print "	  unit		- engineering units associated with this detector"
-#		 print "	  fieldName - scan-record field (e.g., 'D01')"
+#		 self.logger.debug(" "
+#		 self.logger.debug("   each detector-data structure (e.g., dim[1].d[0]) has the following fields: "
+#		 self.logger.debug("	  desc		- description of this detector"
+#		 self.logger.debug("	  data		- data list"
+#		 self.logger.debug("	  unit		- engineering units associated with this detector"
+#		 self.logger.debug("	  fieldName - scan-record field (e.g., 'D01')"
 
 
 #	 if help:
-#		 print " "
-#		 print "   each positioner-data structure (e.g., dim[1].p[0]) has the following fields: "
-#		 print "	  desc			- description of this positioner"
-#		 print "	  data			- data list"
-#		 print "	  step_mode		- scan mode (e.g., Linear, Table, On-The-Fly)"
-#		 print "	  unit			- engineering units associated with this positioner"
-#		 print "	  fieldName		- scan-record field (e.g., 'P1')"
-#		 print "	  name			- name of EPICS PV (e.g., 'xxx:m1.VAL')"
-#		 print "	  readback_desc - description of this positioner"
-#		 print "	  readback_unit - engineering units associated with this positioner"
-#		 print "	  readback_name - name of EPICS PV (e.g., 'xxx:m1.VAL')"
+#		 self.logger.debug(" "
+#		 self.logger.debug("   each positioner-data structure (e.g., dim[1].p[0]) has the following fields: "
+#		 self.logger.debug("	  desc			- description of this positioner"
+#		 self.logger.debug("	  data			- data list"
+#		 self.logger.debug("	  step_mode		- scan mode (e.g., Linear, Table, On-The-Fly)"
+#		 self.logger.debug("	  unit			- engineering units associated with this positioner"
+#		 self.logger.debug("	  fieldName		- scan-record field (e.g., 'P1')"
+#		 self.logger.debug("	  name			- name of EPICS PV (e.g., 'xxx:m1.VAL')"
+#		 self.logger.debug("	  readback_desc - description of this positioner"
+#		 self.logger.debug("	  readback_unit - engineering units associated with this positioner"
+#		 self.logger.debug("	  readback_name - name of EPICS PV (e.g., 'xxx:m1.VAL')"
 
 	# ----------------------------------------------------------------------
 
@@ -862,12 +878,12 @@ class mda:
 		pmain_scan = file.tell() - (len(buf) - u.get_position())
 
 		if verbose:
-			print 'Version: ', version
-			print 'Scan no: ', scan_number
-			print 'Rank:	', rank
-			print 'Dims:	', scan_size
-			print 'Scan is Regular:', add_scan_s_regular
-			print 'Pointer to extra pvs:', pointer_extra_PVs
+			self.logger.debug('Version: %s', version)
+			self.logger.debug('Scan no: %s', scan_number)
+			self.logger.debug('Rank:	%s', rank)
+			self.logger.debug('Dims:	%s', scan_size)
+			self.logger.debug('Scan is Regular: %s', add_scan_s_regular)
+			self.logger.debug('Pointer to extra pvs: %s', pointer_extra_PVs)
 
 		file.seek(0,2)
 		f_size = file.tell()
@@ -882,15 +898,15 @@ class mda:
 		scan_cpt = u.unpack_int()
 		
 		if verbose:
-			print 'scan_rank: ', scan_rank
-			print 'scan_npts: ', scan_npts
-			print 'scan_cpt:	', scan_cpt
+			self.logger.debug('scan_rank: %s', scan_rank)
+			self.logger.debug('scan_npts: %s', scan_npts)
+			self.logger.debug('scan_cpt: %s', scan_cpt)
 			
 		if scan_rank > 2048:
 			return None
 		
 		if scan_cpt <= 0 :
-			print 'error: scan_cpt = ', scan_cpt
+			self.logger.error('error: scan_cpt = %s', scan_cpt)
 			invalid_file[0] = 2
 			return None
 		
@@ -899,7 +915,7 @@ class mda:
 		outer_pointer_lower_scans = u.unpack_farray(scan_npts, u.unpack_int) # points set in scan
 	
 		if verbose:
-			print 'outer_pointer_lower_scans = ', outer_pointer_lower_scans
+			self.logger.debug('outer_pointer_lower_scans = %s', outer_pointer_lower_scans)
 		outer_pointer_lower_scans = np.array(outer_pointer_lower_scans)
 		outer_pointer_lower_scans = outer_pointer_lower_scans[np.nonzero(outer_pointer_lower_scans)]
 		
@@ -919,14 +935,15 @@ class mda:
 		scan_data = scan()
 
 		if verbose:
-			print 'Scan name: ', scan_name
-			print 'Scan time: ', scan_time
-			print 'no_positioners ', scan_no_positioners
-			print 'no_detectors ', scan_no_detectors
-			print 'no_triggers ', scan_no_triggers
+			self.logger.debug('Scan name: %s', scan_name)
+			self.logger.debug('Scan time: %s', scan_time)
+			self.logger.debug('no_positioners %s', scan_no_positioners)
+			self.logger.debug('no_detectors %s', scan_no_detectors)
+			self.logger.debug('no_triggers %s', scan_no_triggers)
 		
 		one_d_info = (scan_name, scan_time, scan_no_positioners, scan_no_detectors, scan_no_triggers)
-		if verbose: print '1D info: ', one_d_info
+		if verbose:
+			self.logger.debug('1D info: %s', one_d_info)
 		
 		if scan_no_detectors > 0 :
 			mca_calib_arr = np.zeros((scan_no_detectors)) # create mca calibration array
@@ -939,28 +956,43 @@ class mda:
 			positioner = scanPositioner()
 			positioner.number = u.unpack_int()
 			positioner.fieldName = posName(positioner.number)
-			if verbose: print "positioner ", j
+			if verbose:
+				self.logger.debug("positioner %s", j)
 			length = u.unpack_int() # length of name string
-			if length: positioner.name = u.unpack_string()
-			if verbose: print "positioner[%d].name = %s" % (j, `positioner.name`)
+			if length:
+				positioner.name = u.unpack_string()
+			if verbose:
+				self.logger.debug("positioner[%d].name = %s", j, positioner.name)
 			length = u.unpack_int() # length of desc string
-			if length: positioner.desc = u.unpack_string()
-			if verbose: print "positioner[%d].desc = %s" % (j, `positioner.desc`)
+			if length:
+				positioner.desc = u.unpack_string()
+			if verbose:
+				self.logger.debug("positioner[%d].desc = %s", j, positioner.desc)
 			length = u.unpack_int() # length of step_mode string
-			if length: positioner.step_mode = u.unpack_string()
-			if verbose: print "positioner[%d].step_mode = %s" % (j, `positioner.step_mode`)
+			if length:
+				positioner.step_mode = u.unpack_string()
+			if verbose:
+				self.logger.debug("positioner[%d].step_mode = %s", j, positioner.step_mode)
 			length = u.unpack_int() # length of unit string
-			if length: positioner.unit = u.unpack_string()
-			if verbose: print "positioner[%d].unit = %s" % (j, `positioner.unit`)
+			if length:
+				positioner.unit = u.unpack_string()
+			if verbose:
+				self.logger.debug("positioner[%d].unit = %s", j, positioner.unit)
 			length = u.unpack_int() # length of readback_name string
-			if length: positioner.readback_name = u.unpack_string()
-			if verbose: print "positioner[%d].readback_name = %s" % (j, `positioner.readback_name`)
+			if length:
+				positioner.readback_name = u.unpack_string()
+			if verbose:
+				self.logger.debug("positioner[%d].readback_name = %s", j, positioner.readback_name)
 			length = u.unpack_int() # length of readback_desc string
-			if length: positioner.readback_desc = u.unpack_string()
-			if verbose: print "positioner[%d].readback_desc = %s" % (j, `positioner.readback_desc`)
+			if length:
+				positioner.readback_desc = u.unpack_string()
+			if verbose:
+				self.logger.debug("positioner[%d].readback_desc = %s", j, positioner.readback_desc)
 			length = u.unpack_int() # length of readback_unit string
-			if length: positioner.readback_unit = u.unpack_string()
-			if verbose: print "positioner[%d].readback_unit = %s" % (j, `positioner.readback_unit`)
+			if length:
+				positioner.readback_unit = u.unpack_string()
+			if verbose:
+				self.logger.debug("positioner[%d].readback_unit = %s", j, positioner.readback_unit)
 	
 		one_d_positioner = positioner
 		
@@ -969,31 +1001,43 @@ class mda:
 				detector = scanDetector()
 				detector.number = u.unpack_int()
 				detector.fieldName = detName(detector.number)
-				if verbose: print "detector ", j
+				if verbose:
+					self.logger.debug("detector %s", j)
 				length = u.unpack_int() # length of name string
-				if length: detector.name = u.unpack_string()
-				if verbose: print "detector[%d].name = %s" % (j, `detector.name`)
+				if length:
+					detector.name = u.unpack_string()
+				if verbose:
+					self.logger.debug("detector[%d].name = %s", j, detector.name)
 				length = u.unpack_int() # length of desc string
-				if length: detector.desc = u.unpack_string()
-				if verbose: print "detector[%d].desc = %s" % (j, `detector.desc`)
+				if length:
+					detector.desc = u.unpack_string()
+				if verbose:
+					self.logger.debug("detector[%d].desc = %s", j, detector.desc)
 				length = u.unpack_int() # length of unit string
-				if length: detector.unit = u.unpack_string()
-				if verbose: print "detector[%d].unit = %s" % (j, `detector.unit`)
+				if length:
+					detector.unit = u.unpack_string()
+				if verbose:
+					self.logger.debug("detector[%d].unit = %s", j, detector.unit)
 				mca_calib_description_arr.append(detector.name)
 			except:
-				print 'read_scan(): Error reading detector description strings'
+				self.logger.exception('read_scan(): Error reading detector description strings')
 			
-		if verbose: print 'mca_calib_description_arr: ', mca_calib_description_arr
+		if verbose:
+			self.logger.debug('mca_calib_description_arr: %s', mca_calib_description_arr)
 
 		for j in range(scan_no_triggers):
 			trigger = scanTrigger()
 			trigger.number = u.unpack_int()
-			if verbose: print "trigger ", j
+			if verbose:
+				self.logger.debug("trigger %s", j)
 			length = u.unpack_int() # length of name string
-			if length: trigger.name = u.unpack_string()
-			if verbose: print "trigger[%d].name = %s" % (j, `trigger.name`)
+			if length:
+				trigger.name = u.unpack_string()
+			if verbose:
+				self.logger.debug("trigger[%d].name = %s", j, trigger.name)
 			trigger.command = u.unpack_float()
-			if verbose: print "trigger[%d].command = %s" % (j, `trigger.command`)
+			if verbose:
+				self.logger.debug("trigger[%d].command = %s", j, trigger.command)
 
 		### read data
 		# positioners
@@ -1001,9 +1045,11 @@ class mda:
 		buf = file.read(scan_no_positioners * scan_npts * 8)
 		u = Unpacker(buf)
 		for j in range(scan_no_positioners):
-			if verbose: print "read %d pts for pos. %d at buf loc %x" % (scan_npts, j, u.get_position())
+			if verbose:
+				self.logger.debug("read %d pts for pos. %d at buf loc %x", scan_npts, j, u.get_position())
 			readback_array = u.unpack_farray(scan_npts, u.unpack_double)	
-			if verbose: print "readback_array = ", readback_array
+			if verbose:
+				self.logger.debug("readback_array = %s", readback_array)
 			
 			if j == 0:
 				readback_array = np.array(readback_array)
@@ -1012,16 +1058,16 @@ class mda:
 				# remove those y positions that are incorrect for aborted scans
 				if y_pixels < 3:
 					invalid_file[0] = 2
-					print 'ERROR: scanned y_pixels less than 3 in an aborted array'
+					self.logger.error('ERROR: scanned y_pixels less than 3 in an aborted array')
 					return None
 
 				y_coord_arr = y_coord_arr[0:y_pixels]
 				y_coord_arr[y_pixels-1] = y_coord_arr[y_pixels-2] + (y_coord_arr[y_pixels-2] - y_coord_arr[y_pixels-3])
 				if verbose:
-					print 'y coord array before correction : ', readback_array
-					print 'y coord array after correction : ', y_coord_arr
+					self.logger.debug('y coord array before correction : %s', readback_array)
+					self.logger.debug('y coord array after correction : %s', y_coord_arr)
 
-		#if verbose: print 'y coord array after correction : ', y_coord_arr			  
+		#if verbose: self.logger.debug('y coord array after correction : ', y_coord_arr
 
 		# detectors
 		file.seek(file.tell() - (len(buf) - u.get_position()))
@@ -1030,15 +1076,15 @@ class mda:
 		for j in range(scan_no_detectors):
 			detector_array = u.unpack_farray(scan_npts, u.unpack_float)
 			mca_calib_arr[j] = detector_array[0]
-			#if verbose: print "detector_array" , detector_array
+			#if verbose: self.logger.debug("detector_array" , detector_array
 		
-		if verbose: print 'mca_calib_arr ', mca_calib_arr
+		if verbose:
+			self.logger.debug('mca_calib_arr %s', mca_calib_arr)
 		
 		for i_outer_loop in range(len(outer_pointer_lower_scans)):
 			verbose = 0
 			if outer_pointer_lower_scans[i_outer_loop] == 0:
-				print 'skipping rest of scan, because outer_pointer_lower_scans(i_outer_loop) EQ 0 '
-				print 'current y position: ', i_outer_loop, ' of total ', len(outer_pointer_lower_scans) - 1
+				self.logger.info('skipping rest of scan, because outer_pointer_lower_scans(i_outer_loop) EQ 0 current y position: %s of total %s', i_outer_loop, len(outer_pointer_lower_scans) - 1)
 				continue
 			
 			file.seek(outer_pointer_lower_scans[i_outer_loop])
@@ -1050,15 +1096,15 @@ class mda:
 			scan_cpt = u.unpack_int()
 		
 			if verbose:
-				print 'scan_rank: ', scan_rank
-				print 'scan_npts: ', scan_npts
-				print 'scan_cpt:	', scan_cpt
+				self.logger.debug('scan_rank: %s', scan_rank)
+				self.logger.debug('scan_npts: %s', scan_npts)
+				self.logger.debug('scan_cpt: %s', scan_cpt)
 			
 			if scan_rank > 2048:
 				return None
 		
 			if scan_cpt <= 0 :
-				print 'error: scan_cpt = ', scan_cpt
+				self.logger.error('error: scan_cpt = %s', scan_cpt)
 				invalid_file[0] = 2
 				return None
 		
@@ -1069,8 +1115,8 @@ class mda:
 				pointer_lower_scans = u.unpack_farray(scan_npts, u.unpack_int)
 
 			if verbose:
-				print 'pointer_lower_scans	  : ', pointer_lower_scans
-				print 'x pixels    : ', x_pixels
+				self.logger.debug('pointer_lower_scans: %s', pointer_lower_scans)
+				self.logger.debug('x pixels: %s', x_pixels)
 
 			if scan_npts > 2999:
 				invalid_file[0] = 3
@@ -1088,44 +1134,59 @@ class mda:
 			scan_no_triggers = u.unpack_int()
 
 			if verbose:
-				print 'Scan name: ', scan_name
-				print 'Scan time: ', scan_time
-				print 'no_positioners ', scan_no_positioners
-				print 'no_detectors ', scan_no_detectors
-				print 'no_triggers ', scan_no_triggers
+				self.logger.debug('Scan name: %s', scan_name)
+				self.logger.debug('Scan time: %s', scan_time)
+				self.logger.debug('no_positioners %s', scan_no_positioners)
+				self.logger.debug('no_detectors %s', scan_no_detectors)
+				self.logger.debug('no_triggers %s', scan_no_triggers)
 
 			one_d_time_stamp.append(scan_time)
 			
 			#need to define the 2d detector array FOR the first time only
-			if i_outer_loop == 0 :
+			if i_outer_loop == 0:
 				detector_arr = np.zeros((x_pixels, y_pixels, scan_no_detectors))
 
 			for j in range(scan_no_positioners):
 				positioner = scanPositioner()
 				positioner.number = u.unpack_int()
 				positioner.fieldName = posName(positioner.number)
-				if verbose: print "positioner ", j
+				if verbose:
+					self.logger.debug("positioner %s", j)
 				length = u.unpack_int()  # length of name string
-				if length: positioner.name = u.unpack_string()
-				if verbose: print "positioner[%d].name = %s" % (j, `positioner.name`)
+				if length:
+					positioner.name = u.unpack_string()
+				if verbose:
+					self.logger.debug("positioner[%d].name = %s", j, positioner.name)
 				length = u.unpack_int()  # length of desc string
-				if length: positioner.desc = u.unpack_string()
-				if verbose: print "positioner[%d].desc = %s" % (j, `positioner.desc`)
+				if length:
+					positioner.desc = u.unpack_string()
+				if verbose:
+					self.logger.debug("positioner[%d].desc = %s", j, positioner.desc)
 				length = u.unpack_int()  # length of step_mode string
-				if length: positioner.step_mode = u.unpack_string()
-				if verbose: print "positioner[%d].step_mode = %s" % (j, `positioner.step_mode`)
+				if length:
+					positioner.step_mode = u.unpack_string()
+				if verbose:
+					self.logger.debug("positioner[%d].step_mode = %s", j, positioner.step_mode)
 				length = u.unpack_int()  # length of unit string
-				if length: positioner.unit = u.unpack_string()
-				if verbose: print "positioner[%d].unit = %s" % (j, `positioner.unit`)
+				if length:
+					positioner.unit = u.unpack_string()
+				if verbose:
+					self.logger.debug("positioner[%d].unit = %s", j, positioner.unit)
 				length = u.unpack_int()  # length of readback_name string
-				if length: positioner.readback_name = u.unpack_string()
-				if verbose: print "positioner[%d].readback_name = %s" % (j, `positioner.readback_name`)
+				if length:
+					positioner.readback_name = u.unpack_string()
+				if verbose:
+					self.logger.debug("positioner[%d].readback_name = %s", j, positioner.readback_name)
 				length = u.unpack_int()  # length of readback_desc string
-				if length: positioner.readback_desc = u.unpack_string()
-				if verbose: print "positioner[%d].readback_desc = %s" % (j, `positioner.readback_desc`)
+				if length:
+					positioner.readback_desc = u.unpack_string()
+				if verbose:
+					self.logger.debug("positioner[%d].readback_desc = %s", j, positioner.readback_desc)
 				length = u.unpack_int()  # length of readback_unit string
-				if length: positioner.readback_unit = u.unpack_string()
-				if verbose: print "positioner[%d].readback_unit = %s" % (j, `positioner.readback_unit`)
+				if length:
+					positioner.readback_unit = u.unpack_string()
+				if verbose:
+					self.logger.debug("positioner[%d].readback_unit = %s", j, positioner.readback_unit)
 				
 				if i_outer_loop == 0:
 					two_d_info = (scan_name, scan_time, scan_no_positioners, scan_no_detectors, scan_no_triggers)
@@ -1135,16 +1196,20 @@ class mda:
 				detector = scanDetector()
 				detector.number = u.unpack_int()
 				detector.fieldName = detName(detector.number)
-				if verbose: print "detector ", j
+				if verbose:
+					self.logger.debug("detector %s", j)
 				length = u.unpack_int()  # length of name string
 				if length: detector.name = u.unpack_string()
-				if verbose: print "detector[%d].name = %s" % (j, `detector.name`)
+				if verbose:
+					self.logger.debug("detector[%d].name = %s", j, detector.name)
 				length = u.unpack_int()  # length of desc string
 				if length: detector.desc = u.unpack_string()
-				if verbose: print "detector[%d].desc = %s" % (j, `detector.desc`)
+				if verbose:
+					self.logger.debug("detector[%d].desc = %s", j, detector.desc)
 				length = u.unpack_int()  # length of unit string
 				if length: detector.unit = u.unpack_string()
-				if verbose: print "detector[%d].unit = %s" % (j, `detector.unit`)
+				if verbose:
+					self.logger.debug("detector[%d].unit = %s", j, detector.unit)
 				
 				if i_outer_loop == 0:
 					detector_description_arr.append(detector.name)
@@ -1152,12 +1217,15 @@ class mda:
 			for j in range(scan_no_triggers):
 				trigger = scanTrigger()
 				trigger.number = u.unpack_int()
-				if verbose: print "trigger ", j
+				if verbose:
+					self.logger.debug("trigger %s", j)
 				length = u.unpack_int() # length of name string
 				if length: trigger.name = u.unpack_string()
-				if verbose: print "trigger[%d].name = %s" % (j, `trigger.name`)
+				if verbose:
+					self.logger.debug("trigger[%d].name = %s", j, trigger.name)
 				trigger.command = u.unpack_float()
-				if verbose: print "trigger[%d].command = %s" % (j, `trigger.command`)
+				if verbose:
+					self.logger.debug("trigger[%d].command = %s", j, trigger.command)
 
 			# read data: positioners
 			file.seek(file.tell() - (len(buf) - u.get_position()))
@@ -1165,17 +1233,17 @@ class mda:
 			u = Unpacker(buf)
 			for j in range(scan_no_positioners):
 				if verbose:
-					print "read %d pts for pos. %d at buf loc %x" % (scan_npts, j, u.get_position())
+					self.logger.debug("read %d pts for pos. %d at buf loc %x", scan_npts, j, u.get_position())
 				readback_array = u.unpack_farray(scan_npts, u.unpack_double)	
 				if verbose:
-					print "readback_array = ", readback_array
+					self.logger.debug("readback_array = %s", readback_array)
 			
 				if x_coord_arr[0] == 0:
 					readback_array = np.array(readback_array)
 					x_coord_arr = readback_array.copy()
 
 			if verbose:
-				print 'x coord array : ', x_coord_arr
+				self.logger.debug('x coord array : %s', x_coord_arr)
 
 			# This is slow so read directly detectors
 			# file.seek(file.tell() - (len(buf) - u.get_position()))
@@ -1194,7 +1262,8 @@ class mda:
 				detector_array = struct.unpack('>' + str(scan_npts) + 'f', buf)
 				detector_arr[:, i_outer_loop, j] = detector_array[:]
 
-			if verbose: print "detector_array", detector_array
+			if verbose:
+				self.logger.debug("detector_array %s", detector_array)
 	
 			if rank == 2:
 				continue
@@ -1205,11 +1274,10 @@ class mda:
 				if (i_innermost_loop > 0) and (rank > 2):
 					if (pointer_lower_scans[i_innermost_loop] == 0) or \
 						(pointer_lower_scans[i_innermost_loop] < outer_pointer_lower_scans[i_outer_loop] ):
-						print 'skipping rest of line, because either pointer_lower_scans(i_innermost_loop) EQ 0 or lt outer_pointer'
-						print 'current y position: ', i_outer_loop, ' of total ', len(outer_pointer_lower_scans) - 1
-						print 'current x position: ', i_innermost_loop, ' of total ', len(pointer_lower_scans) - 1
-						print 'pointer_lower_scans(i_innermost_loop): ', pointer_lower_scans[i_innermost_loop], \
-						' outer_pointer_lower_scans(i_outer_loop) : ', outer_pointer_lower_scans[i_outer_loop]
+						self.logger.info('skipping rest of line, because either pointer_lower_scans(i_innermost_loop) EQ 0 or lt outer_pointer')
+						self.logger.info('current y position: %s of total %s', i_outer_loop, len(outer_pointer_lower_scans) - 1)
+						self.logger.info('current x position: %s of total %s', i_innermost_loop, len(pointer_lower_scans) - 1)
+						self.logger.info('pointer_lower_scans(i_innermost_loop): %s outer_pointer_lower_scans(i_outer_loop) : %s', pointer_lower_scans[i_innermost_loop], outer_pointer_lower_scans[i_outer_loop])
 						continue
 
 					file.seek(pointer_lower_scans[i_innermost_loop])
@@ -1222,14 +1290,14 @@ class mda:
 				scan_cpt = u.unpack_int()
 		
 				if verbose:
-					print 'scan_rank: ', scan_rank
-					print 'scan_npts: ', scan_npts
-					print 'scan_cpt:	', scan_cpt
+					self.logger.debug('scan_rank: %s', scan_rank)
+					self.logger.debug('scan_npts: %s', scan_npts)
+					self.logger.debug('scan_cpt: %s', scan_cpt)
 			
 				if scan_rank > 2048:
 					return None
 				if scan_cpt == 0:
-					print 'warning: scan_header.cpt EQ 0 '
+					self.logger.warning('warning: scan_header.cpt EQ 0 ')
 
 				# read scan information  
 				namelength = u.unpack_int()
@@ -1243,11 +1311,11 @@ class mda:
 				scan_no_triggers = u.unpack_int()
 
 				if verbose:
-					print 'Scan name: ', scan_name
-					print 'Scan time: ', scan_time
-					print 'no_positioners ', scan_no_positioners
-					print 'no_detectors ', scan_no_detectors
-					print 'no_triggers ', scan_no_triggers
+					self.logger.debug('Scan name: %s', scan_name)
+					self.logger.debug('Scan time: %s', scan_time)
+					self.logger.debug('no_positioners %s', scan_no_positioners)
+					self.logger.debug('no_detectors %s', scan_no_detectors)
+					self.logger.debug('no_triggers %s', scan_no_triggers)
 
 				temp_timestamp.append(scan_time)
 
@@ -1255,63 +1323,80 @@ class mda:
 					positioner = scanPositioner()
 					positioner.number = u.unpack_int()
 					positioner.fieldName = posName(positioner.number)
-					if verbose: print "positioner ", j
+					if verbose:
+						self.logger.debug("positioner %s", j)
 					length = u.unpack_int()  # length of name string
 					if length: positioner.name = u.unpack_string()
-					if verbose: print "positioner[%d].name = %s" % (j, `positioner.name`)
+					if verbose:
+						self.logger.debug("positioner[%d].name = %s", j, positioner.name)
 					length = u.unpack_int()  # length of desc string
 					if length: positioner.desc = u.unpack_string()
-					if verbose: print "positioner[%d].desc = %s" % (j, `positioner.desc`)
+					if verbose:
+						self.logger.debug("positioner[%d].desc = %s", j, positioner.desc)
 					length = u.unpack_int()  # length of step_mode string
 					if length: positioner.step_mode = u.unpack_string()
-					if verbose: print "positioner[%d].step_mode = %s" % (j, `positioner.step_mode`)
+					if verbose:
+						self.logger.debug("positioner[%d].step_mode = %s", j, positioner.step_mode)
 					length = u.unpack_int()  # length of unit string
 					if length: positioner.unit = u.unpack_string()
-					if verbose: print "positioner[%d].unit = %s" % (j, `positioner.unit`)
+					if verbose:
+						self.logger.debug("positioner[%d].unit = %s", j, positioner.unit)
 					length = u.unpack_int()  # length of readback_name string
 					if length: positioner.readback_name = u.unpack_string()
-					if verbose: print "positioner[%d].readback_name = %s" % (j, `positioner.readback_name`)
+					if verbose:
+						self.logger.debug("positioner[%d].readback_name = %s", j, positioner.readback_name)
 					length = u.unpack_int()  # length of readback_desc string
 					if length: positioner.readback_desc = u.unpack_string()
-					if verbose: print "positioner[%d].readback_desc = %s" % (j, `positioner.readback_desc`)
+					if verbose:
+						self.logger.debug("positioner[%d].readback_desc = %s", j, positioner.readback_desc)
 					length = u.unpack_int()  # length of readback_unit string
 					if length: positioner.readback_unit = u.unpack_string()
-					if verbose: print "positioner[%d].readback_unit = %s" % (j, `positioner.readback_unit`)
+					if verbose:
+						self.logger.debug("positioner[%d].readback_unit = %s", j, positioner.readback_unit)
 
 				for j in range(scan_no_detectors):
 					detector = scanDetector()
 					detector.number = u.unpack_int()
 					detector.fieldName = detName(detector.number)
-					if verbose: print "detector ", j
+					if verbose:
+						self.logger.debug("detector %s", j)
 					length = u.unpack_int()  # length of name string
 					if length: detector.name = u.unpack_string()
-					if verbose: print "detector[%d].name = %s" % (j, `detector.name`)
+					if verbose:
+						self.logger.debug("detector[%d].name = %s", j, detector.name)
 					length = u.unpack_int()  # length of desc string
 					if length: detector.desc = u.unpack_string()
-					if verbose: print "detector[%d].desc = %s" % (j, `detector.desc`)
+					if verbose:
+						self.logger.debug("detector[%d].desc = %s", j, detector.desc)
 					length = u.unpack_int()  # length of unit string
 					if length: detector.unit = u.unpack_string()
-					if verbose: print "detector[%d].unit = %s" % (j, `detector.unit`)
+					if verbose:
+						self.logger.debug("detector[%d].unit = %s", j, detector.unit)
 
 				for j in range(scan_no_triggers):
 					trigger = scanTrigger()
 					trigger.number = u.unpack_int()
-					if verbose: print "trigger ", j
+					if verbose:
+						self.logger.debug("trigger %s", j)
 					length = u.unpack_int()  # length of name string
 					if length:
 						trigger.name = u.unpack_string()
-					if verbose: print "trigger[%d].name = %s" % (j, `trigger.name`)
+					if verbose:
+						self.logger.debug("trigger[%d].name = %s", j, trigger.name)
 					trigger.command = u.unpack_float()
-					if verbose: print "trigger[%d].command = %s" % (j, `trigger.command`)
+					if verbose:
+						self.logger.debug("trigger[%d].command = %s", j, trigger.command)
 
 				# read data: positioners
 				file.seek(file.tell() - (len(buf) - u.get_position()))
 				buf = file.read(scan_no_positioners * scan_npts * 8)
 				u = Unpacker(buf)
 				for j in range(scan_no_positioners):
-					if verbose: print "read %d pts for pos. %d at buf loc %x" % (scan_npts, j, u.get_position())
+					if verbose:
+						self.logger.debug("read %d pts for pos. %d at buf loc %x", scan_npts, j, u.get_position())
 					readback_array = u.unpack_farray(scan_cpt, u.unpack_double)    
-					if verbose: print "readback_array = ", readback_array
+					if verbose:
+						self.logger.debug("readback_array = %s", readback_array)
 			
 				if rank == 2:
 					continue
@@ -1446,7 +1531,7 @@ class mda:
 			scan = None
 
 		if scan == None:
-			print 'not read a valid mda flyscan file, filename: ', mdafilename
+			self.logger.error('not read a valid mda flyscan file, filename: %s', mdafilename)
 			# maps_change_xrf_resetvars, n_ev, n_rows, n_cols, n_energy, energy, energy_spec, scan_time_stamp, dataset_orig
 			return None
 
@@ -1588,15 +1673,15 @@ class mda:
 		num_files_found = len(hdf_files)
 		if num_files_found != 1:
 			if num_files_found > 1:
-				print 'Error: too many files found, ', hdf_files
+				self.logger.error('Error: too many files found, %s', hdf_files)
 				return None
 			else:
-				print 'Could not file hdf5 file associated with mda file: ', mdafilename
+				self.logger.info('Could not file hdf5 file associated with mda file: %s', mdafilename)
 				return None
 
 		hdf_file = call_function_with_retry(h5py.File, 5, 0.1, 1.1, (hdf_files[0], 'r'))
 		if hdf_file == None:
-			print 'Error: Could not open file: ', hdf_files[0]
+			self.logger.error( 'Error: Could not open file: %s', hdf_files[0])
 			return None
 
 		gid = hdf_file['MAPS_RAW']

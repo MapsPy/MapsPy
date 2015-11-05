@@ -40,21 +40,20 @@ def open_file_with_retry(filename, open_attr, retry_amt=5, retry_sleep=0.1, retr
 			file = open(filename, open_attr)
 			break
 		except:
-			print 'failed to open ',filename, ' Retry in ',retry_sleep,' seconds...'
+			#print 'failed to open ', filename, ' Retry in ', retry_sleep, ' seconds...'
 			time.sleep(retry_sleep)
 			retry_sleep += retry_sleep_inc
 	return file
 
 
-def call_function_with_retry(func_ptr, retry_amt = 5, retry_sleep = 0.1, retry_sleep_inc = 1.1, *args):
+def call_function_with_retry(func_ptr, retry_amt=5, retry_sleep=0.1, retry_sleep_inc=1.1, *args):
 	retVal = None
-	print args
 	for i in range(retry_amt):
 		try:
 			retVal = func_ptr(*args[0])
 			break
 		except:
-			print 'failed to call func_ptr',str(func_ptr), ' Retry in ',retry_sleep,' seconds...'
+			#print 'failed to call func_ptr', str(func_ptr), ' Retry in ', retry_sleep, ' seconds...'
 			time.sleep(retry_sleep)
 			retry_sleep += retry_sleep_inc
 	return retVal

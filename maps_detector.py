@@ -42,7 +42,7 @@ from file_io.file_util import open_file_with_retry
 # ----------------------------------------------------------------------
 
 
-def get_detector_calibration(maps_conf, beamline, info_elements, scan, fpo_file):
+def get_detector_calibration(maps_conf, beamline, info_elements, scan, fpo_file, logger):
 
 	verbose = False
 
@@ -63,8 +63,9 @@ def get_detector_calibration(maps_conf, beamline, info_elements, scan, fpo_file)
 		# check to see if the file is there by opening it
 		f = open(fpo_file, 'rt')
 		f.close()
-		if verbose: print 'reading maps_fit_parameters_override.txt'
-		fp = maps_fit_parameters.maps_fit_parameters()
+		if verbose:
+			logger.info('reading maps_fit_parameters_override.txt')
+		fp = maps_fit_parameters.maps_fit_parameters(logger)
 		fitp = fp.define_fitp(beamline, info_elements)
 		fitp, test_string, pileup_string = fp.read_fitp(fpo_file, info_elements)
 
@@ -74,12 +75,12 @@ def get_detector_calibration(maps_conf, beamline, info_elements, scan, fpo_file)
 
 	except:
 		if verbose:
-			print 'will try to use calibration from mda file'
-			print 'maps_conf.calibration.slope[0] ', maps_conf.calibration.slope[0]
-			print scan.extra_pv
+			logger.info('will try to use calibration from mda file')
+			logger.debug('maps_conf.calibration.slope[0] %s', maps_conf.calibration.slope[0])
+			logger.debug('scan.extra_pv %s', scan.extra_pv)
 		if (maps_conf.calibration.slope[0] == 0.0) and (len(scan.extra_pv) > 0):
 			if verbose:
-				print 'have extra pvs'
+				logger.debug('have extra pvs')
 			if (beamline == '2-ID-D') or (beamline == '2-ID-B'):
 				if crate + ':mca1.CALO' in scan.extra_pv:
 					maps_conf.calibration.offset[0] = scan.extra_pv[crate + ':mca1.CALO'][2][0]
@@ -123,7 +124,7 @@ def get_detector_calibration(maps_conf, beamline, info_elements, scan, fpo_file)
 
 def find_detector_name(det_descr, date_number, detector_arr, detector_description_arr, make_maps_conf,
 						x_coord_arr, y_coord_arr, beamline,
-						n_cols, n_rows, maps_overridefile):
+						n_cols, n_rows, maps_overridefile, logger):
 
 	verbose = False
 
@@ -225,7 +226,7 @@ def find_detector_name(det_descr, date_number, detector_arr, detector_descriptio
 		have_override_file = False
 
 	if (have_override_file == False) or (srcurrent == None):
-		print 'did not fine either override file, or srcurrent, use defaults'
+		logger.info('did not fine either override file, or srcurrent, use defaults')
 		for ii in det_descr:
 			this_det = ii
 			this_name = ''
@@ -397,7 +398,7 @@ def find_detector_name(det_descr, date_number, detector_arr, detector_descriptio
 				dmaps_set[:, :, this_det] = d_det[:, :, det_descr.index(make_maps_conf.dmaps[this_det].name)]
 				make_maps_conf.dmaps[this_det].units = 's'
 			else:
-				print 'Could not find elapsed life time detector (1). Will proceed assuming a ELT=1'
+				logger.warning('Could not find elapsed life time detector (1). Will proceed assuming a ELT=1')
 
 		if 'ERT' in make_maps_conf.dmaps[this_det].name:
 			if make_maps_conf.dmaps[this_det].name in det_descr:
@@ -471,7 +472,7 @@ def find_detector_name(det_descr, date_number, detector_arr, detector_descriptio
 			if make_maps_conf.dmaps[this_det].name == 'phase' : no_int = 1
 			else: no_int = 0
 
-			anl = maps_analyze.analyze()
+			anl = maps_analyze.analyze(logger)
 			nrml, ntmb, rdt = anl.maps_simple_dpc_integration(nrml, ntmb, no_int = no_int)
 			# notem nrml, ntmb, now normalized (what comes up ust go down)
 			if make_maps_conf.dmaps[this_det].name == 'H_dpc_norm':
@@ -500,7 +501,7 @@ def find_detector_name(det_descr, date_number, detector_arr, detector_descriptio
 					dmaps_set[:, mm, this_det] = x_coord_arr[:]
 					make_maps_conf.dmaps[this_det].units = 'mm'
 			except:
-				print 'Warning could not read x_coord'
+				logger.warning('Warning could not read x_coord')
 
 		if 'y_coord' in make_maps_conf.dmaps[this_det].name:
 			try:
@@ -508,6 +509,6 @@ def find_detector_name(det_descr, date_number, detector_arr, detector_descriptio
 					dmaps_set[mm, :, this_det] = y_coord_arr[:]
 					make_maps_conf.dmaps[this_det].units = 'mm'
 			except:
-				print 'Warning could not read y_coord'
+				logger.warning('Warning could not read y_coord')
 
 	return dmaps_set
