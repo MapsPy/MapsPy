@@ -93,18 +93,19 @@ def rebin(a, *args):
 	return eval(''.join(evList))
 
 # ----------------------------------------------------------------------
-def fit_line_threaded(logger, i_fit, data_line, output_dir, n_rows,  matrix, spectral_binning, elt_line,
+def fit_line_threaded(log_name, i_fit, data_line, output_dir, n_rows,  matrix, spectral_binning, elt_line,
 				values_line, bkgnd_line, tfy_line,
 				info_elements, fitp, old_fitp, add_pars, keywords, add_matrixfit_pars, xrf_bin, calib):
 
+	logger = logging.getLogger(log_name)
 	logger.info('fitting row number %s', i_fit)
 
 	fit = maps_analyze.analyze(logger)
-	fitted_line, ka_line, l_line, bkground_line,  values_line, bkgnd_line, tfy_line, xmin, xmax = fit.fit_line(data_line, 
+	fitted_line, ka_line, l_line, bkground_line, values_line, bkgnd_line, tfy_line, xmin, xmax = fit.fit_line(data_line,
 						output_dir, n_rows, matrix, spectral_binning, elt_line, values_line, bkgnd_line, tfy_line, 
-						info_elements, fitp, old_fitp, add_pars, keywords, add_matrixfit_pars, xrf_bin, calib )    
+						info_elements, fitp, old_fitp, add_pars, keywords, add_matrixfit_pars, xrf_bin, calib)
 
-	return [fitted_line, ka_line, l_line, bkground_line,  values_line, bkgnd_line, tfy_line, xmin, xmax]
+	return [fitted_line, ka_line, l_line, bkground_line, values_line, bkgnd_line, tfy_line, xmin, xmax]
 
 # ----------------------------------------------------------------------
 class analyze:
@@ -474,7 +475,7 @@ class analyze:
 				if num_files_found > 1:
 					self.logger.error('Error: too many files found, %s', hdf_files)
 				else:
-					self.logger.info('Could not file hdf5 file associated with mda file: %s', mdafilename)
+					self.logger.info('Could not find hdf5 file associated with mda file: %s', mdafilename)
 			else:
 				test_netcdf = FLYSCAN_TYPE_HDF
 
@@ -1347,7 +1348,7 @@ class analyze:
 						for jj in range(n_rows):
 							raw_temp[:, kk] = raw_temp[:, kk] + data_line[:, jj]
 
-						results_pool.append(pool.apply_async(fit_line_threaded, (self.logger, i_fit, data_line,
+						results_pool.append(pool.apply_async(fit_line_threaded, (self.logger.name, i_fit, data_line,
 										output_dir, n_rows, matrix, spectral_binning, elt_line, values_line, bkgnd_line, tfy_line,
 										info_elements, fitp, old_fitp, fitp.add_pars, keywords, add_matrixfit_pars, xrf_bin, calib)) )
 					#self.logger.info( '------ Waiting for fitting to finish ------')

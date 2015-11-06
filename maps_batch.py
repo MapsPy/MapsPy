@@ -840,10 +840,10 @@ def _option_b_(main_dict, maps_conf, maps_def, total_number_detectors, info_elem
 		if fitp != None:
 			avg_res_override_name = os.path.join(current_directory, 'average_resulting_maps_fit_parameters_override.txt')
 			#old_override_name = os.path.join(current_directory, 'old_maps_fit_parameters_override.txt')
-			old_override_date_name = os.path.join(current_directory, 'old_' + strftime("%Y-%m-%d_%H-%M-%S", gmtime()) + '_maps_fit_parameters_override.txt')
+			old_override_date_name = os.path.join(current_directory, 'old_' + strftime("%Y-%m-%d_%H-%M-%S", gmtime()) + '_maps_fit_parameters_override.txt' + suffix)
 			#old_override_suffix_date_name = os.path.join(current_directory, 'old_' + strftime("%Y-%m-%d_%H-%M-%S", gmtime()) + '_maps_fit_parameters_override.txt' + suffix)
 			#maps_override_suffix_name = os.path.join(current_directory, 'maps_fit_parameters_override.txt' + suffix)
-			maps_override_name = os.path.join(current_directory, 'maps_fit_parameters_override.txt')
+			maps_override_name = os.path.join(current_directory, 'maps_fit_parameters_override.txt' + suffix)
 			logger.info('total_num detectors = %s', total_number_detectors)
 			try:
 				if os.path.isfile(maps_override_name):

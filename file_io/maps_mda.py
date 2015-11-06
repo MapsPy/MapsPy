@@ -1676,7 +1676,7 @@ class mda:
 				self.logger.error('Error: too many files found, %s', hdf_files)
 				return None
 			else:
-				self.logger.info('Could not file hdf5 file associated with mda file: %s', mdafilename)
+				self.logger.info('Could not find hdf5 file associated with mda file: %s', mdafilename)
 				return None
 
 		hdf_file = call_function_with_retry(h5py.File, 5, 0.1, 1.1, (hdf_files[0], 'r'))
