@@ -1073,7 +1073,8 @@ class maps_fit_parameters:
 		f2 = open_file_with_retry(filepath, 'rt')
 		if f2 == None:
 			self.logger.error('Error opening file %s to write to!',filepath)
-			return 
+			return
+
 
 		for line in f2:
 			if ':' in line : 

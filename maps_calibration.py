@@ -44,6 +44,7 @@ import maps_fit_parameters
 import maps_tools
 import glob
 import henke
+import copy
 from file_io import maps_mda
 from file_io.file_util import open_file_with_retry
 #from file_io.mca_io import load_mca
@@ -1784,11 +1785,13 @@ class calibration:
 				det = 0
 				try:
 					fitp, test_string, pileup_string = fp.read_fitp(maps_overridefile, info_elements, det=det)
+					# copy fitp
+					avg_fitp.g = copy.deepcopy(fitp.g)
 					self.logger.info('found override file (maps_fit_parameters_override.txt). Using the contained parameters. %s', test_string)
 				except:
 					self.logger.warning('warning: did not find override file (maps_fit_parameters_override.txt). Will abort this action')
 					return 0, 0, spectra
-				for jj in range(fitp.g.n_fitp) : 
+				for jj in range(fitp.g.n_fitp):
 					if fitp.s.name[jj] in test_string:
 						#wo_a = test_string.index(fitp.s.name[jj])
 						fitp.s.val[jj] = 1.
@@ -1959,6 +1962,7 @@ class calibration:
 			avg_fitp.s.val[:] = avg_fitp.s.val[:] + fitp.s.val[:]
 			avg_n_fitp += 1
 
+		avg_fitp.g = copy.copy(fitp.g)
 		avg_fitp.g.det_material |= fitp.g.det_material
 		avg_fitp.s.val[:] = avg_fitp.s.val[:]/avg_n_fitp
 		avg_fitp.s.max[:] = fitp.s.max[:]

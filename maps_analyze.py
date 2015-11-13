@@ -133,9 +133,9 @@ class analyze:
 		sigma, f_step, f_tail, kb_f_tail, gamma = self.set_fit_vals(self.fitp, pall, element_pos)
 
 		background = self.maps_snip(self.fitp, pall) 
-		#		 import matplotlib.pyplot as plt
-		#		 plt.plot(background)
-		#		 plt.show()
+		#import matplotlib.pyplot as plt
+		#plt.plot(background)
+		#plt.show()
 	
 		if self.snip_background == 0 : background[:] = 0.
 		counts_background = background[keywords.xmin:keywords.xmax+1].copy()
@@ -268,22 +268,22 @@ class analyze:
 		self.counts_tail = counts_tail
 		self.counts_pileup = counts_pileup
 		self.counts_escape = counts_escape
-		
-		#		 import matplotlib.pyplot as plt
-		#		 plt.semilogy(counts+0.1)
-		#		 plt.semilogy(counts_background +0.1)
-		#		 plt.semilogy(counts_ka+0.1)
-		#		 plt.semilogy(counts_kb+0.1)
-		#		 plt.semilogy(counts_l+0.1)
-		#		 plt.semilogy(counts_m+0.1)
-		#		 plt.semilogy(counts_elastic+0.1)
-		#		 plt.semilogy(counts_compton+0.1)
-		#		 plt.semilogy(counts_step+0.1)
-		#		 plt.semilogy(counts_tail+0.1)
-		#		 plt.semilogy(counts_pileup+0.1)
-		#		 plt.semilogy(counts_escape+0.1)
-		#		 plt.show()
-	
+		'''
+		import matplotlib.pyplot as plt
+		plt.semilogy(counts+0.1)
+		plt.semilogy(counts_background +0.1)
+		plt.semilogy(counts_ka+0.1)
+		plt.semilogy(counts_kb+0.1)
+		plt.semilogy(counts_l+0.1)
+		plt.semilogy(counts_m+0.1)
+		plt.semilogy(counts_elastic+0.1)
+		plt.semilogy(counts_compton+0.1)
+		plt.semilogy(counts_step+0.1)
+		plt.semilogy(counts_tail+0.1)
+		plt.semilogy(counts_pileup+0.1)
+		plt.semilogy(counts_escape+0.1)
+		plt.show()
+		'''
 		return counts
 				
 	# -----------------------------------------------------------------------------
@@ -719,15 +719,17 @@ class analyze:
 			self.fitmatrix = self.generate_fitmatrix(fitp, x, parinfo_value)
 
 			p0 = np.array(fit_parameters)
-			
-			#			 fit = self.matrixmodel_spectrum(x, p0)
-			#			 import matplotlib.pyplot as plt
-			#			 plt.plot(x,fit)
-			#			 plt.plot(x,y)
-			#			 #plt.semilogy(x,y+0.1)
-			#			 #plt.show()
-			#			 #plt.semilogy(x,fit+0.1)
-			#			 plt.show()
+
+			'''
+			fit = self.matrixmodel_spectrum(x, p0)
+			import matplotlib.pyplot as plt
+			plt.plot(x,fit)
+			plt.plot(x,y)
+			#plt.semilogy(x,y+0.1)
+			#plt.show()
+			#plt.semilogy(x,fit+0.1)
+			plt.show()
+			'''
 			
 			bounds=[]
 			have_bounds = 0
@@ -777,13 +779,15 @@ class analyze:
 
 				fitted_spec = self.matrixmodel_spectrum(x, p1)
 
-				#				 import matplotlib.pyplot as plt
-				#				 plt.plot(x,fitted_spec)
-				#				 plt.plot(x,y)
-				#				 #plt.semilogy(x,y+0.1)
-				#				 #plt.show()
-				#				 #plt.semilogy(x,fit+0.1)
-				#				 plt.show()
+				'''
+				import matplotlib.pyplot as plt
+				plt.plot(x,fitted_spec)
+				plt.plot(x,y)
+				#plt.semilogy(x,y+0.1)
+				#plt.show()
+				#plt.semilogy(x,fit+0.1)
+				#plt.show()
+				'''
 
 				# store the uncertainty estimates
 				delu = parinfo_value.copy() * 0.
@@ -811,15 +815,16 @@ class analyze:
 			u[keywords.added_params[1:4]] = parameters[parameters.size - offset + 12:parameters.size - offset + 15]
 
 			dummy = self.model_spectrum(x, u, allpars=True)
-			
-			#			 import matplotlib.pyplot as plt
-			#			 plt.plot(x,dummy)
-			#			 plt.plot(x,y)
-			#			 #plt.semilogy(x,y+0.1)
-			#			 #plt.show()
-			#			 #plt.semilogy(x,fit+0.1)
-			#			 plt.show()
 
+			'''
+			import matplotlib.pyplot as plt
+			plt.plot(x,dummy)
+			plt.plot(x,y)
+			#plt.semilogy(x,y+0.1)
+			#plt.show()
+			#plt.semilogy(x,fit+0.1)
+			plt.show()
+			'''
 		else:
 			# matrix == False
 			
@@ -876,7 +881,6 @@ class analyze:
 			fitted_spec = self.model_spectrum(x, p1)
 			u = parameters
 
-			verbose = 0
 			string = ''
 			if len(wusepar) > 0:
 				if verbose:
@@ -932,7 +936,7 @@ class analyze:
 				self.logger.debug(' chisqred: %s', chisqred)
 				self.logger.debug(' abs_err: %s', self.abs_err)
 				self.logger.debug(' rel_err: %s', self.rel_err)
-				self.logger.debug(' time + core ana: %s', (time() - time1))
+				#self.logger.debug(' time + core ana: %s', (time() - time1))
 				self.logger.debug('snip width: %s', u[keywords.added_params[0]])
 
 			name_len = []
@@ -996,8 +1000,6 @@ class analyze:
 			u, fitted_spec, background, xmin, xmax, perror = self.fit_spectrum(fitp, data_temp, data_temp.size, calib,
 																			spectral_binning=spectral_binning,
 																			first=True, matrix=True, maxiter=1000)
-
-			sys.stdout.flush()
 
 			#return the number of function evaluations:
 			niter = self.nfev

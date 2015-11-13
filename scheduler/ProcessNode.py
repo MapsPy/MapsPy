@@ -251,7 +251,6 @@ class ProcessNode(RestBase):
 			return
 		self.logger.info('checking for jobs to process')
 		job_list = self.db.get_all_unprocessed_and_processing_jobs()
-		#saveout = sys.stdout
 		for job_dict in job_list:
 			try:
 				alias_path = self.check_for_alias(job_dict[Constants.JOB_DATA_PATH], self.path_alias_dict)

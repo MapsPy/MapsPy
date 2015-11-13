@@ -721,8 +721,6 @@ class analyze:
 		n_channels = 2048
 		n_mca_channels = mca_arr_dimensions[2]
 
-		sys.stdout.flush()
-
 		if total_number_detectors > 1 :
 			if (self.netcdf_fly_scan != 1) and (beamline != 'GSE-CARS') and (beamline != 'Bio-CAT'):
 				# if it is a fly scan, ie netcdf_fly_scan is 1, the even a multi
@@ -934,8 +932,6 @@ class analyze:
 		for i in range(np.amin(fitp.keywords.kele_pos), np.amax(fitp.keywords.mele_pos)):
 			text = text + 'perror_' + str(fitp.s.name[i]) + ', '
 
-		sys.stdout.flush()
-
 		# below is the routine for straight ROI mapping
 		for jj in range(len(elements_to_use)):
 			counts = 0.
@@ -992,8 +988,6 @@ class analyze:
 				counts = counts + these_counts
 
 			thisdata.dataset_orig[:, :, jj, 0] = counts
-
-		sys.stdout.flush()
 
 		# below is the routine for using matrix math to calculate elemental
 		# content with overlap removal
@@ -1182,7 +1176,6 @@ class analyze:
 		fitp = fp.define_fitp(beamline, info_elements)
 
 		self.logger.debug('make_maps_conf.use_fit = %s', make_maps_conf.use_fit)
-		sys.stdout.flush()
 
 		# Spectrum fitting goes here if enabled
 		if (make_maps_conf.use_fit > 0) or (self.pca > 0):
@@ -1322,7 +1315,6 @@ class analyze:
 					output_dir = self.main_dict['output_dir']
 
 					self.logger.info('Started fitting')
-					sys.stdout.flush()
 
 					results_pool = []
 					# start = 29
