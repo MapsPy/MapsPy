@@ -43,13 +43,20 @@ import maps_fit_parameters
 import maps_analyze
 import maps_calibration
 from file_io.file_util import open_file_with_retry
+import logging
 
 # ------------------------------------------------------------------------------------------------
 
 
-def mp_make_maps(logger, info_elements, main_dict, maps_conf, header, mdafilename, this_detector, use_fit, total_number_detectors,
+def mp_make_maps(log_name, info_elements, main_dict, maps_conf, header, mdafilename, this_detector, use_fit, total_number_detectors,
 				quick_dirty, nnls, xrf_bin, max_no_processors_lines):
-
+	logger = logging.getLogger(log_name)
+	fHandler = logging.FileHandler(log_name)
+	logger.setLevel(logging.DEBUG)
+	fHandler.setLevel(logging.DEBUG)
+	formatter = logging.Formatter('%(asctime)s | %(levelname)s | PID[%(process)d] | %(funcName)s(): %(message)s')
+	fHandler.setFormatter(formatter)
+	logger.addHandler(fHandler)
 	try:
 		makemaps = maps_generate_img_dat.analyze(logger, info_elements, main_dict, maps_conf, beamline=main_dict['beamline'], use_fit=use_fit)
 		makemaps.generate_img_dat_threaded(header, mdafilename, this_detector, total_number_detectors, quick_dirty, nnls, max_no_processors_lines, xrf_bin)
@@ -332,7 +339,7 @@ def main(main_dict, logger, force_fit=0, no_fit=False):
 				header, scan_ext = os.path.splitext(filenames[pp])
 				mdafilename = os.path.join(main_dict['mda_dir'], filenames[pp])
 				logger.info('Multiple processor file version: doing filen #: %s this detector: %s pp: %s', mdafilename, this_detector, pp)
-				proc = multiprocessing.Process(target=mp_make_maps, args=(logger, info_elements, main_dict, maps_conf, header, mdafilename, this_detector,use_fit, total_number_detectors, quick_dirty, main_dict['nnls'], main_dict['xrf_bin'], max_no_processors_lines))
+				proc = multiprocessing.Process(target=mp_make_maps, args=(logger.name, info_elements, main_dict, maps_conf, header, mdafilename, this_detector,use_fit, total_number_detectors, quick_dirty, main_dict['nnls'], main_dict['xrf_bin'], max_no_processors_lines))
 				procs_to_start += [proc]
 			num_procs_running = 0
 			while len(procs_to_start) > 0 or len(procs_to_join) > 0:

@@ -98,6 +98,12 @@ def fit_line_threaded(log_name, i_fit, data_line, output_dir, n_rows,  matrix, s
 				info_elements, fitp, old_fitp, add_pars, keywords, add_matrixfit_pars, xrf_bin, calib):
 
 	logger = logging.getLogger(log_name)
+	fHandler = logging.FileHandler(log_name)
+	logger.setLevel(logging.DEBUG)
+	fHandler.setLevel(logging.DEBUG)
+	formatter = logging.Formatter('%(asctime)s | %(levelname)s | PID[%(process)d] | %(funcName)s(): %(message)s')
+	fHandler.setFormatter(formatter)
+	logger.addHandler(fHandler)
 	logger.info('fitting row number %s', i_fit)
 
 	fit = maps_analyze.analyze(logger)
