@@ -826,8 +826,8 @@ def _option_b_(main_dict, maps_conf, maps_def, total_number_detectors, info_elem
 		fp = maps_fit_parameters.maps_fit_parameters(logger)
 		fitp = fp.define_fitp(main_dict['beamline'], info_elements)
 		fitp.g.no_iters = 4
-		#this_w_uname = "DO_FIT_ALL_W_TAILS"
-		this_w_uname = "DO_MATRIX_FIT"
+		this_w_uname = "DO_FIT_ALL_W_TAILS"
+		#this_w_uname = "DO_MATRIX_FIT"
 		dofit_spec = 1
 		avg_fitp = fp.define_fitp(main_dict['beamline'], info_elements)
 		#			  if (first_run == 1) and (this_detector_element == 0) :

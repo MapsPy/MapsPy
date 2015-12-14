@@ -1723,7 +1723,7 @@ class calibration:
 			maps_overridefile = os.path.join(self.main_dict['master_dir'], 'maps_fit_parameters_override.txt')
 
 		used_chan = []
-		for i in range(self.main_dict['max_spectra']-11):
+		for i in range(self.main_dict['max_spectra'] - 11):
 			used_chan.append(spectra[i].used_chan)
 		wo = np.where(np.array(used_chan) > 0)[0]
 		tot_wo = len(wo)
