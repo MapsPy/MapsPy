@@ -104,10 +104,25 @@ class nc:
 		scan.detector_description_arr.append('dxpXMAP2xfm3:mca2.ELTM')
 		scan.detector_description_arr.append('dxpXMAP2xfm3:mca3.ELTM')
 		scan.detector_description_arr.append('dxpXMAP2xfm3:mca4.ELTM')
-		
+
+		scan.detector_description_arr.append('dxpXMAP2xfm3:mca1.ERTM')
+		scan.detector_description_arr.append('dxpXMAP2xfm3:mca2.ERTM')
+		scan.detector_description_arr.append('dxpXMAP2xfm3:mca3.ERTM')
+		scan.detector_description_arr.append('dxpXMAP2xfm3:mca4.ERTM')
+
+		scan.detector_description_arr.append('dxpXMAP2xfm3:dxp1:InputCountRate')
+		scan.detector_description_arr.append('dxpXMAP2xfm3:dxp2:InputCountRate')
+		scan.detector_description_arr.append('dxpXMAP2xfm3:dxp3:InputCountRate')
+		scan.detector_description_arr.append('dxpXMAP2xfm3:dxp4:InputCountRate')
+
+		scan.detector_description_arr.append('dxpXMAP2xfm3:dxp1:OutputCountRate')
+		scan.detector_description_arr.append('dxpXMAP2xfm3:dxp2:OutputCountRate')
+		scan.detector_description_arr.append('dxpXMAP2xfm3:dxp3:OutputCountRate')
+		scan.detector_description_arr.append('dxpXMAP2xfm3:dxp4:OutputCountRate')
+
 		new_det_len = len(scan.detector_description_arr)
 
-		new_detector_arr=np.zeros((scan.x_pixels, scan.y_pixels, new_det_len))
+		new_detector_arr=np.ones((scan.x_pixels, scan.y_pixels, new_det_len))
 		new_detector_arr[:, :, 0:old_det_len] = scan.detector_arr[:, :, 0:old_det_len]	
 		scan.detector_arr = new_detector_arr
 

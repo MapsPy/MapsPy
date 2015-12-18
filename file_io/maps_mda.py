@@ -1537,136 +1537,31 @@ class mda:
 
 		convert_pv_names(mdafilename, scan)
 
-		detector_description_arr = scan.detector_description_arr
-		detector_arr = scan.detector_arr
+		x_pixels = scan.detector_arr.shape[0]
+		y_pixels = scan.detector_arr.shape[1]
 
-		x_pixels = detector_arr.shape[0]
-		y_pixels = detector_arr.shape[1]
+		# now fill in XRF information
+		scan.detector_description_arr.append('dxpXMAP2xfm3:mca1.ELTM')
+		scan.detector_description_arr.append('dxpXMAP2xfm3:mca2.ELTM')
+		scan.detector_description_arr.append('dxpXMAP2xfm3:mca3.ELTM')
+		scan.detector_description_arr.append('dxpXMAP2xfm3:mca4.ELTM')
 
-		wo = -1
-		'''
-		if '2xfm:mcs:mca1.VAL' in detector_description_arr:
-			wo = detector_description_arr.index('2xfm:mcs:mca1.VAL')
+		scan.detector_description_arr.append('dxpXMAP2xfm3:mca1.ERTM')
+		scan.detector_description_arr.append('dxpXMAP2xfm3:mca2.ERTM')
+		scan.detector_description_arr.append('dxpXMAP2xfm3:mca3.ERTM')
+		scan.detector_description_arr.append('dxpXMAP2xfm3:mca4.ERTM')
 
-		time = detector_arr[:, :, 0] / 25000000.
-		if wo != -1:
-			time = time 
-		else: 
-			time[:, :] = 1.
+		scan.detector_description_arr.append('dxpXMAP2xfm3:dxp1:InputCountRate')
+		scan.detector_description_arr.append('dxpXMAP2xfm3:dxp2:InputCountRate')
+		scan.detector_description_arr.append('dxpXMAP2xfm3:dxp3:InputCountRate')
+		scan.detector_description_arr.append('dxpXMAP2xfm3:dxp4:InputCountRate')
 
-		wo = -1
-		if '2xfm:mcs:mca2.VAL' in detector_description_arr:
-			wo = detector_description_arr.index('2xfm:mcs:mca2.VAL')
-		if wo != -1:
-			detector_description_arr[wo] = '2xfm:scaler3_cts1.B'
-		if wo != -1:
-			detector_arr[:, :, wo] = detector_arr[:, :, wo] / time
-		wo = -1
-		if '2xfm:mcs:mca3.VAL' in detector_description_arr:
-			wo = detector_description_arr.index('2xfm:mcs:mca3.VAL')
-		if wo != -1:
-			detector_description_arr[wo] = '2xfm:scaler3_cts1.C'
-		if wo != -1:
-			detector_arr[:, :, wo] = detector_arr[:, :, wo] / time
-		wo = -1
-		if '2xfm:mcs:mca4.VAL' in detector_description_arr:
-			wo = detector_description_arr.index('2xfm:mcs:mca4.VAL')
-		if wo != -1:
-			detector_description_arr[wo] = '2xfm:scaler3_cts1.D'
-		wo = -1
-		if '2xfm:mcs:mca5.VAL' in detector_description_arr:
-			wo = detector_description_arr.index('2xfm:mcs:mca5.VAL')
-		if wo != -1:
-			detector_description_arr[wo] = '2xfm:scaler3_cts2.A'
-		wo = -1
-		if '2xfm:mcs:mca6.VAL' in detector_description_arr:
-			wo = detector_description_arr.index('2xfm:mcs:mca6.VAL')
-		if wo != -1:
-			detector_description_arr[wo] = '2xfm:scaler3_cts2.B'
-		wo = -1
-		if '2xfm:mcs:mca7.VAL' in detector_description_arr:
-			wo = detector_description_arr.index('2xfm:mcs:mca7.VAL')
-		if wo != -1:
-			detector_description_arr[wo] = '2xfm:scaler3_cts2.C'
-		wo = -1
-		if '2xfm:mcs:mca8.VAL' in detector_description_arr:
-			wo = detector_description_arr.index('2xfm:mcs:mca8.VAL')
-		if wo != -1:
-			detector_description_arr[wo] = '2xfm:scaler3_cts2.D'
-		wo = -1
-		if '2xfm:mcs:mca9.VAL' in detector_description_arr:
-			wo = detector_description_arr.index('2xfm:mcs:mca9.VAL')
-		if wo != -1:
-			detector_description_arr[wo] = '2xfm:scaler3_cts3.A'
-		wo = -1
-		if '2xfm:mcs:mca10.VAL' in detector_description_arr:
-			wo = detector_description_arr.index('2xfm:mcs:mca10.VAL')
-		if wo != -1:
-			detector_description_arr[wo] = '2xfm:scaler3_cts3.B'
-		wo = -1
-		if '2xfm:mcs:mca11.VAL' in detector_description_arr:
-			wo = detector_description_arr.index('2xfm:mcs:mca11.VAL')
-		if wo != -1:
-			detector_description_arr[wo] = '2xfm:scaler3_cts3.C'
-		wo = -1
-		if '2xfm:mcs:mca12.VAL' in detector_description_arr:
-			wo = detector_description_arr.index('2xfm:mcs:mca12.VAL')
-		if wo != -1:
-			detector_description_arr[wo] = '2xfm:scaler3_cts3.D'
-		wo = -1
-		if '2xfm:mcs:mca13.VAL' in detector_description_arr:
-			wo = detector_description_arr.index('2xfm:mcs:mca13.VAL')
-		if wo != -1:
-			detector_description_arr[wo] = '2xfm:scaler3_cts4.A'
-		wo = -1
-		if '2xfm:mcs:mca14.VAL' in detector_description_arr:
-			wo = detector_description_arr.index('2xfm:mcs:mca14.VAL')
-		if wo != -1:
-			detector_description_arr[wo] = '2xfm:scaler3_cts4.B'
-		wo = -1
-		if '2xfm:mcs:mca15.VAL' in detector_description_arr:
-			wo = detector_description_arr.index('2xfm:mcs:mca15.VAL')
-		if wo != -1:
-			detector_description_arr[wo] = '2xfm:scaler3_cts4.C'
-		wo = -1
-		if '2xfm:mcs:mca16.VAL' in detector_description_arr:
-			wo = detector_description_arr.index('2xfm:mcs:mca16.VAL')
-		if wo != -1:
-			detector_description_arr[wo] = '2xfm:scaler3_cts4.D'
-		wo = -1
-		if '2xfm:mcs:mca17.VAL' in detector_description_arr:
-			wo = detector_description_arr.index('2xfm:mcs:mca17.VAL')
-		if wo != -1:
-			detector_description_arr[wo] = '2xfm:scaler3_cts5.A'
-		wo = -1
-		if '2xfm:mcs:mca18.VAL' in detector_description_arr:
-			wo = detector_description_arr.index('2xfm:mcs:mca18.VAL')
-		if wo != -1:
-			detector_description_arr[wo] = '2xfm:scaler3_cts5.B'
-		wo = -1
-		if '2xfm:mcs:mca19.VAL' in detector_description_arr:
-			wo = detector_description_arr.index('2xfm:mcs:mca19.VAL')
-		if wo != -1:
-			detector_description_arr[wo] = '2xfm:scaler3_cts5.C'
-		wo = -1
-		if '2xfm:mcs:mca20.VAL' in detector_description_arr:
-			wo = detector_description_arr.index('2xfm:mcs:mca20.VAL')
-		if wo != -1:
-			detector_description_arr[wo] = '2xfm:scaler3_cts5.D'
-		'''
-		n_ev = 0
-		n_rows = y_pixels
-		n_cols = x_pixels
-	
-		mca_arr = 0
-		# now fill in XRF information	 
+		scan.detector_description_arr.append('dxpXMAP2xfm3:dxp1:OutputCountRate')
+		scan.detector_description_arr.append('dxpXMAP2xfm3:dxp2:OutputCountRate')
+		scan.detector_description_arr.append('dxpXMAP2xfm3:dxp3:OutputCountRate')
+		scan.detector_description_arr.append('dxpXMAP2xfm3:dxp4:OutputCountRate')
 
-		new_detector_description_arr = ['dxpXMAP2xfm3:mca1.ELTM', 'dxpXMAP2xfm3:mca2.ELTM', 'dxpXMAP2xfm3:mca3.ELTM', 'dxpXMAP2xfm3:mca4.ELTM']
-		old_detector_description_arr = detector_description_arr
-		old_detector_arr = detector_arr
-		detector_description_arr = old_detector_description_arr + new_detector_description_arr
-		detector_arr = np.ones((x_pixels, y_pixels, len(detector_description_arr)))
-		detector_arr[:, :, 0:len(old_detector_description_arr)] = old_detector_arr[:, :, 0:len(old_detector_description_arr)]	 
+		scan.detector_arr = np.append(scan.detector_arr, np.ones((x_pixels, y_pixels, 16)), 2)
 
 		file_path = os.path.join(path, os.path.join('flyXRF.h5', header))
 		hdf_files = glob.glob(file_path + '*.h5')
@@ -1729,25 +1624,25 @@ class mda:
 			scan.mca_arr[0:this_x_pixels, 0:this_y_pixels, j_temp*100:(99+j_temp*100+1)] = data[0:this_x_pixels, 0:this_y_pixels, j_temp*100:(99+j_temp*100+1)]
 		del data
 		#scan.mca_arr = scan.mca_arr.astype(float)
+		det_desc_arr_len = len(scan.detector_description_arr)
+		scan.detector_arr[0:this_x_pixels, 0:this_y_pixels, det_desc_arr_len-16] = livetime[0:this_x_pixels, 0:this_y_pixels, 0]
+		scan.detector_arr[0:this_x_pixels, 0:this_y_pixels, det_desc_arr_len-15] = livetime[0:this_x_pixels, 0:this_y_pixels, 1]
+		scan.detector_arr[0:this_x_pixels, 0:this_y_pixels, det_desc_arr_len-14] = livetime[0:this_x_pixels, 0:this_y_pixels, 2]
+		scan.detector_arr[0:this_x_pixels, 0:this_y_pixels, det_desc_arr_len-13] = livetime[0:this_x_pixels, 0:this_y_pixels, 3]
 
-		detector_arr[0:this_x_pixels, 0:this_y_pixels, len(detector_description_arr)-16] = livetime[0:this_x_pixels, 0:this_y_pixels, 0]
-		detector_arr[0:this_x_pixels, 0:this_y_pixels, len(detector_description_arr)-15] = livetime[0:this_x_pixels, 0:this_y_pixels, 1]
-		detector_arr[0:this_x_pixels, 0:this_y_pixels, len(detector_description_arr)-14] = livetime[0:this_x_pixels, 0:this_y_pixels, 2]
-		detector_arr[0:this_x_pixels, 0:this_y_pixels, len(detector_description_arr)-13] = livetime[0:this_x_pixels, 0:this_y_pixels, 3]
+		scan.detector_arr[0:this_x_pixels, 0:this_y_pixels, det_desc_arr_len-12] = realtime[0:this_x_pixels, 0:this_y_pixels, 0]
+		scan.detector_arr[0:this_x_pixels, 0:this_y_pixels, det_desc_arr_len-11] = realtime[0:this_x_pixels, 0:this_y_pixels, 1]
+		scan.detector_arr[0:this_x_pixels, 0:this_y_pixels, det_desc_arr_len-10] = realtime[0:this_x_pixels, 0:this_y_pixels, 2]
+		scan.detector_arr[0:this_x_pixels, 0:this_y_pixels, det_desc_arr_len-9] = realtime[0:this_x_pixels, 0:this_y_pixels, 3]
 
-		detector_arr[0:this_x_pixels, 0:this_y_pixels, len(detector_description_arr)-12] = realtime[0:this_x_pixels, 0:this_y_pixels, 0]
-		detector_arr[0:this_x_pixels, 0:this_y_pixels, len(detector_description_arr)-11] = realtime[0:this_x_pixels, 0:this_y_pixels, 1]
-		detector_arr[0:this_x_pixels, 0:this_y_pixels, len(detector_description_arr)-10] = realtime[0:this_x_pixels, 0:this_y_pixels, 2]
-		detector_arr[0:this_x_pixels, 0:this_y_pixels, len(detector_description_arr)-9] = realtime[0:this_x_pixels, 0:this_y_pixels, 3]
+		scan.detector_arr[0:this_x_pixels, 0:this_y_pixels, det_desc_arr_len-8] = inputcounts[0:this_x_pixels, 0:this_y_pixels, 0] / livetime[0:this_x_pixels, 0:this_y_pixels, 0]
+		scan.detector_arr[0:this_x_pixels, 0:this_y_pixels, det_desc_arr_len-7] = inputcounts[0:this_x_pixels, 0:this_y_pixels, 1] / livetime[0:this_x_pixels, 0:this_y_pixels, 1]
+		scan.detector_arr[0:this_x_pixels, 0:this_y_pixels, det_desc_arr_len-6] = inputcounts[0:this_x_pixels, 0:this_y_pixels, 2] / livetime[0:this_x_pixels, 0:this_y_pixels, 2]
+		scan.detector_arr[0:this_x_pixels, 0:this_y_pixels, det_desc_arr_len-5] = inputcounts[0:this_x_pixels, 0:this_y_pixels, 3] / livetime[0:this_x_pixels, 0:this_y_pixels, 3]
 
-		detector_arr[0:this_x_pixels, 0:this_y_pixels, len(detector_description_arr)-8] = inputcounts[0:this_x_pixels, 0:this_y_pixels, 0] / livetime[0:this_x_pixels, 0:this_y_pixels, 0]
-		detector_arr[0:this_x_pixels, 0:this_y_pixels, len(detector_description_arr)-7] = inputcounts[0:this_x_pixels, 0:this_y_pixels, 1] / livetime[0:this_x_pixels, 0:this_y_pixels, 1]
-		detector_arr[0:this_x_pixels, 0:this_y_pixels, len(detector_description_arr)-6] = inputcounts[0:this_x_pixels, 0:this_y_pixels, 2] / livetime[0:this_x_pixels, 0:this_y_pixels, 2]
-		detector_arr[0:this_x_pixels, 0:this_y_pixels, len(detector_description_arr)-5] = inputcounts[0:this_x_pixels, 0:this_y_pixels, 3] / livetime[0:this_x_pixels, 0:this_y_pixels, 3]
-
-		detector_arr[0:this_x_pixels, 0:this_y_pixels, len(detector_description_arr)-4] = outputcounts[0:this_x_pixels, 0:this_y_pixels, 0] / realtime[0:this_x_pixels, 0:this_y_pixels, 0]
-		detector_arr[0:this_x_pixels, 0:this_y_pixels, len(detector_description_arr)-3] = outputcounts[0:this_x_pixels, 0:this_y_pixels, 1] / realtime[0:this_x_pixels, 0:this_y_pixels, 1]
-		detector_arr[0:this_x_pixels, 0:this_y_pixels, len(detector_description_arr)-2] = outputcounts[0:this_x_pixels, 0:this_y_pixels, 2] / realtime[0:this_x_pixels, 0:this_y_pixels, 2]
-		detector_arr[0:this_x_pixels, 0:this_y_pixels, len(detector_description_arr)-1] = outputcounts[0:this_x_pixels, 0:this_y_pixels, 3] / realtime[0:this_x_pixels, 0:this_y_pixels, 3]
+		scan.detector_arr[0:this_x_pixels, 0:this_y_pixels, det_desc_arr_len-4] = outputcounts[0:this_x_pixels, 0:this_y_pixels, 0] / realtime[0:this_x_pixels, 0:this_y_pixels, 0]
+		scan.detector_arr[0:this_x_pixels, 0:this_y_pixels, det_desc_arr_len-3] = outputcounts[0:this_x_pixels, 0:this_y_pixels, 1] / realtime[0:this_x_pixels, 0:this_y_pixels, 1]
+		scan.detector_arr[0:this_x_pixels, 0:this_y_pixels, det_desc_arr_len-2] = outputcounts[0:this_x_pixels, 0:this_y_pixels, 2] / realtime[0:this_x_pixels, 0:this_y_pixels, 2]
+		scan.detector_arr[0:this_x_pixels, 0:this_y_pixels, det_desc_arr_len-1] = outputcounts[0:this_x_pixels, 0:this_y_pixels, 3] / realtime[0:this_x_pixels, 0:this_y_pixels, 3]
 
 		return scan
