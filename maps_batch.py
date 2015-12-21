@@ -1083,7 +1083,8 @@ def maps_batch(wdir, option_a_roi_plus, option_b_extract_spectra, option_c_per_p
 		logger.info(' we are now going to create the maps_generate_average...')
 		n_channels = 2048
 		if option_b_extract_spectra > 0:
-			energy_channels = spectra[0].calib['off'] + spectra[0].calib['lin'] * np.arange((n_channels), dtype=np.float)
+			energy_channels = None
+			#energy_channels = spectra[0].calib['off'] + spectra[0].calib['lin'] * np.arange((n_channels), dtype=np.float)
 		else:
 			energy_channels = None
 		makemaps = maps_generate_img_dat.analyze(logger, info_elements, main_dict, maps_conf)
