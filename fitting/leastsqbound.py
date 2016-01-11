@@ -100,7 +100,7 @@ def leastsqbound(func, x0, bounds, args=(), **kw):
 	if full:
 		xi,cov_xi,infodic,mesg,ier = r
 		xe = internal2external(xi,bounds)
-		if cov_xi:
+		if not cov_xi == None:
 			cov_xe = i2e_cov_x(xi,bounds,cov_xi)
 		else:
 			cov_xe = None

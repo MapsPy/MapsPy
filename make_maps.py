@@ -90,8 +90,8 @@ def main(main_dict, logger, force_fit=0, no_fit=False):
 	max_no_processors_lines = main_dict['max_no_processors_lines']
 	if max_no_processors_lines == -1:
 		max_no_processors_lines = multiprocessing.cpu_count() - 1
-		logger.info('cpu_count() = %d\n' % multiprocessing.cpu_count())
-		logger.info('max_no_processors_lines to fit lines %s', max_no_processors_lines)
+	logger.info('cpu_count() = %d\n' % multiprocessing.cpu_count())
+	logger.info('max_no_processors_lines to fit lines %s', max_no_processors_lines)
 
 	total_number_detectors = main_dict['total_number_detectors']
 	quick_dirty = main_dict['quick_dirty']

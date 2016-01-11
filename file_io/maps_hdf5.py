@@ -511,7 +511,7 @@ class h5:
 			entryname = 'extra_pvs'
 			comment = 'additional process variables saved in the original dataset'
 			data = []
-			self.logger.debug('extra_pv: %s', extra_pv)
+			#self.logger.debug('extra_pv: %s', extra_pv)
 			if extra_pv_order:
 				for k in extra_pv_order:
 					v = extra_pv[k]

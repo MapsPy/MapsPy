@@ -93,9 +93,7 @@ def rebin(a, *args):
 	return eval(''.join(evList))
 
 # ----------------------------------------------------------------------
-def fit_line_threaded(log_name, i_fit, data_line, output_dir, n_rows,  matrix, spectral_binning, elt_line,
-				values_line, bkgnd_line, tfy_line,
-				info_elements, fitp, old_fitp, add_pars, keywords, add_matrixfit_pars, xrf_bin, calib):
+def fit_line_threaded(log_name, i_fit, data_line, n_rows,  matrix, spectral_binning, elt_line, fitp, old_fitp, keywords, xrf_bin, calib):
 
 	logger = logging.getLogger(log_name)
 	fHandler = logging.FileHandler(log_name)
@@ -108,8 +106,7 @@ def fit_line_threaded(log_name, i_fit, data_line, output_dir, n_rows,  matrix, s
 
 	fit = maps_analyze.analyze(logger)
 	fitted_line, ka_line, l_line, bkground_line, values_line, bkgnd_line, tfy_line, xmin, xmax = fit.fit_line(data_line,
-						output_dir, n_rows, matrix, spectral_binning, elt_line, values_line, bkgnd_line, tfy_line, 
-						info_elements, fitp, old_fitp, add_pars, keywords, add_matrixfit_pars, xrf_bin, calib)
+						n_rows, matrix, spectral_binning, elt_line, fitp, old_fitp, keywords, xrf_bin, calib)
 
 	return [fitted_line, ka_line, l_line, bkground_line, values_line, bkgnd_line, tfy_line, xmin, xmax]
 
@@ -877,10 +874,11 @@ class analyze:
 		ert1_ = dmaps_set[:, :, dmaps_names.index('ERT1')]
 		icr1_ = dmaps_set[:, :, dmaps_names.index('ICR1')]
 		ocr1_ = dmaps_set[:, :, dmaps_names.index('OCR1')]
-		#if ert1_[0] > 0 and icr1_[0] > 0 and ocr1_[0] > 0:
 		if ert1_.sum() > 0 and icr1_.sum() > 0 and ocr1_.sum() > 0:
-			dmaps_set[:, :, dmaps_names.index('ELT1')] = dmaps_set[:, :, dmaps_names.index('ERT1')] * dmaps_set[:, :, dmaps_names.index('OCR1')] / dmaps_set[:, :, dmaps_names.index('ICR1')]
-			# ICR = Input Counts/Trigger Filter Livetime OCR = Output Counts / Real Time Energy Filter Livetime = Real Time * OCR/ICR.
+			#dmaps_set[:, :, dmaps_names.index('ELT1')] = dmaps_set[:, :, dmaps_names.index('ERT1')] * dmaps_set[:, :, dmaps_names.index('OCR1')] / dmaps_set[:, :, dmaps_names.index('ICR1')]
+			elt1_ = ert1_ * ocr1_ / icr1_
+			dmaps_set[:, :, dmaps_names.index('ELT1')] = elt1_[:]
+		#	# ICR = Input Counts/Trigger Filter Livetime OCR = Output Counts / Real Time Energy Filter Livetime = Real Time * OCR/ICR.
 
 		elt1_arr = []
 		if 'ELT1' in dmaps_names:
@@ -1216,7 +1214,12 @@ class analyze:
 			ka_line = np.zeros((self.max_spec_channels, n_rows))
 			l_line = np.zeros((self.max_spec_channels, n_rows))
 			bkground_line = np.zeros((self.max_spec_channels, n_rows))
-
+			'''
+			fitted_line2 = np.zeros((self.max_spec_channels, n_rows))
+			ka_line2 = np.zeros((self.max_spec_channels, n_rows))
+			l_line2 = np.zeros((self.max_spec_channels, n_rows))
+			bkground_line2 = np.zeros((self.max_spec_channels, n_rows))
+			'''
 			fitted_temp = np.zeros((self.max_spec_channels, no_detectors + 1))
 			Ka_temp = np.zeros((self.max_spec_channels, no_detectors + 1))
 			l_temp = np.zeros((self.max_spec_channels, no_detectors + 1))
@@ -1224,7 +1227,7 @@ class analyze:
 			raw_temp = np.zeros((self.max_spec_channels, no_detectors + 1))
 
 			add_plot_spectra = np.zeros((self.max_spec_channels, 12, n_rows), dtype=np.float32)
-			temp_add_plot_spectra = np.zeros((self.max_spec_channels, 12, n_rows), dtype=np.float32)
+			#temp_add_plot_spectra = np.zeros((self.max_spec_channels, 12, n_rows), dtype=np.float32)
 			add_plot_names = ['fitted', 'K alpha', 'background', 'K beta', 'L lines', 'M lines', 'step', 'tail', 'elastic', 'compton', 'pileup', 'escape']
 
 			values = np.zeros((n_cols, n_rows, fitp.g.n_fitp), dtype=np.float32)
@@ -1233,10 +1236,14 @@ class analyze:
 			bkgnd_line = np.zeros((n_rows), dtype=np.float32)
 			tfy = np.zeros((n_cols, n_rows), dtype=np.float32)
 			tfy_line = np.zeros((n_rows), dtype=np.float32)
-			sigma = np.zeros((n_cols, n_rows, fitp.g.n_fitp), dtype=np.float32)
+			#sigma = np.zeros((n_cols, n_rows, fitp.g.n_fitp), dtype=np.float32)
 			elt_line = np.zeros((n_rows), dtype=np.float32)
-
-			test = np.zeros(self.max_spec_channels)
+			'''
+			values_line2 = np.zeros((n_rows, fitp.g.n_fitp), dtype=np.float32)
+			bkgnd_line2 = np.zeros((n_rows), dtype=np.float32)
+			tfy_line2 = np.zeros((n_rows), dtype=np.float32)
+			'''
+			#test = np.zeros(self.max_spec_channels)
 
 			which_dets_to_use = np.where(make_maps_conf.use_det == 1)
 			for bb in range(no_detectors):
@@ -1312,24 +1319,17 @@ class analyze:
 					pool = multiprocessing.Pool(no_processors_to_use)
 
 					count = n_cols
-					#count = 1
+
 					data_lines = np.zeros((self.main_dict['max_spec_channels'],	n_rows, n_cols))
 					for i_fit in range(n_cols):
 						for jj in range(n_rows):
 							data_lines[0:scan.mca_arr[i_fit, jj, :].size, jj, i_fit] = scan.mca_arr[i_fit, jj, :]
 
-					output_dir = self.main_dict['output_dir']
-
 					self.logger.info('Started fitting')
 
 					results_pool = []
-					# start = 29
-					# count = 4
-					# for i_fit in range(start,33):
 					start = 0
 					for i_fit in range(count):
-						data_line = data_lines[:, :, i_fit]
-						#self.logger.info('fitting row number ', i_fit, ' of ', count)
 						elt_line[:] = elt1_arr[i_fit, :]
 
 						fitp.s.val[:]=old_fitp.s.val[:]
@@ -1344,11 +1344,10 @@ class analyze:
 									continue
 
 						for jj in range(n_rows):
-							raw_temp[:, kk] = raw_temp[:, kk] + data_line[:, jj]
+							raw_temp[:, kk] = raw_temp[:, kk] + data_lines[:, jj, i_fit]
 
-						results_pool.append(pool.apply_async(fit_line_threaded, (self.logger.name, i_fit, data_line,
-										output_dir, n_rows, matrix, spectral_binning, elt_line, values_line, bkgnd_line, tfy_line,
-										info_elements, fitp, old_fitp, fitp.add_pars, keywords, add_matrixfit_pars, xrf_bin, calib)) )
+						results_pool.append(pool.apply_async(fit_line_threaded, (self.logger.name, i_fit, data_lines[:,:,i_fit],
+										n_rows, matrix, spectral_binning, elt1_arr[i_fit, :], fitp, old_fitp, keywords, xrf_bin, calib)) )
 					#self.logger.info( '------ Waiting for fitting to finish ------')
 					#del data_lines
 					pool.close()
@@ -1360,13 +1359,13 @@ class analyze:
 					for iline in range(count):
 						results_line = results[iline]
 						#self.logger.info( 'results_line=', results_line)
-						fitted_line = results_line[0]
-						ka_line = results_line[1]
-						l_line = results_line[2]
-						bkground_line = results_line[3]
-						values_line = results_line[4]
-						bkgnd_line = results_line[5]
-						tfy_line = results_line[6]
+						fitted_line[...] = results_line[0][...]
+						ka_line[...] = results_line[1][...]
+						l_line[...] = results_line[2][...]
+						bkground_line[...] = results_line[3][...]
+						values_line[...] = results_line[4][...]
+						bkgnd_line[...] = results_line[5][...]
+						tfy_line[...] = results_line[6][...]
 						xmin = results_line[7]
 						xmax = results_line[8]
 						values[start+iline, :, :] = values_line[:, :]
@@ -1381,7 +1380,12 @@ class analyze:
 							Ka_temp[xmin:xmax+1, kk] = Ka_temp[xmin:xmax+1, kk] + ka_line[xmin:xmax+1, jj]
 							l_temp[xmin:xmax+1, kk] = l_temp[xmin:xmax+1, kk] + l_line[xmin:xmax+1, jj]
 							bkground_temp[xmin:xmax+1, kk] = bkground_temp[xmin:xmax+1, kk] + bkground_line[xmin:xmax+1, jj]
-							#raw_temp[:, kk] = raw_temp[:, kk] + data_line[:, jj]
+
+						#import matplotlib.pyplot as plt
+						#plt.plot(range(0,2048), ka_line[:,0])
+						##plt.semilogy(range(70,500), ka_line[70:500])
+						#plt.show()
+						#exit(1)
 
 					self.logger.debug('before %s', thisdata.energy_fit[0, kk])
 
@@ -1391,19 +1395,7 @@ class analyze:
 
 					self.logger.debug('after %s', thisdata.energy_fit[0, kk])
 
-					'''
-					import matplotlib.pyplot as plt
-					plt.plot(x,test)
-					#plt.plot(x,y)
-					#plt.semilogy(x,y+0.1)
-					#plt.show()
-					#plt.semilogy(x,fit+0.1)
-					plt.show()
-					'''
-
 				else:
-					#count = 4
-					#for i_fit in range(29,33):    #Used for testing
 					count = n_cols
 					for i_fit in range(count):
 
@@ -1424,11 +1416,8 @@ class analyze:
 							data_line[0:scan.mca_arr[i_fit, jj, :].size, jj] = scan.mca_arr[i_fit, jj, :]
 						elt_line[:] = elt1_arr[i_fit, :]
 
-						output_dir = self.main_dict['output_dir']
-
 						fitted_line, ka_line, l_line, bkground_line, values_line, bkgnd_line, tfy_line, xmin, xmax = fit.fit_line(data_line,
-												output_dir, n_rows, matrix, spectral_binning, elt_line, values_line, bkgnd_line, tfy_line,
-												info_elements, fitp, old_fitp, fitp.add_pars, keywords, add_matrixfit_pars, xrf_bin, calib)
+												n_rows, matrix, spectral_binning, elt_line, fitp, old_fitp, keywords, xrf_bin, calib)
 
 						if fitted_line == None:
 							continue

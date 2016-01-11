@@ -1617,12 +1617,18 @@ class mda:
 
 		# create mca_arr as int_arr to save memory. conversion int to flt will still take the combined memopry
 		#  allocation FOR both,	but is probably a bit better than before
-		scan.mca_arr = np.zeros((x_pixels, y_pixels, 2000), dtype=np.int)  # nxmx2000 array  ( 2000 energies)
+		#scan.mca_arr = np.zeros((x_pixels, y_pixels, 2000), dtype=np.int)  # nxmx2000 array  ( 2000 energies)
+
+		scan.mca_arr = np.zeros((x_pixels, y_pixels, 2000))  # nxmx2000 array  ( 2000 energies)
+
 		#scan.mca_arr = self.mp_array_to_np_array(x_pixels, y_pixels, 2000, None)
 
-		for j_temp in range(20):
-			scan.mca_arr[0:this_x_pixels, 0:this_y_pixels, j_temp*100:(99+j_temp*100+1)] = data[0:this_x_pixels, 0:this_y_pixels, j_temp*100:(99+j_temp*100+1)]
+		scan.mca_arr[0:this_x_pixels, 0:this_y_pixels, 0:2000] = data[0:this_x_pixels, 0:this_y_pixels, 0:2000]
+
+		#for j_temp in range(20):
+		#	scan.mca_arr[0:this_x_pixels, 0:this_y_pixels, j_temp*100:(99+j_temp*100+1)] = data[0:this_x_pixels, 0:this_y_pixels, j_temp*100:(99+j_temp*100+1)]
 		del data
+
 		#scan.mca_arr = scan.mca_arr.astype(float)
 		det_desc_arr_len = len(scan.detector_description_arr)
 		scan.detector_arr[0:this_x_pixels, 0:this_y_pixels, det_desc_arr_len-16] = livetime[0:this_x_pixels, 0:this_y_pixels, 0]
