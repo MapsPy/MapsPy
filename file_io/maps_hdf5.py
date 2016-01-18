@@ -842,7 +842,10 @@ class h5:
 			units = ['-' for x in range(XRFmaps_info.n_used_dmaps+XRFmaps_info.n_used_chan)]
 			self.logger.debug('len units = %s', len(units))
 			units[0:XRFmaps_info.n_used_dmaps] = XRFmaps_info.dmaps_units[:]
-			units[XRFmaps_info.n_used_dmaps:XRFmaps_info.n_used_dmaps + XRFmaps_info.n_used_chan] = XRFmaps_info.chan_units[: 2-drop_vtwo]
+			if type(XRFmaps_info.chan_units[0]) == tuple:
+				units[XRFmaps_info.n_used_dmaps:XRFmaps_info.n_used_dmaps + XRFmaps_info.n_used_chan] = XRFmaps_info.chan_units[: 2-drop_vtwo][0]
+			else:
+				units[XRFmaps_info.n_used_dmaps:XRFmaps_info.n_used_dmaps + XRFmaps_info.n_used_chan] = XRFmaps_info.chan_units[: 2-drop_vtwo]
 
 			names = ['' for x in range(XRFmaps_info.n_used_dmaps + XRFmaps_info.n_used_chan)]
 			names[0:XRFmaps_info.n_used_dmaps] = XRFmaps_info.dmaps_names[:]
