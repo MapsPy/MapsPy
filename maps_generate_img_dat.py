@@ -41,11 +41,9 @@ import logging
 import os
 import struct
 import matplotlib as mplot
-import sys
 import multiprocessing
 import csv
 import glob
-import traceback
 
 from file_io import maps_mda
 from file_io import maps_nc
@@ -96,12 +94,14 @@ def rebin(a, *args):
 def fit_line_threaded(log_name, i_fit, data_line, n_rows,  matrix, spectral_binning, elt_line, fitp, old_fitp, keywords, xrf_bin, calib):
 
 	logger = logging.getLogger(log_name)
+	'''
 	fHandler = logging.FileHandler(log_name)
 	logger.setLevel(logging.DEBUG)
 	fHandler.setLevel(logging.DEBUG)
 	formatter = logging.Formatter('%(asctime)s | %(levelname)s | PID[%(process)d] | %(funcName)s(): %(message)s')
 	fHandler.setFormatter(formatter)
 	logger.addHandler(fHandler)
+	'''
 	logger.info('fitting row number %s', i_fit)
 
 	fit = maps_analyze.analyze(logger)
@@ -1074,7 +1074,7 @@ class analyze:
 		maps_conf_chan_elstouse_names = []
 		for iel in range(len(elements_to_use)):
 			maps_conf_chan_elstouse_names.append(make_maps_conf.chan[elements_to_use[iel]].name)
-		self.logger.debug('maps_conf_chan_elstouse_names %s',  maps_conf_chan_elstouse_names)
+		self.logger.debug('maps_conf_chan_elstouse_names %s', maps_conf_chan_elstouse_names)
 
 		temp_fitp_use = fitp.s.use[np.amin(fitp.keywords.kele_pos):np.amax(fitp.keywords.mele_pos)+1]
 		temp_fitp_name = fitp.s.name[np.amin(fitp.keywords.kele_pos):np.amax(fitp.keywords.mele_pos)+1]
@@ -1416,6 +1416,8 @@ class analyze:
 							data_line[0:scan.mca_arr[i_fit, jj, :].size, jj] = scan.mca_arr[i_fit, jj, :]
 						elt_line[:] = elt1_arr[i_fit, :]
 
+						fitp.s.val[:]=old_fitp.s.val[:]
+
 						fitted_line, ka_line, l_line, bkground_line, values_line, bkgnd_line, tfy_line, xmin, xmax = fit.fit_line(data_line,
 												n_rows, matrix, spectral_binning, elt_line, fitp, old_fitp, keywords, xrf_bin, calib)
 
@@ -1551,10 +1553,10 @@ class analyze:
 		#begin pca part:
 		if self.pca > 0:
 			seconds_PCA_start = tm.time()
-			input_arr = np.zeros((n_cols*n_rows, n_channels))
+			input_arr = np.zeros((n_cols * n_rows, n_channels))
 			l = 0
 			for i_x_pixels in range(n_cols):
-				for i_y_pixels in range(n_rows-1):
+				for i_y_pixels in range(n_rows - 1):
 					input_arr[l, :] = scan.mca_arr[i_x_pixels, i_y_pixels, :]
 					l = l + 1
 
@@ -1575,22 +1577,22 @@ class analyze:
 				# create a group for maps to hold the data
 				pcaGrp = f.create_group('PCA')
 
-				ds_data = pcaGrp.create_dataset('n_channels', data = n_channels)
-				ds_data = pcaGrp.create_dataset('n_cols', data = n_cols)
-				ds_data = pcaGrp.create_dataset('n_rows', data = n_rows)
+				ds_data = pcaGrp.create_dataset('n_channels', data=n_channels)
+				ds_data = pcaGrp.create_dataset('n_cols', data=n_cols)
+				ds_data = pcaGrp.create_dataset('n_rows', data=n_rows)
 				data = long(len(scan.detector_description_arr))
-				ds_data = pcaGrp.create_dataset('n_detector_description', data = data)
-				ds_data = pcaGrp.create_dataset('eigen_vec', data = eigen_values_vec)
-				ds_data = pcaGrp.create_dataset('U', data = U, compression='gzip', compression_opts=7)
-				ds_data = pcaGrp.create_dataset('V', data = V, compression='gzip', compression_opts=7)
-				ds_data = pcaGrp.create_dataset('input_arr', data = input_arr, compression='gzip', compression_opts=7)
-				ds_data = pcaGrp.create_dataset('scan_time_stamp', data = scan.scan_time_stamp)
-				ds_data = pcaGrp.create_dataset('y_coord_arr', data = scan.y_coord_arr)
-				ds_data = pcaGrp.create_dataset('x_coord_arr', data = scan.x_coord_arr)
-				ds_data = pcaGrp.create_dataset('x_pixels', data = scan.x_pixels)
-				ds_data = pcaGrp.create_dataset('y_pixels', data = scan.y_pixels)
-				ds_data = pcaGrp.create_dataset('detector_description_arr', data = scan.detector_description_arr)
-				ds_data = pcaGrp.create_dataset('detector_arr', data = scan.detector_arr)
+				ds_data = pcaGrp.create_dataset('n_detector_description', data=data)
+				ds_data = pcaGrp.create_dataset('eigen_vec', data=eigen_values_vec)
+				ds_data = pcaGrp.create_dataset('U', data=U, compression='gzip', compression_opts=7)
+				ds_data = pcaGrp.create_dataset('V', data=V, compression='gzip', compression_opts=7)
+				ds_data = pcaGrp.create_dataset('input_arr', data=input_arr, compression='gzip', compression_opts=7)
+				ds_data = pcaGrp.create_dataset('scan_time_stamp', data=scan.scan_time_stamp)
+				ds_data = pcaGrp.create_dataset('y_coord_arr', data=scan.y_coord_arr)
+				ds_data = pcaGrp.create_dataset('x_coord_arr', data=scan.x_coord_arr)
+				ds_data = pcaGrp.create_dataset('x_pixels', data=scan.x_pixels)
+				ds_data = pcaGrp.create_dataset('y_pixels', data=scan.y_pixels)
+				ds_data = pcaGrp.create_dataset('detector_description_arr', data=scan.detector_description_arr)
+				ds_data = pcaGrp.create_dataset('detector_arr', data=scan.detector_arr)
 
 				f.close()
 

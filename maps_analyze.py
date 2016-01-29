@@ -1074,7 +1074,7 @@ class analyze:
 		covar = None
 		perror = None
 		# set the covariance matrix 
-		if (n is not None) and (fjac is not None) and (ipvt is not None):
+		if (not n == None) and (not fjac == None) and (not ipvt == None):
 			sz = fjac.shape
 			if (n > 0) and (sz[0] >= n) and (sz[1] >= n) and (len(ipvt) >= n):
 

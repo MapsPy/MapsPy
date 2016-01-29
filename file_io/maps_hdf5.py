@@ -37,7 +37,7 @@ import os
 import numpy as np
 import h5py 
 import time
-from file_util import open_file_with_retry, call_function_with_retry
+from file_util import call_function_with_retry
 
 import maps_definitions
 import maps_mda
@@ -425,7 +425,7 @@ class h5:
 			nbs1832Grp = mmcGrp.create_group('nbs1832')
 		else:
 			nbs1832Grp = mmcGrp['nbs1832']
-		
+		element_standard
 		substructure = thisdata.make_maps_conf.nbs32  
 		entryname = 'name'
 		data = substructure.name
@@ -459,7 +459,7 @@ class h5:
 			nbs1833Grp = mmcGrp.create_group('nbs1833')
 		else:
 			nbs1833Grp = mmcGrp['nbs1833']
-				   
+
 		substructure = thisdata.make_maps_conf.nbs33  
 		entryname = 'name'
 		data = substructure.name
@@ -490,9 +490,43 @@ class h5:
 		ds_data = nbs1833Grp.create_dataset(entryname, data = data)
 		'''
 
-		entryname = 'e_cal'
+		if 'element_standard' not in mmcGrp:
+			elStandardGrp = mmcGrp.create_group('element_standard')
+		else:
+			elStandardGrp = mmcGrp['element_standard']
+
+		substructure = thisdata.make_maps_conf.element_standard
+		entryname = 'name'
+		data = substructure.name
+		ds_data = elStandardGrp.create_dataset(entryname, data=data)
+		entryname = 'date'
+		data = substructure.date
+		ds_data = elStandardGrp.create_dataset(entryname, data=data)
+		entryname = 'live_time'
+		data = substructure.live_time
+		ds_data = elStandardGrp.create_dataset(entryname, data=data)
+		entryname = 'real_time'
+		data = substructure.real_time
+		ds_data = elStandardGrp.create_dataset(entryname, data=data)
+		entryname = 'current'
+		data = substructure.current
+		ds_data = elStandardGrp.create_dataset(entryname, data=data)
+		entryname = 'us_ic'
+		data = substructure.us_ic
+		ds_data = elStandardGrp.create_dataset(entryname, data=data)
+		entryname = 'ds_ic'
+		data = substructure.ds_ic
+		ds_data = elStandardGrp.create_dataset(entryname, data=data)
+		entryname = 'us_amp'
+		data = substructure.us_amp
+		ds_data = elStandardGrp.create_dataset(entryname, data=data)
+		entryname = 'ds_amp'
+		data = substructure.ds_amp
+		ds_data = elStandardGrp.create_dataset(entryname, data=data)
+
+		entryname = 'axo_e_cal'
 		data = np.transpose(thisdata.make_maps_conf.e_cal)
-		ds_data = mmcGrp.create_dataset(entryname, data = data)  
+		ds_data = mmcGrp.create_dataset(entryname, data=data)
 		'''
 		if thisdata.version >= 9 :
 			entryname = 'axo_e_cal'
@@ -595,7 +629,7 @@ class h5:
 		XRFmaps_info = maps_def.define_xrfmaps_info(n_cols, n_rows, dataset_size,
 													n_channels, n_channels, no_detectors, 
 													n_used_chan, n_used_dmaps, 
-													make_maps_conf, version = 9)  
+													make_maps_conf, version=9)
 
 		XRFmaps_info.n_ev = n_channels
 		XRFmaps_info.n_energy = n_channels

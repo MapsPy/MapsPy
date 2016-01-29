@@ -51,13 +51,8 @@ import logging
 def mp_make_maps(log_name, info_elements, main_dict, maps_conf, header, mdafilename, this_detector, use_fit, total_number_detectors,
 				quick_dirty, nnls, xrf_bin, max_no_processors_lines):
 	logger = logging.getLogger(log_name)
-	fHandler = logging.FileHandler(log_name)
-	logger.setLevel(logging.DEBUG)
-	fHandler.setLevel(logging.DEBUG)
-	formatter = logging.Formatter('%(asctime)s | %(levelname)s | PID[%(process)d] | %(funcName)s(): %(message)s')
-	fHandler.setFormatter(formatter)
-	logger.addHandler(fHandler)
 	try:
+		logger.debug("Starting processing file %s , detector %d of %d", mdafilename, this_detector, total_number_detectors)
 		makemaps = maps_generate_img_dat.analyze(logger, info_elements, main_dict, maps_conf, beamline=main_dict['beamline'], use_fit=use_fit)
 		makemaps.generate_img_dat_threaded(header, mdafilename, this_detector, total_number_detectors, quick_dirty, nnls, max_no_processors_lines, xrf_bin)
 	except:
@@ -85,8 +80,8 @@ def main(main_dict, logger, force_fit=0, no_fit=False):
 	me = maps_elements.maps_elements(logger)
 	info_elements = me.get_element_info()
 
-	maps_def = maps_definitions.maps_definitions(logger)
-	maps_conf = maps_def.set_maps_definitions(main_dict['beamline'], info_elements, version=main_dict['version'])
+	#maps_def = maps_definitions.maps_definitions(logger)
+	#maps_conf = maps_def.set_maps_definitions(main_dict['beamline'], info_elements, version=main_dict['version'])
 	max_no_processors_lines = main_dict['max_no_processors_lines']
 	if max_no_processors_lines == -1:
 		max_no_processors_lines = multiprocessing.cpu_count() - 1
@@ -137,11 +132,12 @@ def main(main_dict, logger, force_fit=0, no_fit=False):
 
 	# Calculate intermediate result
 
-	detector_number_arr = np.zeros((no_files), dtype=int)
 	#detector_number_arr_orig = np.zeros((no_files), dtype=int)
 	suffix = ''
 	for this_detector in range(main_dict['detector_to_start_with'], total_number_detectors):
 		# Look for override files in main.master_dir
+		maps_def = maps_definitions.maps_definitions(logger)
+		maps_conf = maps_def.set_maps_definitions(main_dict['beamline'], info_elements, version=main_dict['version'])
 		if total_number_detectors > 1:
 			suffix = str(this_detector)
 			logger.info('suff = %s', suffix)
@@ -163,21 +159,21 @@ def main(main_dict, logger, force_fit=0, no_fit=False):
 		# below is the routine for using matrix math to calculate elemental
 		# content with overlap removal
 		logger.info('now using matrix math for analysis; calculate intermediate solution for speed now')
-		kk = 0
 
 		temp_elementsuse = []
-		for item in maps_conf.chan: temp_elementsuse.append(item.use)
+		for item in maps_conf.chan:
+			temp_elementsuse.append(item.use)
 		elements_to_use = np.where(np.array(temp_elementsuse) == 1)
 		elements_to_use = elements_to_use[0]
 		if elements_to_use.size == 0:
 			return False
 
-		spectra = maps_def.define_spectra(main_dict['max_spec_channels'], main_dict['max_spectra'], main_dict['max_ICs'], mode='plot_spec')
+		#spectra = maps_def.define_spectra(main_dict['max_spec_channels'], main_dict['max_spectra'], main_dict['max_ICs'], mode='plot_spec')
 
 		fp = maps_fit_parameters.maps_fit_parameters(logger)
 		fitp = fp.define_fitp(main_dict['beamline'], info_elements)
 
-		element_pos = np.concatenate((fitp.keywords.kele_pos, fitp.keywords.lele_pos, fitp.keywords.mele_pos))
+		#element_pos = np.concatenate((fitp.keywords.kele_pos, fitp.keywords.lele_pos, fitp.keywords.mele_pos))
 
 		fitp.s.use[:] = 1
 		fitp.s.val[np.amin(fitp.keywords.kele_pos):np.amax(fitp.keywords.mele_pos)] = 1e-10
@@ -186,9 +182,9 @@ def main(main_dict, logger, force_fit=0, no_fit=False):
 
 		pileup_string = ''
 		test_string = ''
-		det = kk
+
 		try:
-			fitp, test_string, pileup_string = fp.read_fitp(maps_overridefile, info_elements, det)
+			fitp, test_string, pileup_string = fp.read_fitp(maps_overridefile, info_elements)
 			if fitp == None:
 				logger.error('ERROR - could not read override file: %s' + maps_overridefile)
 				return False
@@ -206,14 +202,14 @@ def main(main_dict, logger, force_fit=0, no_fit=False):
 		parinfo_fixed = np.zeros((n_pars), dtype=np.int)
 		parinfo_limited = np.zeros((n_pars, 2), dtype=np.int)
 		parinfo_limits = np.zeros((n_pars, 2))
-		parinfo_relstep = np.zeros((n_pars))
-		parinfo_mpmaxstep = np.zeros((n_pars))
-		parinfo_mpminstep = np.zeros((n_pars))
+		#parinfo_relstep = np.zeros((n_pars))
+		#parinfo_mpmaxstep = np.zeros((n_pars))
+		#parinfo_mpminstep = np.zeros((n_pars))
 
 		for i in range(n_pars):
 			parinfo_value[i] = float(fitp.s.val[i])
 			wo = np.where(fitp.keywords.peaks == i)
-			if wo[0].size > 0 :
+			if wo[0].size > 0:
 				if fitp.s.val[i] > 0:
 					parinfo_value[i] = np.log10(fitp.s.val[i])
 				else:
@@ -233,20 +229,28 @@ def main(main_dict, logger, force_fit=0, no_fit=False):
 		add_matrixfit_pars[4] = fitp.s.val[fitp.keywords.added_params[2]]
 		add_matrixfit_pars[5] = fitp.s.val[fitp.keywords.added_params[3]]
 
-		parinfo_prime_val = parinfo_value[np.amin(fitp.keywords.kele_pos):np.amax(fitp.keywords.mele_pos)+1]
-		parinfo_prime_val = np.concatenate((parinfo_prime_val, [parinfo_value[fitp.keywords.coherent_pos[1]], parinfo_value[fitp.keywords.compton_pos[2]]],
-											parinfo_value[fitp.keywords.added_params[4:13]], parinfo_value[fitp.keywords.added_params[1:4]]), axis=0)
-		parinfo_prime_fixed = parinfo_fixed[np.amin(fitp.keywords.kele_pos):np.amax(fitp.keywords.mele_pos)+1]
-		parinfo_prime_fixed = np.concatenate((parinfo_prime_fixed, [parinfo_fixed[fitp.keywords.coherent_pos[1]], parinfo_fixed[fitp.keywords.compton_pos[2]]],
-											  parinfo_fixed[fitp.keywords.added_params[4:13]], parinfo_fixed[fitp.keywords.added_params[1:4]]), axis=0)
+		parinfo_prime_val = parinfo_value[np.amin(fitp.keywords.kele_pos):np.amax(fitp.keywords.mele_pos) + 1]
+		parinfo_prime_val = np.concatenate((parinfo_prime_val,
+											[parinfo_value[fitp.keywords.coherent_pos[1]], parinfo_value[fitp.keywords.compton_pos[2]]],
+											parinfo_value[fitp.keywords.added_params[4:13]],
+											parinfo_value[fitp.keywords.added_params[1:4]]), axis=0)
+		parinfo_prime_fixed = parinfo_fixed[np.amin(fitp.keywords.kele_pos):np.amax(fitp.keywords.mele_pos) + 1]
+		parinfo_prime_fixed = np.concatenate((parinfo_prime_fixed,
+											[parinfo_fixed[fitp.keywords.coherent_pos[1]], parinfo_fixed[fitp.keywords.compton_pos[2]]],
+											parinfo_fixed[fitp.keywords.added_params[4:13]],
+											parinfo_fixed[fitp.keywords.added_params[1:4]]), axis=0)
 
-		parinfo_prime_limited = parinfo_limited[np.amin(fitp.keywords.kele_pos):np.amax(fitp.keywords.mele_pos)+1,:]
-		parinfo_prime_limited = np.concatenate((parinfo_prime_limited, [parinfo_limited[fitp.keywords.coherent_pos[1],:], parinfo_limited[fitp.keywords.compton_pos[2],:]],
-											  parinfo_limited[fitp.keywords.added_params[4:13],:], parinfo_limited[fitp.keywords.added_params[1:4],:]), axis=0)
+		parinfo_prime_limited = parinfo_limited[np.amin(fitp.keywords.kele_pos):np.amax(fitp.keywords.mele_pos) + 1, :]
+		parinfo_prime_limited = np.concatenate((parinfo_prime_limited,
+												[parinfo_limited[fitp.keywords.coherent_pos[1], :], parinfo_limited[fitp.keywords.compton_pos[2], :]],
+												parinfo_limited[fitp.keywords.added_params[4:13], :],
+												parinfo_limited[fitp.keywords.added_params[1:4], :]), axis=0)
 
-		parinfo_prime_limits = parinfo_limits[np.amin(fitp.keywords.kele_pos):np.amax(fitp.keywords.mele_pos)+1,:]
-		parinfo_prime_limits = np.concatenate((parinfo_prime_limits, [parinfo_limits[fitp.keywords.coherent_pos[1],:], parinfo_limits[fitp.keywords.compton_pos[2],:]],
-											  parinfo_limits[fitp.keywords.added_params[4:13],:], parinfo_limits[fitp.keywords.added_params[1:4],:]), axis=0)
+		parinfo_prime_limits = parinfo_limits[np.amin(fitp.keywords.kele_pos):np.amax(fitp.keywords.mele_pos) + 1, :]
+		parinfo_prime_limits = np.concatenate((parinfo_prime_limits,
+											[parinfo_limits[fitp.keywords.coherent_pos[1], :], parinfo_limits[fitp.keywords.compton_pos[2], :]],
+											parinfo_limits[fitp.keywords.added_params[4:13], :],
+											parinfo_limits[fitp.keywords.added_params[1:4], :]), axis=0)
 
 		fitp.keywords.use_this_par[:] = 0
 		fitp.keywords.use_this_par[np.where(parinfo_prime_fixed != 1)] = 1
@@ -270,9 +274,9 @@ def main(main_dict, logger, force_fit=0, no_fit=False):
 		for mm in range(wo_use_this_par.size):
 			fitmatrix_reduced[:, mm] = fitmatrix[:, wo_use_this_par[mm]]
 		mm = wo_use_this_par.size - 1
-		fitmatrix_reduced[:, mm] = fitmatrix[:, np.max(fitp.keywords.mele_pos) - np.min(fitp.keywords.kele_pos) + 1] # elastic scatter
-		mm = mm + 1
-		fitmatrix_reduced[:, mm] = fitmatrix[:, np.max(fitp.keywords.mele_pos) - np.min(fitp.keywords.kele_pos) + 2] # inelastic scatter
+		fitmatrix_reduced[:, mm] = fitmatrix[:, np.max(fitp.keywords.mele_pos) - np.min(fitp.keywords.kele_pos) + 1]  # elastic scatter
+		mm += 1
+		fitmatrix_reduced[:, mm] = fitmatrix[:, np.max(fitp.keywords.mele_pos) - np.min(fitp.keywords.kele_pos) + 2]  # inelastic scatter
 
 		if main_dict['nnls'] == 0:
 			logger.info('Calculating nnls. Start time: %s', time.time())
@@ -320,8 +324,6 @@ def main(main_dict, logger, force_fit=0, no_fit=False):
 
 		no_files = len(filenames)
 
-		detector_number_arr = map(str, detector_number_arr)
-
 		filepath = os.path.join(main_dict['output_dir'], 'mapsprocessinfo_' + '.txt')
 		text_file = open_file_with_retry(filepath, 'w')
 		text_file.write(time.strftime("%a, %d %b %Y %H:%M:%S"))
@@ -332,38 +334,37 @@ def main(main_dict, logger, force_fit=0, no_fit=False):
 		if no_processors_to_use_files >= 2:
 			# Need to modify stout to flush prints
 			logger.info('use multiple processors for multiple files')
-			#pool = multiprocessing.Pool(no_processors_to_use_files)
-			procs_to_start = []
 			procs_to_join = []
-			for pp in range(no_files):
-				header, scan_ext = os.path.splitext(filenames[pp])
-				mdafilename = os.path.join(main_dict['mda_dir'], filenames[pp])
-				logger.info('Multiple processor file version: doing filen #: %s this detector: %s pp: %s', mdafilename, this_detector, pp)
-				proc = multiprocessing.Process(target=mp_make_maps, args=(logger.name, info_elements, main_dict, maps_conf, header, mdafilename, this_detector,use_fit, total_number_detectors, quick_dirty, main_dict['nnls'], main_dict['xrf_bin'], max_no_processors_lines))
-				procs_to_start += [proc]
 			num_procs_running = 0
-			while len(procs_to_start) > 0 or len(procs_to_join) > 0:
-				for proc in procs_to_start[:]:
+			filenames_to_proc = filenames[:]
+			while len(filenames_to_proc) > 0 or len(procs_to_join) > 0:
+				for pp in filenames_to_proc[:]:
 					if num_procs_running < no_processors_to_use_files:
-						logger.debug('Starting file processs')
+						logger.debug('-------------------------------------Starting file processs------------------------------------')
+						header, scan_ext = os.path.splitext(pp)
+						mdafilename = os.path.join(main_dict['mda_dir'], pp)
+						logger.info('Multiple processor file version: doing filen #: %s this detector: %s pp: %s', mdafilename, this_detector, pp)
+						proc = multiprocessing.Process(target=mp_make_maps, args=(logger.name, info_elements, main_dict, maps_conf, header, mdafilename, this_detector, use_fit, total_number_detectors, quick_dirty, main_dict['nnls'], main_dict['xrf_bin'], max_no_processors_lines))
 						proc.start()
 						procs_to_join += [proc]
-						procs_to_start.remove(proc)
+						filenames_to_proc.remove(pp)
 						num_procs_running += 1
-				for proc in procs_to_join[:]:
-					if proc.exitcode is None and not proc.is_alive():
+					else:
+						break
+				for proc2 in procs_to_join[:]:
+					if proc2.exitcode == None and proc2.is_alive():
 						time.sleep(0.1)
-					elif proc.exitcode < 0:
+					elif proc2.exitcode < 0:
 						logger.error('Exception thrown for one of the files processing')
-						proc.join()
+						proc2.join()
 						logger.debug('Process Joined')
-						procs_to_join.remove(proc)
+						procs_to_join.remove(proc2)
 						num_procs_running -= 1
 					else:
 						logger.debug('Finished processing file')
-						proc.join()
+						proc2.join()
 						logger.debug('Process Joined')
-						procs_to_join.remove(proc)
+						procs_to_join.remove(proc2)
 						num_procs_running -= 1
 		else:
 			#  a single processor machine,	just use the single processor

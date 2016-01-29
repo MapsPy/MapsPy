@@ -33,8 +33,6 @@ SUCH DAMAGE.
 '''
 
 from __future__ import division
-from scipy.optimize import leastsq
-import time as time
 import os
 
 import numpy as np

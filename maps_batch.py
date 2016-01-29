@@ -685,8 +685,8 @@ def save_spectrum(main_dict, filename, sfilename, logger):
 		print>>f, line
 		if ic0['sens_unit'] == 0 : line = 'ENVIRONMENT: 2xfm:A1sens_unit.VAL="pA/V"'
 		if ic0['sens_unit'] == 1 : line = 'ENVIRONMENT: 2xfm:A1sens_unit.VAL="nA/V"'
-		if ic0['sens_unit'] == 2 : line = 'ENVIRONMENT: 2xfm:A1sens_unit.VAL="mA/V"'
-		if ic0['sens_unit'] == 3 : line = 'ENVIRONMENT: 2xfm:A1sens_unit.VAL="uA/V"'
+		if ic0['sens_unit'] == 2 : line = 'ENVIRONMENT: 2xfm:A1sens_unit.VAL="uA/V"'
+		if ic0['sens_unit'] == 3 : line = 'ENVIRONMENT: 2xfm:A1sens_unit.VAL="mA/V"'
 		print>>f, line
 		if ic1['sens_num'] == 0 : line = 'ENVIRONMENT: 2xfm:A2sens_num.VAL="1"'
 		if ic1['sens_num'] == 1 : line = 'ENVIRONMENT: 2xfm:A2sens_num.VAL="2"'
@@ -700,8 +700,8 @@ def save_spectrum(main_dict, filename, sfilename, logger):
 		print>>f, line
 		if ic1['sens_unit'] == 0 : line = 'ENVIRONMENT: 2xfm:A2sens_unit.VAL="pA/V"'
 		if ic1['sens_unit'] == 1 : line = 'ENVIRONMENT: 2xfm:A2sens_unit.VAL="nA/V"'
-		if ic1['sens_unit'] == 2 : line = 'ENVIRONMENT: 2xfm:A2sens_unit.VAL="mA/V"'
-		if ic1['sens_unit'] == 3 : line = 'ENVIRONMENT: 2xfm:A2sens_unit.VAL="uA/V"'
+		if ic1['sens_unit'] == 2 : line = 'ENVIRONMENT: 2xfm:A2sens_unit.VAL="uA/V"'
+		if ic1['sens_unit'] == 3 : line = 'ENVIRONMENT: 2xfm:A2sens_unit.VAL="mA/V"'
 		print>>f, line
 
 	if main_dict['beamline'] == '2-ID-D':
@@ -718,8 +718,8 @@ def save_spectrum(main_dict, filename, sfilename, logger):
 		print>>f, line
 		if ic0['sens_unit'] == 0 : line = 'ENVIRONMENT: 2idd:A2sens_unit.VAL="pA/V"'
 		if ic0['sens_unit'] == 1 : line = 'ENVIRONMENT: 2idd:A2sens_unit.VAL="nA/V"'
-		if ic0['sens_unit'] == 2 : line = 'ENVIRONMENT: 2idd:A2sens_unit.VAL="mA/V"'
-		if ic0['sens_unit'] == 3 : line = 'ENVIRONMENT: 2idd:A2sens_unit.VAL="uA/V"'
+		if ic0['sens_unit'] == 2 : line = 'ENVIRONMENT: 2idd:A2sens_unit.VAL="uA/V"'
+		if ic0['sens_unit'] == 3 : line = 'ENVIRONMENT: 2idd:A2sens_unit.VAL="mA/V"'
 		print>>f, line
 		if ic1['sens_num'] == 0 : line = 'ENVIRONMENT: 2idd:A4sens_num.VAL="1"'
 		if ic1['sens_num'] == 1 : line = 'ENVIRONMENT: 2idd:A4sens_num.VAL="2"'
@@ -733,8 +733,8 @@ def save_spectrum(main_dict, filename, sfilename, logger):
 		print>>f, line
 		if ic1['sens_unit'] == 0 : line = 'ENVIRONMENT: 2idd:A4sens_unit.VAL="pA/V"'
 		if ic1['sens_unit'] == 1 : line = 'ENVIRONMENT: 2idd:A4sens_unit.VAL="nA/V"'
-		if ic1['sens_unit'] == 2 : line = 'ENVIRONMENT: 2idd:A4sens_unit.VAL="mA/V"'
-		if ic1['sens_unit'] == 3 : line = 'ENVIRONMENT: 2idd:A4sens_unit.VAL="uA/V"'
+		if ic1['sens_unit'] == 2 : line = 'ENVIRONMENT: 2idd:A4sens_unit.VAL="uA/V"'
+		if ic1['sens_unit'] == 3 : line = 'ENVIRONMENT: 2idd:A4sens_unit.VAL="mA/V"'
 		print>>f, line
 
 	print>>f, 'DATA:'

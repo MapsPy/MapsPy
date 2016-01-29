@@ -399,7 +399,7 @@ class henke:
 	def extra(self, ielement = -1): 
 		
 		energies, f1, f2, n_extra, energies_extra, f1_extra, f2_extra = self.read(ielement, all = False)
-		if n_extra is not None and n_extra != 0:
+		if not n_extra == None and n_extra != 0:
 			energies_all=np.concatenate((energies,energies_extra), axis=0)
 			f1_all=np.concatenate((f1,f1_extra), axis=0)
 			f2_all=np.concatenate((f2,f2_extra), axis=0)

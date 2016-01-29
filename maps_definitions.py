@@ -510,8 +510,8 @@ class maps_definitions:
 				year_pos = 20
 				month_pos = 4
 				day_pos = 8
-				hour_pos = 13
-				minute_pos = 16
+				hour_pos = 11
+				minute_pos = 13
 			else:
 				year_pos = 8
 				month_pos = 0
@@ -537,9 +537,9 @@ class maps_definitions:
 				year = int(test)
 				test = date[day_pos: day_pos + 2]
 				day = int(test)
-				test = date[hour_pos:hour_pos + 4]
+				test = date[hour_pos:hour_pos + 2]
 				hour = int(test)
-				test = date[minute_pos: minute_pos + 4]
+				test = date[minute_pos: minute_pos + 2]
 				minute = int(test)
 			except:
 				self.logger.exception('push_spectrum(): Could not convert date.')
