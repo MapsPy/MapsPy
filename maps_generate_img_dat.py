@@ -740,8 +740,9 @@ class analyze:
 			if self.netcdf_fly_scan != 1:
 				# if it is a fly scan, ie netcdf_fly_scan is 1, the even a multi
 				# element detector scan is read in as a single element
+				scan_shape = scan.mca_arr.shape
 				old_mca_arr = scan.mca_arr.copy()
-				scan.mca_arr = np.zeros((n_cols, n_rows, n_channels))
+				scan.mca_arr = np.zeros((n_cols, n_rows, scan_shape[2]))
 				old_mca_no_dets = old_mca_arr.shape
 				if len(old_mca_no_dets) == 4 :
 					old_mca_no_dets = old_mca_no_dets[3]

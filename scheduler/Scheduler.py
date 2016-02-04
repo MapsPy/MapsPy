@@ -121,6 +121,8 @@ class Scheduler(RestBase):
 				s = requests.Session()
 				r = s.post(url, data=json.dumps(job))
 				self.logger.info('result %s , %s', r.status_code, r.text)
+				if r.status_code == 200:
+					db.update_job(job)
 			self.job_lock.release()
 		except:
 			self.job_lock.release()
@@ -171,7 +173,7 @@ class Scheduler(RestBase):
 			self.logger.exception("Error")
 
 	def callback_process_node_update(self, node):
-		self.logger.info('callback %s', node[Constants.PROCESS_NODE_COMPUTERNAME])
+		#self.logger.info('callback %s', node[Constants.PROCESS_NODE_COMPUTERNAME])
 		try:
 			self.job_lock.acquire(True)
 			if not Constants.PROCESS_NODE_ID in node:

@@ -1459,58 +1459,6 @@ class calibration:
 		self._write_calibration_segment_(f, make_maps_conf, 'ROIs', 'roi', '[XRF_counts_per_s/(weight_ugr_cm*standard.current)]', 0)
 		self._write_calibration_segment_(f, make_maps_conf, 'fitted data', 'fitted', '', 1)
 		self._write_calibration_segment_(f, make_maps_conf, 'ROI+', 'roi', '[XRF_counts_per_s/(weight_ugr_cm*standard.current)]', 2)
-		'''
-		line = ' '
-		print>>f, line.strip()
-		line = 'calibration curve for ROIs'
-		print>>f,  line.strip()
-		line = 'desc, name, Z, for_SRCurrent_norm, for_US_IC_norm, for_DS_IC_norm[XRF_counts_per_s/(weight_ugr_cm*standard.current)], measured_counts, error_bar'
-		if make_maps_conf.version >= 8 : line = line+', measured_nb1832, measured_nb1833'
-		print>>f,  line.strip()
-		for ii in range(make_maps_conf.n_chan):
-			line = 'calib_curve_roi,' + make_maps_conf.chan[ii].name + ', '
-			line = line+str(make_maps_conf.chan[ii].z)+', '
-			for jj in range(5):
-				line = line+str(make_maps_conf.e_cal[ii, 0, jj]) + ', '
-			if make_maps_conf.version >= 8:
-				for jj in range(5, 7):
-					line = line+str(make_maps_conf.e_cal[ii, 0, jj]) + ', '
-			print>>f,  line.strip()
-
-		line = ' '
-		print>>f,  line.strip()
-		line = 'calibration curve for fitted data'
-		print>>f,  line.strip()
-		line = 'desc, name, Z, for_SRCurrent_norm, for_US_IC_norm, for_DS_IC_norm, measured_counts, error_bar'
-		if make_maps_conf.version >= 8 : line = line+', measured_nb1832, measured_nb1833'
-		print>>f,  line.strip()
-		for ii in range(make_maps_conf.n_chan):
-			line = 'calib_curve_fitted,' + make_maps_conf.chan[ii].name +', '
-			line = line+str(make_maps_conf.chan[ii].z)+', '
-			for jj in range(5):
-				line = line+str(make_maps_conf.e_cal[ii, 1, jj])+', '
-			if make_maps_conf.version >= 8:
-				for jj in range(5, 7):
-					line = line+str(make_maps_conf.e_cal[ii, 1, jj])+', '
-			print>>f,  line.strip()
-
-		line = ' '
-		print>>f,  line.strip()
-		line = 'calibration curve for ROI+'
-		print>>f,  line.strip()
-		line = 'desc, name, Z, for_SRCurrent_norm, for_US_IC_norm, for_DS_IC_norm[XRF_counts_per_s/(weight_ugr_cm*standard.current)], measured_counts, error_bar'
-		if make_maps_conf.version >= 8 : line = line+', measured_nb1832, measured_nb1833'
-		print>>f,  line.strip()
-		for ii in range(make_maps_conf.n_chan):
-			line = 'calib_curve_roi,' + make_maps_conf.chan[ii].name +', '
-			line = line+str(make_maps_conf.chan[ii].z)+', '
-			for jj in range(5):
-				line = line+str(make_maps_conf.e_cal[ii, 2, jj])+', '
-			if make_maps_conf.version >= 8:
-				for jj in range(5, 7):
-					line = line+str(make_maps_conf.e_cal[ii, 2, jj])+', '
-			print>>f,  line.strip()
-		'''
 		f.close()
 
 		self.logger.info("Saved calibration info file")
