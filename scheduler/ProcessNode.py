@@ -53,6 +53,7 @@ from plugins.SQLiteDB import SQLiteDB
 from handlers.ProcessNodeHandlers import ProcessNodeHandler, ProcessNodeJobsWebService
 import maps_batch
 import math
+import glob
 import Constants
 
 class ProcessNode(RestBase):
@@ -257,6 +258,12 @@ class ProcessNode(RestBase):
 				alias_path = alias_path.replace('\\', '/')
 				self.logger.info('processing job: %s  alias_path: %s', job_dict[Constants.JOB_DATA_PATH], alias_path)
 				self.pn_info[Constants.PROCESS_NODE_STATUS] = Constants.PROCESS_NODE_STATUS_PROCESSING
+
+				#if this is a live job then only process the latest file created
+				if job_dict[Constants.JOB_IS_LIVE_JOB] == 1:
+					dataset_full_file_path = max(glob.iglob(alias_path + '/mda/*.mda'), key=os.path.getctime)
+					job_dict[Constants.JOB_DATASET_FILES_TO_PROC] = os.path.basename(dataset_full_file_path)
+
 				job_dict[Constants.JOB_STATUS] = Constants.JOB_STATUS_PROCESSING
 				job_dict[Constants.JOB_START_PROC_TIME] = datetime.ctime(datetime.now())
 				log_name = 'Job_' + str(job_dict[Constants.JOB_ID]) + '_' + datetime.strftime(datetime.now(), "%y_%m_%d_%H_%M_%S") + '.log'

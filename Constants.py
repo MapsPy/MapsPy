@@ -80,6 +80,7 @@ JOB_START_PROC_TIME = 'StartProcTime'  # TIMESTAMP
 JOB_FINISH_PROC_TIME = 'FinishProcTime'  # TIMESTAMP
 JOB_LOG_PATH = 'Log_Path'  # TEXT
 JOB_PROCESS_NODE_ID = 'Process_Node_Id'  # INTEGER
+JOB_IS_LIVE_JOB = 'Is_Live_Job'  # INTEGER
 JOB_EMAILS = 'Emails' # TEXT comma separated
 
 # ===================================== General Keys =======================================
