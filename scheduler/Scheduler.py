@@ -63,7 +63,7 @@ class Scheduler(RestBase):
 		cherrypy.config.update({
 			'server.socket_host': self.settings[Settings.SERVER_HOSTNAME],
 			'server.socket_port': int(self.settings[Settings.SERVER_PORT]),
-			'log.access_file': "logs/scheduler_access.log",
+			#'log.access_file': "logs/scheduler_access.log",
 			'log.error_file': "logs/scheduler_error.log"
 		})
 		self.mailman = Mailman.mailman(self.settings[Settings.SERVER_SMTP_ADDRESS],
