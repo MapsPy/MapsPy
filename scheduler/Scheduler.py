@@ -63,6 +63,9 @@ class Scheduler(RestBase):
 		cherrypy.config.update({
 			'server.socket_host': self.settings[Settings.SERVER_HOSTNAME],
 			'server.socket_port': int(self.settings[Settings.SERVER_PORT]),
+			'server.accepted_queue_timeout': 1,
+			'server.socket_queue_size': 40,
+			'server.socket_timeout': 2,
 			#'log.access_file': "logs/scheduler_access.log",
 			'log.error_file': "logs/scheduler_error.log"
 		})
