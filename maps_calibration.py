@@ -760,6 +760,8 @@ class calibration:
 			else:
 				aux_arr[mm, 5] = 1.
 
+		used_elements = []
+		'''
 		if 'Al' in chan_names:
 			used_elements = [chan_names.index('Al')]
 			used_elements.append(chan_names.index('Si'))
@@ -774,10 +776,10 @@ class calibration:
 		if self.maps_conf.incident_E > 9.66: temp_string.append('Zn')
 		temp_string.append('Pb_M')
 		if self.maps_conf.incident_E > 13.03: temp_string.append('Pb_L')
-
-		for i in range(len(temp_string)):
-			if temp_string[i] in chan_names:
-				wo = chan_names.index(temp_string[i])
+		'''
+		for i in range(len(e_list)):
+			if e_list[i] in chan_names:
+				wo = chan_names.index(e_list[i])
 				used_elements.append(wo)
 
 		m_used_elements = []
@@ -809,6 +811,7 @@ class calibration:
 
 				x = used_elements[:]
 				y = 1./temp_calib[used_elements]
+				y[np.isinf(y)] = 0.
 				y = np.array(y)
 				err = y / 20. + np.sqrt(y) / 10.
 				#set the last three errors to be very large so
@@ -1535,8 +1538,8 @@ class calibration:
 					y = make_maps_conf.e_cal[wo, l, k]
 					measured = y.copy()
 					measured[:] = 0.
-					measured_32 = measured.copy()
-					measured_33 = measured.copy()
+					#measured_32 = measured.copy()
+					#measured_33 = measured.copy()
 					for ii in range(len(wo)):
 						weight_ugr_cm = 0.
 						weight_ugr_cm = self.lookup_axo_standard_weight(make_maps_conf.chan[wo[ii]].name)
@@ -1554,21 +1557,7 @@ class calibration:
 						if k == 2:
 							norm = make_maps_conf.element_standard.ds_ic
 						measured[ii] = 1.0 / (weight_ugr_cm * norm / make_maps_conf.e_cal[wo[ii], l, 3])
-					'''
-					for ii in range(len(wo)): 
-						weight_ugr_cm = 0.
-						weight_ugr_cm = self.lookup_nbs_standard_weight(make_maps_conf.chan[wo[ii]].name, old_ratio = old_ratio)
-						if weight_ugr_cm == 0. : continue
-						if make_maps_conf.version > 8 :
-							if k ==0 : norm = make_maps_conf.nbs32.current
-							if k ==1 : norm = make_maps_conf.nbs32.us_ic
-							if k ==2 : norm = make_maps_conf.nbs32.ds_ic
-							measured_32[ii] = 1.0/(weight_ugr_cm*norm/make_maps_conf.e_cal[wo[ii], l, 5])
-							if k ==0 : norm = make_maps_conf.nbs33.current
-							if k ==1 : norm = make_maps_conf.nbs33.us_ic
-							if k ==2 : norm = make_maps_conf.nbs33.ds_ic
-							measured_33[ii] = 1.0/(weight_ugr_cm*norm/make_maps_conf.e_cal[wo[ii], l, 6])
-					'''
+						measured[np.isinf(measured)] = 0.
 					x = []
 					for iw in range(len(wo)): x.append(make_maps_conf.chan[iw].z)
 					x = np.array(x)
@@ -1585,8 +1574,6 @@ class calibration:
 					x = x[wo_2]
 					y = y[wo_2]
 					measured = measured[wo_2]		
-					measured_32 = measured_32[wo_2]
-					measured_33 = measured_33[wo_2]
 
 					x_p = x.copy()
 					y_p = y.copy()
@@ -1597,12 +1584,6 @@ class calibration:
 					measured_p = measured.copy()
 					measured_p = np.insert(measured_p, 0, 0)
 					measured_p = np.append(measured_p, 0)
-					measured_p_32 = measured_32.copy()
-					measured_p_32 = np.insert(measured_p_32, 0, 0.0)
-					measured_p_32 = np.append(measured_p_32, 0.0)
-					measured_p_33 = measured_33.copy()
-					measured_p_33 = np.insert(measured_p_33, 0, 0.0)
-					measured_p_33 = np.append(measured_p_33, 0.0)
 					xtickv = x_p
 					chnames = np.array(chan_names)
 					chnames = chnames[wo[wo_2]].tolist()
@@ -1620,8 +1601,6 @@ class calibration:
 						plot1 = axes.semilogy(x_p+0.5, y_p, color = foreground_color, linewidth=1.0, linestyle='steps')
 						#plot1a = axes.semilogy(x_p,y_p, color = 'yellow', linewidth=1.0, linestyle='None', marker = '*')  
 						plot2 = axes.semilogy(x_p, measured_p, color='blue', linewidth=1.0, linestyle='None', marker='x', markersize=7, mew=1.2)
-						plot3 = axes.semilogy(x_p, measured_p_32, color='green', linewidth=1.0, linestyle='None', marker='x', markersize=7, mew=1.2)
-						plot4 = axes.semilogy(x_p, measured_p_33, color='red', linewidth=1.0, linestyle='None', marker='x', markersize=7, mew=1.2)
 
 						axes.xaxis.set_ticks(xtickv)
 						axes.set_ylabel(ytitle, color=foreground_color)

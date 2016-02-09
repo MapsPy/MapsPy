@@ -246,7 +246,7 @@ class maps_definitions:
 					  'dummy', 'dummy', 'dummy', 'dummy', 'dummy', 'dummy',
 					  'dummy', 'dummy', 'dummy', 'dummy', 'dummy', 'dummy']
 
-		list = ['Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar', 'K', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Fe', 'Co',
+		element_list = ['Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar', 'K', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Fe', 'Co',
 				'Ni', 'Cu', 'Zn', 'Ga', 'Ge', 'As', 'Se', 'Br', 'Kr', 'Rb', 'Sr', 'Y', 'Zr', 'Nb', 'Mo', 'Tc',
 				'Ru', 'Rh', 'Pd', 'Ag', 'Cd', 'In', 'Sn', 'Sb', 'Te', 'I', 'dummy', 'dummy',
 				'Mo_L', 'Ag_L', 'Sn_L', 'Cd_L', 'i_L', 'Cs_L', 'Ba_L', 'Eu_L', 'Gd_L', 'W_L', 'Pt_L', 'Au_L',
@@ -312,14 +312,14 @@ class maps_definitions:
 			mcfg.element_standard.calibration.slope = np.zeros(n_max, dtype=np.float)
 			mcfg.element_standard.calibration.quad = np.zeros(n_max, dtype=np.float)
 
-			mcfg.e_cal = np.zeros((len(list), 3, 7), dtype=np.float)
+			mcfg.e_cal = np.zeros((len(element_list), 3, 7), dtype=np.float)
 			# mcfg.axo_e_cal = np.zeros((len(list),3,7), dtype = np.float)
-			mcfg.n_chan = len(list)
+			mcfg.n_chan = len(element_list)
 			mcfg.use_det[0] = 1
 
 			for i in range(mcfg.n_chan):
 				mcfg.chan.append(chan())
-				mcfg.chan[i].name = list[i]
+				mcfg.chan[i].name = element_list[i]
 				mcfg.chan[i].left_roi = np.zeros(n_max, dtype=np.float)
 				mcfg.chan[i].right_roi = np.zeros(n_max, dtype=np.float)
 				mcfg.chan[i].left_bkground = np.zeros(n_max, dtype=np.float)
@@ -337,47 +337,47 @@ class maps_definitions:
 					mcfg.n_used_dmaps += 1
 
 			for item in list_use_these:
-				if item in list:
-					mcfg.chan[list.index(item)].use = 1
+				if item in element_list:
+					mcfg.chan[element_list.index(item)].use = 1
 					mcfg.n_used_chan += 1
 
-			if 'TFY' in list:
+			if 'TFY' in element_list:
 				mcfg.chan[mcfg.n_chan - 2].center = 8.
 				mcfg.chan[mcfg.n_chan - 2].width = 10000.
 
 			for item in info_elements:
-				if item.name in list:
-					mcfg.chan[list.index(item.name)].z = item.z
-					mcfg.chan[list.index(item.name)].center = item.xrf['ka1']
-					mcfg.chan[list.index(item.name)].calib = 1
+				if item.name in element_list:
+					mcfg.chan[element_list.index(item.name)].z = item.z
+					mcfg.chan[element_list.index(item.name)].center = item.xrf['ka1']
+					mcfg.chan[element_list.index(item.name)].calib = 1
 					if verbose:
 						self.logger.debug('item.name: %s, item.z: %s, item.xrf: %s',item.name, item.z, item.xrf['ka1'])
 
 				elname = string.join([item.name, '_L'], '')
-				if elname in list:
-					mcfg.chan[list.index(elname)].z = item.z
-					mcfg.chan[list.index(elname)].center = item.xrf['la1']
-					mcfg.chan[list.index(elname)].calib = 2
+				if elname in element_list:
+					mcfg.chan[element_list.index(elname)].z = item.z
+					mcfg.chan[element_list.index(elname)].center = item.xrf['la1']
+					mcfg.chan[element_list.index(elname)].calib = 2
 					if verbose:
 						self.logger.debug('elname: %s, item.z: %s, item.xrf: %s', elname, item.z, item.xrf['la1'])
 
 				elname = 'Pb_M'
-				if elname in list:
-					mcfg.chan[list.index(elname)].z = 82
-					mcfg.chan[list.index(elname)].center = 2.383
-					mcfg.chan[list.index(elname)].calib = 3
+				if elname in element_list:
+					mcfg.chan[element_list.index(elname)].z = 82
+					mcfg.chan[element_list.index(elname)].center = 2.383
+					mcfg.chan[element_list.index(elname)].calib = 3
 
 				elname = 'Au_M'
-				if elname in list:
-					mcfg.chan[list.index(elname)].z = 79
-					mcfg.chan[list.index(elname)].center = 2.123
-					mcfg.chan[list.index(elname)].calib = 3
+				if elname in element_list:
+					mcfg.chan[element_list.index(elname)].z = 79
+					mcfg.chan[element_list.index(elname)].center = 2.123
+					mcfg.chan[element_list.index(elname)].calib = 3
 
 				elname = 'U_M'
-				if elname in list:
-					mcfg.chan[list.index(elname)].z = 92
-					mcfg.chan[list.index(elname)].center = 3.171
-					mcfg.chan[list.index(elname)].calib = 3
+				if elname in element_list:
+					mcfg.chan[element_list.index(elname)].z = 92
+					mcfg.chan[element_list.index(elname)].center = 3.171
+					mcfg.chan[element_list.index(elname)].calib = 3
 
 			energy_res_offset = 150.  # in ev
 			energy_res_sqrt = 12.  # for keV
