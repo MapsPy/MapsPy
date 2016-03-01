@@ -63,9 +63,9 @@ class Scheduler(RestBase):
 		cherrypy.config.update({
 			'server.socket_host': self.settings[Settings.SERVER_HOSTNAME],
 			'server.socket_port': int(self.settings[Settings.SERVER_PORT]),
-			'server.accepted_queue_timeout': 1,
-			'server.socket_queue_size': 40,
-			'server.socket_timeout': 2,
+			#'server.accepted_queue_timeout': 1,
+			'server.socket_queue_size': 80,
+			'server.socket_timeout': 4,
 			#'log.access_file': "logs/scheduler_access.log",
 			'log.error_file': "logs/scheduler_error.log"
 		})
@@ -99,7 +99,17 @@ class Scheduler(RestBase):
 			},
 			'/static': {
 				'tools.staticdir.on': True,
-				'tools.staticdir.dir': './public'
+				'tools.staticdir.dir': 'public',
+				#'response.timeout': 2000,
+				#'tools.expires.on': True,
+				#'tools.expires.secs'  : 10
+				#'tools.caching.delay': 500
+				'tools.sessions.on': False,
+        		'tools.caching.on': True,
+        		'tools.caching.force' : True,
+        		'tools.caching.delay' : 0,
+        		'tools.expires.on' : True,
+        		'tools.expires.secs' : 60*24*365
 			}
 		}
 
