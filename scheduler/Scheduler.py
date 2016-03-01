@@ -65,7 +65,7 @@ class Scheduler(RestBase):
 			'server.socket_port': int(self.settings[Settings.SERVER_PORT]),
 			#'server.accepted_queue_timeout': 1,
 			'server.socket_queue_size': 80,
-			'server.socket_timeout': 4,
+			#'server.socket_timeout': 4,
 			#'log.access_file': "logs/scheduler_access.log",
 			'log.error_file': "logs/scheduler_error.log"
 		})
@@ -168,7 +168,6 @@ class Scheduler(RestBase):
 				db.delete_job_by_id(job[Constants.JOB_ID])
 				if status == Constants.JOB_STATUS_COMPLETED or status == Constants.JOB_STATUS_GENERAL_ERROR and job[Constants.JOB_PROCESS_NODE_ID] > -1:
 					self.call_delete_job(job)
-				return
 			elif status == Constants.JOB_STATUS_PROCESSING or status == Constants.JOB_STATUS_NEW or status == Constants.JOB_STATUS_CANCELING:
 				self.job_lock.acquire(True)
 				if job[Constants.JOB_PROCESS_NODE_ID] > -1:
@@ -202,16 +201,16 @@ class Scheduler(RestBase):
 				job_list = db.get_all_unprocessed_jobs_for_pn_id(int(node[Constants.PROCESS_NODE_ID]))
 				if len(job_list) < 1:
 					job_list = db.get_all_unprocessed_jobs_for_any_node()
-				for job in job_list:
-					self.logger.info('checking job %s', job)
-					if job[Constants.JOB_PROCESS_NODE_ID] < 0 or job[Constants.JOB_PROCESS_NODE_ID] == node[Constants.PROCESS_NODE_ID]:
-						job[Constants.JOB_PROCESS_NODE_ID] = node[Constants.PROCESS_NODE_ID]
-						url = 'http://' + str(node[Constants.PROCESS_NODE_HOSTNAME]) + ':' + str(node[Constants.PROCESS_NODE_PORT]) + '/job_queue'
-						self.logger.info('_sending job to %s, url: %s', node[Constants.PROCESS_NODE_COMPUTERNAME], url)
-						s = requests.Session()
-						r = s.post(url, data=json.dumps(job))
-						self.logger.info('result %s, %s', r.status_code, r.text)
-						break
+				if len(job_list) > 0:
+					job = job_list[0]
+					job[Constants.JOB_PROCESS_NODE_ID] = node[Constants.PROCESS_NODE_ID]
+					url = 'http://' + str(node[Constants.PROCESS_NODE_HOSTNAME]) + ':' + str(node[Constants.PROCESS_NODE_PORT]) + '/job_queue'
+					self.logger.info('_sending job to %s, url: %s', node[Constants.PROCESS_NODE_COMPUTERNAME], url)
+					s = requests.Session()
+					r = s.post(url, data=json.dumps(job))
+					self.logger.info('result %s, %s', r.status_code, r.text)
+					if r.status_code == 200:
+						db.update_job(job)
 			self.job_lock.release()
 		except:
 			self.job_lock.release()
@@ -224,6 +223,8 @@ class Scheduler(RestBase):
 		s = requests.Session()
 		r = s.delete(url, data=json.dumps(job))
 		self.logger.info('update result %s, %s', r.status_code, r.text)
+		if r.status_code == 200:
+			db.delete_job_by_id(job[Constants.JOB_ID])
 
 	def _get_images_from_hdf(self, job):
 		images_dict = None
