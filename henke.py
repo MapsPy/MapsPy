@@ -685,7 +685,7 @@ class henke:
 			z_array = self.zcompound(name, z_array)
 			atwt = self.zatwt(z_array)
 			
-		wo = np.where(z_array == 1)[0]
+		wo = np.where(z_array > 0)[0]
 
 		if len(wo) == 0 : 
 			self.logger.warning('Warning: get_henke_single() name=%s encountered error, will return', name)
@@ -697,7 +697,10 @@ class henke:
 		else:
 			molecules_per_cc = 0.0
 
-		energies_all, f1_all, f2_all, energies_extra, f1_extra, f2_extra = self.extra(ielement=z - 1)
+		if len(wo) > 1:
+			energies_all, f1_all, f2_all, energies_extra, f1_extra, f2_extra = self.extra(ielement=z[0])
+		else:
+			energies_all, f1_all, f2_all, energies_extra, f1_extra, f2_extra = self.extra(ielement=z - 1)
 
 		if isinstance(energy_array, float):
 			n_array = 1

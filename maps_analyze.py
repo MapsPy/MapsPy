@@ -400,7 +400,7 @@ class analyze:
 
 		sigma = np.sqrt((p[keywords.fwhm_pos[0]] / 2.3548) ** 2 + compton_E * 2.96 * p[keywords.fwhm_pos[1]])
 
-		local_sigma = sigma * p[14]
+		#local_sigma = sigma * p[14]
 
 		delta_energy = ev.copy() - compton_E
 

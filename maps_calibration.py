@@ -753,9 +753,12 @@ class calibration:
 			if (self.maps_conf.add_float['a'] == 0.) or (self.maps_conf.add_long['a'] != 1):
 				aux_arr[mm, 4] = 0.
 			if airpath > 0: 
-				density = 1.0
+				#density = 1.0
+				density = 0.00117
+				#air_ele = 'N78.08O20.95Ar0.93'
+				#density = 1.2047e-3
 				#f1, f2, delta, beta, graze_mrad, reflect, inverse_mu, atwt = Chenke.get_henke_single('air', density, ev) 
-				f1, f2, delta, beta = Chenke.get_henke_single('air', density, ev) 
+				f1, f2, delta, beta = Chenke.get_henke_single('air', density, ev)
 				aux_arr[mm, 5] = self.transmission(airpath*1000., beta, 1239.852/ev)  # airpath is read in microns, transmission function expects nm
 			else:
 				aux_arr[mm, 5] = 1.
