@@ -1063,9 +1063,9 @@ class mda:
 
 				y_coord_arr = y_coord_arr[0:y_pixels]
 				y_coord_arr[y_pixels-1] = y_coord_arr[y_pixels-2] + (y_coord_arr[y_pixels-2] - y_coord_arr[y_pixels-3])
-				if verbose:
-					self.logger.debug('y coord array before correction : %s', readback_array)
-					self.logger.debug('y coord array after correction : %s', y_coord_arr)
+				#if verbose:
+				#	self.logger.debug('y coord array before correction : %s', readback_array)
+				#	self.logger.debug('y coord array after correction : %s', y_coord_arr)
 
 		#if verbose: self.logger.debug('y coord array after correction : ', y_coord_arr
 

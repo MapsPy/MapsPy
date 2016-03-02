@@ -123,6 +123,8 @@
         {
             return $($id).DataTable(
             {
+                //"processing": true,
+                //"serverSide": true,
                 "ajax": $url,
                 "fnRowCallback": function( nRow, aData, iDisplayIndex, iDisplayIndexFull )
                 {
@@ -481,11 +483,11 @@
 
         setInterval(function()
         {
-            $pn_table.ajax.reload();
-            $queued_table.ajax.reload();
-            $processing_table.ajax.reload();
-            $finished_table.ajax.reload();
-        }, 5000);
+            $pn_table.ajax.reload(null, false);
+            $queued_table.ajax.reload(null, false);
+            $processing_table.ajax.reload(null, false);
+            $finished_table.ajax.reload(null, false);
+        }, 3000);
 	
         //----------------------------------------------------------------------
         
@@ -641,7 +643,7 @@
         });
  
          //----------------------------------------------------------------------
-         
+
         $queued_table.on( 'draw', function () 
         {
             $.each( $detailQuJobRows, function ( i, id ) 
@@ -649,7 +651,7 @@
                 $('#'+id+' td.details-control').trigger( 'click' );
             });
         });
- 
+
          //----------------------------------------------------------------------
  
         $processing_table.on( 'draw', function () 

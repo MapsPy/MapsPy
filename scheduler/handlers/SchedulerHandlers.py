@@ -242,8 +242,8 @@ class SchedulerHandler(object):
 
 	@cherrypy.expose
 	def get_all_unprocessed_jobs(self, *args, **kwargs):
-		data_dict = dict()
-		data_dict['draw'] = 1
+		data_dict = kwargs
+		#data_dict['draw'] = 1
 		data_dict['data'] = self.db.get_all_unprocessed_jobs()
 		data_dict['recordsTotal'] = len(data_dict['data'])
 		data_dict['recordsFiltered'] = len(data_dict['data'])
@@ -253,8 +253,8 @@ class SchedulerHandler(object):
 
 	@cherrypy.expose
 	def get_all_processing_jobs(self, *args, **kwargs):
-		data_dict = dict()
-		data_dict['draw'] = 1
+		data_dict = kwargs
+		#data_dict['draw'] = 1
 		data_dict['data'] = self.db.get_all_processing_jobs()
 		data_dict['recordsTotal'] = len(data_dict['data'])
 		data_dict['recordsFiltered'] = len(data_dict['data'])
@@ -264,8 +264,8 @@ class SchedulerHandler(object):
 
 	@cherrypy.expose
 	def get_all_finished_jobs(self, *args, **kwargs):
-		data_dict = dict()
-		data_dict['draw'] = 1
+		data_dict = kwargs
+		#data_dict['draw'] = 1
 		data_dict['data'] = self.db.get_all_finished_jobs()
 		data_dict['recordsTotal'] = len(data_dict['data'])
 		data_dict['recordsFiltered'] = len(data_dict['data'])
@@ -286,8 +286,8 @@ class SchedulerJobsWebService(object):
 	#@cherrypy.tools.json_out()
 	# return list of jobs in queue
 	def GET(self, *args, **kwargs):
-		data_dict = dict()
-		data_dict['draw'] = 1
+		data_dict = kwargs
+		#data_dict['draw'] = 1
 		data_dict['data'] = self.db.get_all_jobs()
 		data_dict['recordsTotal'] = len(data_dict['data'])
 		data_dict['recordsFiltered'] = len(data_dict['data'])
@@ -338,8 +338,8 @@ class SchedulerProcessNodeWebService(object):
 	#@cherrypy.tools.json_out()
 	# get list of computer nodes
 	def GET(self, *args, **kwargs):
-		data_dict = dict()
-		data_dict['draw'] = 1
+		data_dict = kwargs
+		#data_dict['draw'] = 1
 		#if computer_name == None:
 		data_dict['data'] = self.db.get_all_process_nodes()
 		#else:
