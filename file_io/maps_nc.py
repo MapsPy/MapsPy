@@ -239,6 +239,8 @@ def read_xmap_netcdf(fname, logger, verbose=False):
 		return None
 	data_var = fh.variables['array_data']
 	array_data = data_var.data
+	if len(array_data) == 0:
+		array_data = np.zeros((5,1,1047808), dtype='f')
 	t1 = time.time()
 	# array_data will normally be 3d:
 	#  shape = (narrays, nmodules, buffersize)
@@ -253,6 +255,8 @@ def read_xmap_netcdf(fname, logger, verbose=False):
 		array_data.shape = (1,shape[0],shape[1])
 
 	narrays,nmodules,buffersize = array_data.shape
+	if fname == '/data/verify_mapspy/Paunesku/flyXRF/2xfm_0055_2xfm3__275.nc':
+		print fname
 	modpixs = array_data[0,0,8]
 	if modpixs < 124: modpixs = 124
 	npix_total = 0
@@ -282,6 +286,9 @@ def read_xmap_netcdf(fname, logger, verbose=False):
 						# Note:  nchans = number of ROIS !!
 						nchans = max(d[264:268])
 						data_slice = slice(64, 64 + 8 * nchans)
+					else:
+						nchans = 0
+						data_slice = 0
 					xmapdat = xMAPData(narrays*modpixs, nmodules, nchans)
 					xmapdat.firstPixel = bh.startingPixel
 
