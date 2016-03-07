@@ -192,6 +192,12 @@ def main(main_dict, logger, force_fit=0, no_fit=False):
 			logger.exception('could not read override file')
 			return False
 
+		for chan in maps_conf.chan:
+			if chan.name in test_string:
+				if chan.use == 0:
+					maps_conf.n_used_chan += 1
+				chan.use = 1
+
 		for jj in range(fitp.g.n_fitp):
 			if fitp.s.name[jj] in test_string:
 				fitp.s.val[jj] = 1.

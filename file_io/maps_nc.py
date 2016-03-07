@@ -255,8 +255,6 @@ def read_xmap_netcdf(fname, logger, verbose=False):
 		array_data.shape = (1,shape[0],shape[1])
 
 	narrays,nmodules,buffersize = array_data.shape
-	if fname == '/data/verify_mapspy/Paunesku/flyXRF/2xfm_0055_2xfm3__275.nc':
-		print fname
 	modpixs = array_data[0,0,8]
 	if modpixs < 124: modpixs = 124
 	npix_total = 0
