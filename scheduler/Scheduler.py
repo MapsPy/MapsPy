@@ -63,10 +63,7 @@ class Scheduler(RestBase):
 		cherrypy.config.update({
 			'server.socket_host': self.settings[Settings.SERVER_HOSTNAME],
 			'server.socket_port': int(self.settings[Settings.SERVER_PORT]),
-			#'server.accepted_queue_timeout': 1,
-			'server.socket_queue_size': 80,
-			#'server.socket_timeout': 4,
-			#'log.access_file': "logs/scheduler_access.log",
+			'server.thread_pool': 60,
 			'log.error_file': "logs/scheduler_error.log"
 		})
 		self.mailman = Mailman.mailman(self.settings[Settings.SERVER_SMTP_ADDRESS],
@@ -99,11 +96,7 @@ class Scheduler(RestBase):
 			},
 			'/static': {
 				'tools.staticdir.on': True,
-				'tools.staticdir.dir': 'public',
-				#'response.timeout': 2000,
-				#'tools.expires.on': True,
-				#'tools.expires.secs'  : 10
-				#'tools.caching.delay': 500
+				'tools.staticdir.dir': './public',
 				'tools.sessions.on': False,
         		'tools.caching.on': True,
         		'tools.caching.force' : True,
@@ -113,6 +106,14 @@ class Scheduler(RestBase):
 			}
 		}
 
+	def send_job_to_process_node(self, job, p_node):
+		url = 'http://' + str(p_node[Constants.PROCESS_NODE_HOSTNAME]) + ':' + str(p_node[Constants.PROCESS_NODE_PORT]) + '/job_queue'
+		self.logger.info('sending job to %s, url: %s', p_node[Constants.PROCESS_NODE_COMPUTERNAME], url)
+		s = requests.Session()
+		r = s.post(url, data=json.dumps(job))
+		self.logger.info('result %s , %s', r.status_code, r.text)
+		return r
+
 	def callback_new_job(self, job):
 		self.logger.info('callback got new job %s', job)
 		try:
@@ -120,22 +121,21 @@ class Scheduler(RestBase):
 			p_node = None
 			if job[Constants.JOB_PROCESS_NODE_ID] > -1:
 				p_node = db.get_process_node_by_id(int(job[Constants.JOB_PROCESS_NODE_ID]))
+				self.send_job_to_process_node(job, p_node)
 			else:
 				node_list = db.get_all_process_nodes()
 				self.logger.info('searching for idle node')
 				for node in node_list:
 					if node[Constants.PROCESS_NODE_STATUS] == Constants.PROCESS_NODE_STATUS_IDLE:
 						p_node = node
-						break
-			if p_node != None:
-				job[Constants.JOB_PROCESS_NODE_ID] = p_node[Constants.PROCESS_NODE_ID]
-				url = 'http://' + str(p_node[Constants.PROCESS_NODE_HOSTNAME]) + ':' + str(p_node[Constants.PROCESS_NODE_PORT]) + '/job_queue'
-				self.logger.info('sending job to %s, url: %s', p_node[Constants.PROCESS_NODE_COMPUTERNAME], url)
-				s = requests.Session()
-				r = s.post(url, data=json.dumps(job))
-				self.logger.info('result %s , %s', r.status_code, r.text)
-				if r.status_code == 200:
-					db.update_job(job)
+						if p_node != None:
+							job[Constants.JOB_PROCESS_NODE_ID] = p_node[Constants.PROCESS_NODE_ID]
+							r = self.send_job_to_process_node(job, p_node)
+							if r.status_code == 200:
+								db.update_job_pn(job[Constants.JOB_ID], p_node[Constants.PROCESS_NODE_ID])
+								break
+							else:
+								job[Constants.JOB_PROCESS_NODE_ID] = -1
 			self.job_lock.release()
 		except:
 			self.job_lock.release()
@@ -187,7 +187,6 @@ class Scheduler(RestBase):
 	def callback_process_node_update(self, node):
 		#self.logger.info('callback %s', node[Constants.PROCESS_NODE_COMPUTERNAME])
 		try:
-			self.job_lock.acquire(True)
 			if not Constants.PROCESS_NODE_ID in node:
 				self.logger.info('getting id for node %s', node)
 				new_node = db.get_process_node_by_name(node[Constants.PROCESS_NODE_COMPUTERNAME])
@@ -198,20 +197,17 @@ class Scheduler(RestBase):
 				r = s.post(url, data={Constants.PROCESS_NODE_ID: node[Constants.PROCESS_NODE_ID]})
 				self.logger.info('update result: %s, %s', r.status_code, r.text)
 			if node[Constants.PROCESS_NODE_STATUS] == Constants.PROCESS_NODE_STATUS_IDLE:
+				self.job_lock.acquire(True)
 				job_list = db.get_all_unprocessed_jobs_for_pn_id(int(node[Constants.PROCESS_NODE_ID]))
 				if len(job_list) < 1:
 					job_list = db.get_all_unprocessed_jobs_for_any_node()
 				if len(job_list) > 0:
 					job = job_list[0]
 					job[Constants.JOB_PROCESS_NODE_ID] = node[Constants.PROCESS_NODE_ID]
-					url = 'http://' + str(node[Constants.PROCESS_NODE_HOSTNAME]) + ':' + str(node[Constants.PROCESS_NODE_PORT]) + '/job_queue'
-					self.logger.info('_sending job to %s, url: %s', node[Constants.PROCESS_NODE_COMPUTERNAME], url)
-					s = requests.Session()
-					r = s.post(url, data=json.dumps(job))
-					self.logger.info('result %s, %s', r.status_code, r.text)
+					r = self.send_job_to_process_node(job, node)
 					if r.status_code == 200:
-						db.update_job(job)
-			self.job_lock.release()
+						db.update_job_pn(job[Constants.JOB_ID], node[Constants.PROCESS_NODE_ID])
+				self.job_lock.release()
 		except:
 			self.job_lock.release()
 			self.logger.exception('Error')

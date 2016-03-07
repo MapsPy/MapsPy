@@ -106,3 +106,7 @@ class DatabasePlugin(plugins.SimplePlugin):
 
 	def update_job(self, job_dict):
 		return self.db.update_job(job_dict)
+
+	def update_job_pn(self, job_id, pn_id):
+		return self.db.update_job_pn(job_id, pn_id)
+
