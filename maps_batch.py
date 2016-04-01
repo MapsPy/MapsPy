@@ -42,6 +42,9 @@ import logging.handlers
 import h5py
 from datetime import datetime
 import shutil
+
+from enaml.core.compiler_common import fetch_helpers
+
 import maps_generate_img_dat
 import maps_definitions
 import maps_elements
@@ -61,10 +64,11 @@ def setup_logger(log_name, stream_to_console=True):
 	logger.addHandler(fHandler)
 	if stream_to_console:
 		ch = logging.StreamHandler()
+		formatter = logging.Formatter('%(asctime)s | %(levelname)s | PID[%(process)d] | %(funcName)s(): %(message)s')
 		ch.setFormatter(formatter)
 		ch.setLevel(logging.WARNING)
 		logger.addHandler(ch)
-	return logger
+	return logger, fHandler
 
 # ------------------------------------------------------------------------------------------------
 
@@ -72,7 +76,7 @@ def setup_logger(log_name, stream_to_console=True):
 def new_process_func(log_name, alias_path, job_dict):
 	global _log_name
 	_log_name = log_name
-	logger = setup_logger('job_logs/' + log_name)
+	logger, fHandler = setup_logger('job_logs/' + log_name)
 	logger.info('Start Job Process')
 	try:
 		maps_set_str = os.path.join(str(alias_path), 'maps_settings.txt')
@@ -116,8 +120,16 @@ def new_process_func(log_name, alias_path, job_dict):
 		logger.info('Completed Job')
 	except:
 		logger.exception('job process')
+		handlers = logger.handlers[:]
+		for handler in handlers:
+			handler.close()
+			logger.removeHandler(handler)
 		raise SystemError("Error Processing Dataset")
 	logger.info('Done Job Process')
+	handlers = logger.handlers[:]
+	for handler in handlers:
+		handler.close()
+		logger.removeHandler(handler)
 	return 0
 
 # ------------------------------------------------------------------------------------------------
@@ -1106,7 +1118,7 @@ if __name__ == '__main__':
 
 	global _log_name
 	_log_name = log_name = 'Job_' + datetime.strftime(datetime.now(), "%y_%m_%d_%H_%M_%S")
-	logger = setup_logger(_log_name + '.log')
+	logger, fHandler = setup_logger(_log_name + '.log')
 
 	a = 0
 	b = 0

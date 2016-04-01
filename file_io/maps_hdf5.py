@@ -376,8 +376,14 @@ class h5:
 			data = np.transpose(mca_arr)
 			dimensions = data.shape
 			chunk_dimensions = (dimensions[0], 1, 1)
-			ds_data = mapsGrp.create_dataset(entryname, data=data, chunks=chunk_dimensions, compression='gzip', compression_opts=gzip)
-			ds_data.attrs['comments'] = comment
+			for retry in range(3):
+				try:
+					ds_data = mapsGrp.create_dataset(entryname, data=data, chunks=chunk_dimensions, compression='gzip', compression_opts=gzip)
+					ds_data.attrs['comments'] = comment
+					break
+				except:
+					self.logger.error("Error creating dataset %s, retry %d", entryname, retry)
+
 
 		# create a subgroup FOR make_maps_conf
 		if 'make_maps_conf' not in mapsGrp:

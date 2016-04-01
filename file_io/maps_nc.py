@@ -84,12 +84,16 @@ class nc:
 			return None
 
 		invalid_file = invalid_file[0]
-
-		maps_mda.convert_pv_names(filename, scan)
+		try:
+			maps_mda.convert_pv_names(filename, scan)
+		except:
+			self.logger.error('Cannot convert_pv_names: %s filename: %s', str(invalid_file), filename)
 
 		if invalid_file > 0:		
 			self.logger.error('not a valid mda flyscan file, error number: %s filename: %s', str(invalid_file), filename)
-			return None
+			#  may be live scan
+			#return None
+
 
 		n_ev = 0
 		n_rows = scan.y_pixels
@@ -123,54 +127,59 @@ class nc:
 		new_det_len = len(scan.detector_description_arr)
 
 		new_detector_arr=np.ones((scan.x_pixels, scan.y_pixels, new_det_len))
-		new_detector_arr[:, :, 0:old_det_len] = scan.detector_arr[:, :, 0:old_det_len]	
+		if old_det_len > 0:
+			new_detector_arr[:, :, 0:old_det_len] = scan.detector_arr[:, :, 0:old_det_len]
 		scan.detector_arr = new_detector_arr
 
 		file_path = os.path.join(path, os.path.join('flyXRF', header))
 
+		last_line = 0
 		for i_lines in range(n_rows):
+			last_line = i_lines
+			try:
+				nc_files = glob.glob(file_path + '*_' + str(i_lines) + '.nc')
+				#ncfile = os.path.join(path, 'flyXRF', header + '_2xfm3__' + str(i_lines) + '.nc' )
+				if len(nc_files) > 0:
+					ncfile = nc_files[0]
+				else:
+					continue
 
-			nc_files = glob.glob(file_path + '*_' + str(i_lines) + '.nc')
-			#ncfile = os.path.join(path, 'flyXRF', header + '_2xfm3__' + str(i_lines) + '.nc' )
-			if len(nc_files) > 0:
-				ncfile = nc_files[0]
-			else:
-				continue
+				xmapdat = read_xmap_netcdf(ncfile, self.logger, True)
+				if xmapdat == None:
+					return None
+				for ix in range(n_cols):
+					if ix < len(xmapdat.liveTime[:, 0]):
+						scan.mca_arr[ix, i_lines, 0:2000] = xmapdat.data[ix, this_detector, 0:2000]
 
-			xmapdat = read_xmap_netcdf(ncfile, self.logger, True)
-			if xmapdat == None:
-				return None
-			for ix in range(n_cols): 
-				if ix < len(xmapdat.liveTime[:, 0]):
-					scan.mca_arr[ix, i_lines, 0:2000] = xmapdat.data[ix, this_detector, 0:2000]
+						scan.detector_arr[ix, i_lines, new_det_len-16] = xmapdat.liveTime[ix, 0]
+						scan.detector_arr[ix, i_lines, new_det_len-15] = xmapdat.liveTime[ix, 1]
+						scan.detector_arr[ix, i_lines, new_det_len-14] = xmapdat.liveTime[ix, 2]
+						scan.detector_arr[ix, i_lines, new_det_len-13] = xmapdat.liveTime[ix, 3]
 
-					scan.detector_arr[ix, i_lines, new_det_len-16] = xmapdat.liveTime[ix, 0]
-					scan.detector_arr[ix, i_lines, new_det_len-15] = xmapdat.liveTime[ix, 1]
-					scan.detector_arr[ix, i_lines, new_det_len-14] = xmapdat.liveTime[ix, 2]
-					scan.detector_arr[ix, i_lines, new_det_len-13] = xmapdat.liveTime[ix, 3]
+						scan.detector_arr[ix, i_lines, new_det_len-12] = xmapdat.realTime[ix, 0]
+						scan.detector_arr[ix, i_lines, new_det_len-11] = xmapdat.realTime[ix, 1]
+						scan.detector_arr[ix, i_lines, new_det_len-10] = xmapdat.realTime[ix, 2]
+						scan.detector_arr[ix, i_lines, new_det_len-9] = xmapdat.realTime[ix, 3]
 
-					scan.detector_arr[ix, i_lines, new_det_len-12] = xmapdat.realTime[ix, 0]
-					scan.detector_arr[ix, i_lines, new_det_len-11] = xmapdat.realTime[ix, 1]
-					scan.detector_arr[ix, i_lines, new_det_len-10] = xmapdat.realTime[ix, 2]
-					scan.detector_arr[ix, i_lines, new_det_len-9] = xmapdat.realTime[ix, 3]
+						scan.detector_arr[ix, i_lines, new_det_len-8] = xmapdat.inputCounts[ix, 0] / xmapdat.liveTime[ix, 0]
+						scan.detector_arr[ix, i_lines, new_det_len-7] = xmapdat.inputCounts[ix, 1] / xmapdat.liveTime[ix, 1]
+						scan.detector_arr[ix, i_lines, new_det_len-6] = xmapdat.inputCounts[ix, 2] / xmapdat.liveTime[ix, 2]
+						scan.detector_arr[ix, i_lines, new_det_len-5] = xmapdat.inputCounts[ix, 3] / xmapdat.liveTime[ix, 3]
 
-					scan.detector_arr[ix, i_lines, new_det_len-8] = xmapdat.inputCounts[ix, 0] / xmapdat.liveTime[ix, 0]
-					scan.detector_arr[ix, i_lines, new_det_len-7] = xmapdat.inputCounts[ix, 1] / xmapdat.liveTime[ix, 1]
-					scan.detector_arr[ix, i_lines, new_det_len-6] = xmapdat.inputCounts[ix, 2] / xmapdat.liveTime[ix, 2]
-					scan.detector_arr[ix, i_lines, new_det_len-5] = xmapdat.inputCounts[ix, 3] / xmapdat.liveTime[ix, 3]
+						scan.detector_arr[ix, i_lines, new_det_len-4] = xmapdat.outputCounts[ix, 0] / xmapdat.realTime[ix, 0]
+						scan.detector_arr[ix, i_lines, new_det_len-3] = xmapdat.outputCounts[ix, 1] / xmapdat.realTime[ix, 1]
+						scan.detector_arr[ix, i_lines, new_det_len-2] = xmapdat.outputCounts[ix, 2] / xmapdat.realTime[ix, 2]
+						scan.detector_arr[ix, i_lines, new_det_len-1] = xmapdat.outputCounts[ix, 3] / xmapdat.realTime[ix, 3]
 
-					scan.detector_arr[ix, i_lines, new_det_len-4] = xmapdat.outputCounts[ix, 0] / xmapdat.realTime[ix, 0]
-					scan.detector_arr[ix, i_lines, new_det_len-3] = xmapdat.outputCounts[ix, 1] / xmapdat.realTime[ix, 1]
-					scan.detector_arr[ix, i_lines, new_det_len-2] = xmapdat.outputCounts[ix, 2] / xmapdat.realTime[ix, 2]
-					scan.detector_arr[ix, i_lines, new_det_len-1] = xmapdat.outputCounts[ix, 3] / xmapdat.realTime[ix, 3]
-
-					'''
-					scan.detector_arr[ix, i_lines, new_det_len - 1] = xmapdat.liveTime[ix, 0]
-					scan.detector_arr[ix, i_lines, new_det_len - 2] = xmapdat.liveTime[ix, 1]
-					scan.detector_arr[ix, i_lines, new_det_len - 3] = xmapdat.liveTime[ix, 2]
-					scan.detector_arr[ix, i_lines, new_det_len - 4] = xmapdat.liveTime[ix, 3]
-					'''
-
+						'''
+						scan.detector_arr[ix, i_lines, new_det_len - 1] = xmapdat.liveTime[ix, 0]
+						scan.detector_arr[ix, i_lines, new_det_len - 2] = xmapdat.liveTime[ix, 1]
+						scan.detector_arr[ix, i_lines, new_det_len - 3] = xmapdat.liveTime[ix, 2]
+						scan.detector_arr[ix, i_lines, new_det_len - 4] = xmapdat.liveTime[ix, 3]
+						'''
+			except:
+				self.logger.error('Error loading netcdf line at %d, filename: %s', last_line, filename)
+				break
 		return scan
 
 #----------------------------------------------------------------------

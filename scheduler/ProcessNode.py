@@ -288,10 +288,21 @@ class ProcessNode(RestBase):
 				else:
 					self.logger.info('finished processing job with status COMPLETED')
 					job_dict[Constants.JOB_STATUS] = Constants.JOB_STATUS_COMPLETED
+				handlers = job_logger.handlers[:]
+				for handler in handlers:
+					handler.close()
+					job_logger.removeHandler(handler)
 			except:
 				self.logger.exception('Error processing %s', job_dict[Constants.JOB_DATA_PATH])
 				job_dict[Constants.JOB_FINISH_PROC_TIME] = datetime.ctime(datetime.now())
 				job_dict[Constants.JOB_STATUS] = Constants.JOB_STATUS_GENERAL_ERROR
+				try:
+					handlers = job_logger.handlers[:]
+					for handler in handlers:
+						handler.close()
+						job_logger.removeHandler(handler)
+				except:
+					pass
 			if self.db.update_job(job_dict):
 				self.send_job_update(job_dict)
 			self.send_status_update()
