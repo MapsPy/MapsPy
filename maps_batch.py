@@ -42,9 +42,6 @@ import logging.handlers
 import h5py
 from datetime import datetime
 import shutil
-
-from enaml.core.compiler_common import fetch_helpers
-
 import maps_generate_img_dat
 import maps_definitions
 import maps_elements
