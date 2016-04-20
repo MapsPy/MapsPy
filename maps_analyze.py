@@ -778,7 +778,7 @@ class analyze:
 			if np.sum(y) > 0.:
 
 				time1 = time.time()
-				self.logger.debug('start fit, maxiter = %s', maxiter)
+				#self.logger.debug('start fit, maxiter = %s', maxiter)
 				if have_bounds:
 					self.logger.debug('with bounds')
 					p1, cov, infodict, mesg, self.success = leastsqbound(self.residuals_matrix, p0, bounds,
@@ -796,9 +796,9 @@ class analyze:
 				perror1 = self.calc_perror(infodict['fjac'], infodict['ipvt'], len(p1))
 
 				time2 = time.time()
-				self.logger.info('fit done in %s', (time2 - time1))
-				self.logger.info('success: %s mesg: %s', self.success, mesg)
-				self.logger.info('number of function evals %s', infodict['nfev'])
+				#self.logger.info('fit done in %s', (time2 - time1))
+				#self.logger.info('success: %s mesg: %s', self.success, mesg)
+				#self.logger.info('number of function evals %s', infodict['nfev'])
 
 				parameters[self.iusepar] = p1
 
