@@ -524,43 +524,43 @@ class maps_fit_parameters:
 					pileup_string = [x.strip() for x in pileup_string]
 
 				elif tag == 'CAL_OFFSET_[E_OFFSET]':
-					temp = map(float,value.split(','))
+					temp = map(np.float32, value.split(','))
 					if verbose:
 						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.s.val[keywords.energy_pos[0]] = temp[det]
 
 				elif tag == 'CAL_OFFSET_[E_OFFSET]_MAX':  
-					temp = map(float,value.split(','))
+					temp = map(float, value.split(','))
 					if verbose:
 						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.s.max[keywords.energy_pos[0]] = temp[det]
 		
 				elif tag == 'CAL_OFFSET_[E_OFFSET]_MIN':  
-					temp = map(float,value.split(','))
+					temp = map(float, value.split(','))
 					if verbose:
 						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.s.min[keywords.energy_pos[0]] = temp[det]
 
 				elif tag == 'CAL_SLOPE_[E_LINEAR]':
-					temp = map(float,value.split(','))
+					temp = map(float, value.split(','))
 					if verbose:
 						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.s.val[keywords.energy_pos[1]] = temp[det]
 
 				elif tag == 'CAL_SLOPE_[E_LINEAR]_MAX':
-					temp = map(float,value.split(','))
+					temp = map(float, value.split(','))
 					if verbose:
 						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.s.max[keywords.energy_pos[1]] = temp[det]
 
 				elif tag == 'CAL_SLOPE_[E_LINEAR]_MIN':
-					temp = map(float,value.split(','))
+					temp = map(float, value.split(','))
 					if verbose:
 						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.s.min[keywords.energy_pos[1]] = temp[det]
 
 				elif tag == 'CAL_QUAD_[E_QUADRATIC]':
-					temp = map(float,value.split(','))
+					temp = map(float, value.split(','))
 					if verbose:
 						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.s.val[keywords.energy_pos[2]] = temp[det]
@@ -573,25 +573,25 @@ class maps_fit_parameters:
 						fitp.s.use[keywords.energy_pos[2]] = fitp.s.use[keywords.energy_pos[1]]
 
 				elif tag == 'CAL_QUAD_[E_QUADRATIC]_MAX':
-					temp = map(float,value.split(','))
+					temp = map(float, value.split(','))
 					if verbose:
 						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.s.max[keywords.energy_pos[2]] = temp[det]
 
 				elif tag == 'CAL_QUAD_[E_QUADRATIC]_MIN':
-					temp = map(float,value.split(','))
+					temp = map(float, value.split(','))
 					if verbose:
 						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.s.min[keywords.energy_pos[2]] = temp[det]
 
 				elif tag == 'FWHM_OFFSET':
-					temp = map(float,value.split(','))
+					temp = map(float, value.split(','))
 					if verbose:
 						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.s.val[keywords.fwhm_pos[0]] = temp[det]
 
 				elif tag == 'FWHM_FANOPRIME':
-					temp = map(float,value.split(','))
+					temp = map(float, value.split(','))
 					if verbose:
 						self.logger.debug('tag: %s, temp: %s', tag, temp)
 					fitp.s.val[keywords.fwhm_pos[1]] = temp[det]

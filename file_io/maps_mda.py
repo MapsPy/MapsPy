@@ -845,15 +845,6 @@ class mda:
 		# the following variables are created or read with this routine:
 		scan_name =  ' '
 		scan_time_stamp = ' '
-		mca_calib_arr = 0.				#  array
-		mca_calib_description_arr = [] # array
-		y_coord_arr = 0.				# y coordinates in mm
-		x_coord_arr = [0.]				 # x coordinates in mm
-		y_pixels = 0					# m pixels
-		x_pixels = 0					# n pixels
-		detector_arr = 0.				# nxmxo array  ( o detectors)
-		detector_description_arr = []  #  ox1 array
-		mca_arr = 0.					# nxmx2000xno.detectors array  ( 2000 energies)
 		invalid_file[0] = 0
 
 		res = 0
@@ -933,6 +924,11 @@ class mda:
 		scan_no_triggers = u.unpack_int()
 
 		scan_data = scan()
+		scan_data.x_coord_arr = [0.,]
+		scan_data.y_coord_arr = [0.,]
+		scan_data.detector_description_arr = []
+		scan_data.mca_calib_description_arr = []
+		scan_data.mca_calib_arr = 0.
 		try:
 			if verbose:
 				self.logger.debug('Scan name: %s', scan_name)
@@ -948,11 +944,10 @@ class mda:
 				self.logger.debug('1D info: %s', one_d_info)
 
 			if scan_no_detectors > 0 :
-				mca_calib_arr = np.zeros((scan_no_detectors)) # create mca calibration array
-				mca_calib_description_arr = []				  # create mca calib description array
+				scan_data.mca_calib_arr = np.zeros((scan_no_detectors)) # create mca calibration array
+				scan_data.mca_calib_description_arr = []				  # create mca calib description array
 
-			y_pixels = outer_pointer_lower_scans.size # pixels really in the scan
-			scan_data.y_pixels = y_pixels
+			scan_data.y_pixels = outer_pointer_lower_scans.size # pixels really in the scan
 
 			one_d_time_stamp = []
 			positioner = scanPositioner()
@@ -1022,12 +1017,12 @@ class mda:
 						detector.unit = u.unpack_string()
 					if verbose:
 						self.logger.debug("detector[%d].unit = %s", j, detector.unit)
-					mca_calib_description_arr.append(detector.name)
+					scan_data.mca_calib_description_arr.append(detector.name)
 				except:
 					self.logger.exception('read_scan(): Error reading detector description strings')
 
 			if verbose:
-				self.logger.debug('mca_calib_description_arr: %s', mca_calib_description_arr)
+				self.logger.debug('mca_calib_description_arr: %s', scan_data.mca_calib_description_arr)
 
 			for j in range(scan_no_triggers):
 				trigger = scanTrigger()
@@ -1057,16 +1052,16 @@ class mda:
 
 				if j == 0:
 					readback_array = np.array(readback_array)
-					y_coord_arr = readback_array.copy()
-				if y_coord_arr.size != y_pixels:
+					scan_data.y_coord_arr = readback_array.copy()
+				if scan_data.y_coord_arr.size != scan_data.y_pixels:
 					# remove those y positions that are incorrect for aborted scans
-					if y_pixels < 3:
+					if scan_data.y_pixels < 3:
 						invalid_file[0] = 2
-						self.logger.error('ERROR: scanned y_pixels less than 3 in an aborted array')
+						self.logger.error('ERROR: scanned scan_data.y_pixels less than 3 in an aborted array')
 						return None
 
-					y_coord_arr = y_coord_arr[0:y_pixels]
-					y_coord_arr[y_pixels-1] = y_coord_arr[y_pixels-2] + (y_coord_arr[y_pixels-2] - y_coord_arr[y_pixels-3])
+					scan_data.y_coord_arr = scan_data.y_coord_arr[0:scan_data.y_pixels]
+					scan_data.y_coord_arr[scan_data.y_pixels-1] = scan_data.y_coord_arr[scan_data.y_pixels-2] + (scan_data.y_coord_arr[scan_data.y_pixels-2] - scan_data.y_coord_arr[scan_data.y_pixels-3])
 					#if verbose:
 					#	self.logger.debug('y coord array before correction : %s', readback_array)
 					#	self.logger.debug('y coord array after correction : %s', y_coord_arr)
@@ -1079,11 +1074,11 @@ class mda:
 			u = Unpacker(buf)
 			for j in range(scan_no_detectors):
 				detector_array = u.unpack_farray(scan_npts, u.unpack_float)
-				mca_calib_arr[j] = detector_array[0]
+				scan_data.mca_calib_arr[j] = detector_array[0]
 				#if verbose: self.logger.debug("detector_array" , detector_array
 
 			if verbose:
-				self.logger.debug('mca_calib_arr %s', mca_calib_arr)
+				self.logger.debug('mca_calib_arr %s', scan_data.mca_calib_arr)
 
 			for i_outer_loop in range(len(outer_pointer_lower_scans)):
 				verbose = 0
@@ -1112,8 +1107,7 @@ class mda:
 					invalid_file[0] = 2
 					return scan_data
 
-				x_pixels = scan_npts
-				scan_data.x_pixels = x_pixels
+				scan_data.x_pixels = scan_npts
 				two_d_time_stamp = []
 				pointer_lower_scans = np.zeros((scan_npts), dtype=np.int)
 				if scan_rank > 1:
@@ -1121,7 +1115,7 @@ class mda:
 
 				if verbose:
 					self.logger.debug('pointer_lower_scans: %s', pointer_lower_scans)
-					self.logger.debug('x pixels: %s', x_pixels)
+					self.logger.debug('x pixels: %s', scan_data.x_pixels)
 
 				if scan_npts > 2999:
 					invalid_file[0] = 3
@@ -1149,7 +1143,7 @@ class mda:
 
 				#need to define the 2d detector array FOR the first time only
 				if i_outer_loop == 0:
-					detector_arr = np.zeros((x_pixels, y_pixels, scan_no_detectors))
+					scan_data.detector_arr = np.zeros((scan_data.x_pixels, scan_data.y_pixels, scan_no_detectors))
 
 				for j in range(scan_no_positioners):
 					positioner = scanPositioner()
@@ -1217,7 +1211,7 @@ class mda:
 						self.logger.debug("detector[%d].unit = %s", j, detector.unit)
 
 					if i_outer_loop == 0:
-						detector_description_arr.append(detector.name)
+						scan_data.detector_description_arr.append(detector.name)
 
 				for j in range(scan_no_triggers):
 					trigger = scanTrigger()
@@ -1243,12 +1237,12 @@ class mda:
 					if verbose:
 						self.logger.debug("readback_array = %s", readback_array)
 
-					if x_coord_arr[0] == 0:
+					if scan_data.x_coord_arr[0] == 0:
 						readback_array = np.array(readback_array)
-						x_coord_arr = readback_array.copy()
+						scan_data.x_coord_arr = readback_array.copy()
 
 				if verbose:
-					self.logger.debug('x coord array : %s', x_coord_arr)
+					self.logger.debug('x coord array : %s', scan_data.x_coord_arr)
 
 				# This is slow so read directly detectors
 				# file.seek(file.tell() - (len(buf) - u.get_position()))
@@ -1256,7 +1250,7 @@ class mda:
 				# u = Unpacker(buf)
 				# for j in range(scan_no_detectors):
 				# 		detector_array = u.unpack_farray(scan_npts, u.unpack_float)
-				# 		detector_arr[:, i_outer_loop, j] = detector_array[:]
+				# 		scan_data.detector_arr[:, i_outer_loop, j] = detector_array[:]
 
 				import struct
 				# detectors
@@ -1265,7 +1259,7 @@ class mda:
 				for j in range(scan_no_detectors):
 					buf = file.read(scan_npts * 4)
 					detector_array = struct.unpack('>' + str(scan_npts) + 'f', buf)
-					detector_arr[:, i_outer_loop, j] = detector_array[:]
+					scan_data.detector_arr[:, i_outer_loop, j] = detector_array[:]
 
 				if verbose:
 					self.logger.debug("detector_array %s", detector_array)
@@ -1411,10 +1405,10 @@ class mda:
 						else:
 							no_energy_channels = scan_npts
 						if scan_no_detectors > 1:
-							scan_data.mca_arr = np.zeros((x_pixels, y_pixels, no_energy_channels, scan_no_detectors), dtype=np.float32)
+							scan_data.mca_arr = np.zeros((scan_data.x_pixels, scan_data.y_pixels, no_energy_channels, scan_no_detectors), dtype=np.float32)
 							#scan_data.mca_arr = self.mp_array_to_np_array(x_pixels, y_pixels, no_energy_channels, scan_no_detectors)
 						else:
-							scan_data.mca_arr = np.zeros((x_pixels, y_pixels, no_energy_channels), dtype=np.float32)
+							scan_data.mca_arr = np.zeros((scan_data.x_pixels, scan_data.y_pixels, no_energy_channels), dtype=np.float32)
 							#scan_data.mca_arr = self.mp_array_to_np_array(x_pixels, y_pixels, no_energy_channels, None)
 
 					# This is very slow to unpack so read directly detectors
@@ -1493,26 +1487,6 @@ class mda:
 					extra_pv_dict[name] = (desc, unit, value)
 
 					extra_pv_key_list.append(name)
-
-			scan_data.y_pixels = y_pixels
-			scan_data.y_coord_arr = y_coord_arr
-
-			# create mca calib description array
-			scan_data.mca_calib_description_arr = mca_calib_description_arr
-
-			# create mca calibration array
-			scan_data.mca_calib_arr = mca_calib_arr
-
-			scan_data.x_pixels = x_pixels
-			scan_data.x_coord_arr = x_coord_arr
-
-			#detector_arr = fltarr(x_pixels, y_pixels, info.no_detectors)
-			scan_data.detector_arr = detector_arr
-
-			scan_data.detector_description_arr = detector_description_arr
-
-			#mca_arr = fltarr(x_pixels, y_pixels, no_energy_channels, info.no_detectors)
-			#scan_data.mca_arr = mca_arr
 
 			if extra_pvs == True:
 				scan_data.extra_pv = extra_pv_dict

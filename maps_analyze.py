@@ -396,11 +396,11 @@ class analyze:
 		keywords = fitp.keywords
 		compton_E = p[keywords.coherent_pos[0]] / (
 			1. + (p[keywords.coherent_pos[0]] / 511.) * (
-			1. - np.cos(p[keywords.compton_pos[0]] * 2. * np.math.pi / 360.)))
+				1. - np.cos(p[keywords.compton_pos[0]] * 2. * np.math.pi / 360.)))
 
 		sigma = np.sqrt((p[keywords.fwhm_pos[0]] / 2.3548) ** 2 + compton_E * 2.96 * p[keywords.fwhm_pos[1]])
 
-		#local_sigma = sigma * p[14]
+		# local_sigma = sigma * p[14]
 
 		delta_energy = ev.copy() - compton_E
 
@@ -777,9 +777,8 @@ class analyze:
 
 			if np.sum(y) > 0.:
 
-				if verbose:
-					time1 = time.time()
-					self.logger.debug('start fit, maxiter = %s', maxiter)
+				time1 = time.time()
+				self.logger.debug('start fit, maxiter = %s', maxiter)
 				if have_bounds:
 					self.logger.debug('with bounds')
 					p1, cov, infodict, mesg, self.success = leastsqbound(self.residuals_matrix, p0, bounds,
@@ -792,16 +791,14 @@ class analyze:
 																				   full_output=True)
 
 				if self.success not in [1, 2, 3, 4]:
-					if verbose:
-						self.logger.warning(' Unable to fit spectrum')
+					self.logger.warning(' Unable to fit spectrum')
 
 				perror1 = self.calc_perror(infodict['fjac'], infodict['ipvt'], len(p1))
 
-				if verbose:
-					time2 = time.time()
-					self.logger.info('fit done in %s', (time2 - time1))
-					self.logger.info('success: %s mesg: %s', self.success, mesg)
-					self.logger.info('number of function evals %s', infodict['nfev'])
+				time2 = time.time()
+				self.logger.info('fit done in %s', (time2 - time1))
+				self.logger.info('success: %s mesg: %s', self.success, mesg)
+				self.logger.info('number of function evals %s', infodict['nfev'])
 
 				parameters[self.iusepar] = p1
 
@@ -840,7 +837,7 @@ class analyze:
 				perror = parinfo_value.copy() * 0.
 
 				fitted_spec = self.matrixmodel_spectrum(x, p0)
-				#fitted_spec = self.matrixmodel_spectrum(x, parameters)
+			# fitted_spec = self.matrixmodel_spectrum(x, parameters)
 
 			u[min(keywords.kele_pos):max(keywords.mele_pos) + 1] = parameters[0:parameters.size - offset + 1]
 			u[keywords.coherent_pos[1]] = parameters[parameters.size - offset + 1]
@@ -1006,7 +1003,7 @@ class analyze:
 
 	# -----------------------------------------------------------------------------
 	def fit_line(self, data_line, n_rows, matrix, spectral_binning, elt_line,
-				fitp, old_fitp,	keywords, xrf_bin, calib):
+				 fitp, old_fitp, keywords, xrf_bin, calib):
 
 		n_channels = len(data_line[:, 0])
 		fitted_line = np.zeros((n_channels, n_rows))

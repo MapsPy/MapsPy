@@ -280,6 +280,9 @@ class analyze:
 		n_ev, n_rows, n_cols, n_energy, energy, energy_spec, scan_time_stamp, dataset_orig = self.change_xrf_resetvars()
 		mda_scan = maps_mda.mda(self.logger)
 		scan = mda_scan.read_scan(mdafilename, threeD_only=2)
+		if scan == None or scan.detector_description_arr == None:
+			self.logger.info('Not a valid mda flyscan file, scan == None . returning: %s', mdafilename)
+			return
 		if len(scan.detector_description_arr) < 3:
 			self.logger.info('Not a valid mda flyscan file, returning: %s', mdafilename)
 			return
