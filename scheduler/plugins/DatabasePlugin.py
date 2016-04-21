@@ -92,8 +92,8 @@ class DatabasePlugin(plugins.SimplePlugin):
 	def get_all_processing_jobs(self):
 		return self.db.get_all_processing_jobs()
 
-	def get_all_finished_jobs(self):
-		return self.db.get_all_finished_jobs()
+	def get_all_finished_jobs(self, limit=None):
+		return self.db.get_all_finished_jobs(limit)
 
 	def get_job(self, job_id):
 		return self.db.get_job(job_id)

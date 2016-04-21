@@ -9,8 +9,25 @@
     <script src="/static/data_tables/js/jquery.dataTables.js"></script>
     <script src="/static/notify.min.js"></script>
     <script type="text/javascript">
+
+    //----------------------------------------------------------------------
+        
     $(document).ready(function() 
     {
+        
+        //----------------------------------------------------------------------
+    
+        function limit_finished_jobs(limit)
+        {
+
+            if (limit < 0)
+                $finished_table.ajax.url("/get_all_finished_jobs");
+            else
+                $finished_table.ajax.url("/get_all_finished_jobs?limit="+String(limit));
+            
+        }
+
+        
         //----------------------------------------------------------------------
         //--------------------------- gen functions ----------------------------
         //----------------------------------------------------------------------
@@ -260,6 +277,7 @@
             }
             return 0;
         }
+        
         //----------------------------------------------------------------------
         
         function populate_datasets_list()
@@ -299,6 +317,7 @@
             });
         }
         
+       
         //----------------------------------------------------------------------
         //--------------------------- button clicks ----------------------------
         //----------------------------------------------------------------------
@@ -470,7 +489,7 @@
 
         var $queued_table = create_job_data_table("#table_unprocessed_jobs", "/get_all_unprocessed_jobs");
         var $processing_table = create_job_data_table("#table_processing_jobs", "/get_all_processing_jobs");
-        var $finished_table = create_job_data_table("#table_finished_jobs", "/get_all_finished_jobs");
+        var $finished_table = create_job_data_table("#table_finished_jobs", "/get_all_finished_jobs?limit=100");
         $("#priority").val(5);
         $("#chk_all_datasets").prop("checked", true);
         $("#analysis-type-a").prop("checked", true);
@@ -480,6 +499,14 @@
         var $detailJobRows = [];
         var $detailPRJobRows = [];
         var $detailQuJobRows = [];
+
+        $("#limit_100").checked = true;
+        
+        $("#limit_100").on("click", function() { limit_finished_jobs(100); } );
+        $("#limit_500").on("click", function() { limit_finished_jobs(500); } );
+        $("#limit_1000").on("click", function() { limit_finished_jobs(1000); } );
+        $("#limit_All").on("click", function() { limit_finished_jobs(-1); } );
+        
 
         setInterval(function()
         {
@@ -673,7 +700,7 @@
         });
         
         //----------------------------------------------------------------------
-
+        
     });
     </script>
     <title> MapsPy Scheduler </title>
@@ -747,6 +774,15 @@
                         </tr>
                         </thead>
                     </table>
+                </div>
+                <div>
+                    <form>
+                        <input type="radio" name="finished_job_limit" id="limit_100" >100
+                        <input type="radio" name="finished_job_limit" id="limit_500" >500
+                        <input type="radio" name="finished_job_limit" id="limit_1000" >1000
+                        <input type="radio" name="finished_job_limit" id="limit_All" >All
+                        
+                    </form>
                 </div>
             </div>
 

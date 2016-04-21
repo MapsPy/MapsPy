@@ -61,6 +61,7 @@ SELECT_ALL_UNPROCESSED_JOBS = SELECT_ALL_JOBS + ' WHERE Status=0'
 SELECT_ALL_UNPROCESSED_JOBS_ANY_NODE = SELECT_ALL_JOBS + ' WHERE Status=0 and Process_Node_Id=-1'
 SELECT_ALL_PROCESSING_JOBS = SELECT_ALL_JOBS + ' WHERE Status=1'
 SELECT_ALL_FINISHED_JOBS = SELECT_ALL_JOBS + ' WHERE Status>=2'
+SELECT_ALL_FINISHED_JOBS_LIMIT = SELECT_ALL_JOBS + ' WHERE Status>=2 ORDER BY id DESC LIMIT '
 SELECT_ALL_UNPROCESSED_AND_PROCESSING_JOBS = SELECT_ALL_JOBS + ' WHERE Status<=1 ORDER BY Status DESC'
 SELECT_ALL_UNPROCESSED_JOBS_FOR_PN_ID = SELECT_ALL_JOBS + ' WHERE Status<=1 AND Process_Node_Id=:Process_Node_Id ORDER BY Priority ASC'
 SELECT_JOB_BY_ID = SELECT_ALL_JOBS + ' WHERE Id=:Id'
@@ -179,8 +180,11 @@ class SQLiteDB:
 	def get_all_processing_jobs(self):
 		return self._get_jobs_(SELECT_ALL_PROCESSING_JOBS)
 
-	def get_all_finished_jobs(self):
-		return self._get_jobs_(SELECT_ALL_FINISHED_JOBS)
+	def get_all_finished_jobs(self, limit=None):
+		if limit == None:
+			return self._get_jobs_(SELECT_ALL_FINISHED_JOBS)
+		else:
+			return self._get_jobs_(SELECT_ALL_FINISHED_JOBS_LIMIT + str(limit))
 
 	def get_job(self, job_id):
 		jobs = self._get_jobs_(SELECT_JOB_BY_ID, {'Id': int(job_id)})

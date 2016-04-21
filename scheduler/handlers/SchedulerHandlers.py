@@ -266,7 +266,11 @@ class SchedulerHandler(object):
 	def get_all_finished_jobs(self, *args, **kwargs):
 		data_dict = kwargs
 		#data_dict['draw'] = 1
-		data_dict['data'] = self.db.get_all_finished_jobs()
+		limit = None
+		if 'limit' in data_dict.keys():
+			limit = str(data_dict['limit'])
+			print limit
+		data_dict['data'] = self.db.get_all_finished_jobs(limit)
 		data_dict['recordsTotal'] = len(data_dict['data'])
 		data_dict['recordsFiltered'] = len(data_dict['data'])
 		#result = self.db.get_all_finished_jobs()
