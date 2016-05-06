@@ -52,6 +52,7 @@ import make_maps
 import Constants
 from file_io.file_util import open_file_with_retry, call_function_with_retry
 
+
 def setup_logger(log_name, stream_to_console=True):
 	logger = logging.getLogger(log_name)
 	fHandler = logging.FileHandler(log_name)
@@ -101,6 +102,7 @@ def new_process_func(log_name, alias_path, job_dict):
 		key_d = 0
 		key_e = 0
 		key_f = 0 # for netcdf to hdf5 future feature
+		key_g = 0
 		if proc_mask & 1 == 1:
 			key_a = 1
 		if proc_mask & 2 == 2:
@@ -113,7 +115,9 @@ def new_process_func(log_name, alias_path, job_dict):
 			key_e = 1
 		if proc_mask & 32 == 32:
 			key_f = 1
-		maps_batch(wdir=alias_path, option_a_roi_plus=key_a, option_b_extract_spectra=key_b, option_c_per_pixel=key_c, option_d_image_extract=key_d, option_e_exchange_format=key_e, logger=logger)
+		if proc_mask & 64 == 64:
+			key_g = 1
+		maps_batch(wdir=alias_path, option_a_roi_plus=key_a, option_b_extract_spectra=key_b, option_c_per_pixel=key_c, option_d_image_extract=key_d, option_e_exchange_format=key_e, option_g_avg_hdf=key_g, logger=logger)
 		logger.info('Completed Job')
 	except:
 		logger.exception('job process')
@@ -955,7 +959,7 @@ def _option_d_(logger):
 # ------------------------------------------------------------------------------------------------
 
 
-def maps_batch(wdir, option_a_roi_plus, option_b_extract_spectra, option_c_per_pixel, option_d_image_extract, option_e_exchange_format, logger):
+def maps_batch(wdir, option_a_roi_plus, option_b_extract_spectra, option_c_per_pixel, option_d_image_extract, option_e_exchange_format, option_g_avg_hdf, logger):
 	verbose = True
 	time_started = strftime("%Y-%m-%d %H:%M:%S", gmtime())
 
@@ -1078,7 +1082,7 @@ def maps_batch(wdir, option_a_roi_plus, option_b_extract_spectra, option_c_per_p
 			_option_a_(main_dict, maps_conf, logger)
 	except:
 		error_occured = True
-		logger.error("Error occured for roi plus fitting")
+		logger.exception("Error occured for roi plus fitting")
 
 	spectra = None
 	try:
@@ -1087,7 +1091,7 @@ def maps_batch(wdir, option_a_roi_plus, option_b_extract_spectra, option_c_per_p
 			spectra = _option_b_(main_dict, maps_conf, maps_def, main_dict['total_number_detectors'], info_elements, logger)
 	except:
 		error_occured = True
-		logger.error("Error occured for integrated spectra")
+		logger.exception("Error occured for integrated spectra")
 
 	try:
 		# Section c converts mda to h5 files and does ROI/ROI+/FITS
@@ -1095,27 +1099,28 @@ def maps_batch(wdir, option_a_roi_plus, option_b_extract_spectra, option_c_per_p
 			_option_c_(main_dict, logger)
 	except:
 		error_occured = True
-		logger.error("Error occured for per pixel fitting")
+		logger.exception("Error occured for per pixel fitting")
 
 	# Section d extracts images
 	if option_d_image_extract > 0:
 		_option_d_(logger)
 
 	try:
-		# Generate average images
-		if main_dict['total_number_detectors'] > 1 and (option_a_roi_plus > 0 or option_c_per_pixel > 0):
-			logger.info(' we are now going to create the maps_generate_average...')
-			n_channels = 2048
-			if option_b_extract_spectra > 0:
-				energy_channels = None
-				#energy_channels = spectra[0].calib['off'] + spectra[0].calib['lin'] * np.arange((n_channels), dtype=np.float)
-			else:
-				energy_channels = None
-			makemaps = maps_generate_img_dat.analyze(logger, info_elements, main_dict, maps_conf)
-			makemaps.generate_average_img_dat(main_dict['total_number_detectors'], maps_conf, energy_channels)
+		if option_g_avg_hdf > 0:
+			# Generate average images
+			if main_dict['total_number_detectors'] > 1 and (option_a_roi_plus > 0 or option_c_per_pixel > 0):
+				logger.info(' we are now going to create the maps_generate_average...')
+				n_channels = 2048
+				if option_b_extract_spectra > 0:
+					energy_channels = None
+					#energy_channels = spectra[0].calib['off'] + spectra[0].calib['lin'] * np.arange((n_channels), dtype=np.float)
+				else:
+					energy_channels = None
+				makemaps = maps_generate_img_dat.analyze(logger, info_elements, main_dict, maps_conf)
+				makemaps.generate_average_img_dat(main_dict['total_number_detectors'], maps_conf, energy_channels)
 	except:
 		error_occured = True
-		logger.error("Error occured generating avg")
+		logger.exception("Error occured generating avg")
 
 	# Section e adds exchange information
 	if option_e_exchange_format > 0:
@@ -1144,8 +1149,9 @@ if __name__ == '__main__':
 	c = 0
 	d = 0
 	e = 0
+	g = 0
 
-	options, extraParams = getopt.getopt(sys.argv[2:], 'abcde', ['a', 'b', 'c', 'd', 'f', 'full'])
+	options, extraParams = getopt.getopt(sys.argv[2:], 'abcdefg', ['a', 'b', 'c', 'd', 'f', 'g', 'full'])
 	for opt, arg in options:
 		if opt in ('-a', '--a'):
 			a = 1
@@ -1157,6 +1163,8 @@ if __name__ == '__main__':
 			d = 1
 		elif opt in ('-e', '--e'):
 			e = 1
+		elif opt in ('-g', '--g'):
+			g = 1
 		elif opt in ('--full'):
 			a = 1
 			b = 1
@@ -1164,4 +1172,4 @@ if __name__ == '__main__':
 			d = 1
 			e = 1
 
-	maps_batch(wdir=dirct, option_a_roi_plus=a, option_b_extract_spectra=b, option_c_per_pixel=c, option_d_image_extract=d, option_e_exchange_format=e, logger=logger)
+	maps_batch(wdir=dirct, option_a_roi_plus=a, option_b_extract_spectra=b, option_c_per_pixel=c, option_d_image_extract=d, option_e_exchange_format=e, option_g_avg_hdf=g, logger=logger)
