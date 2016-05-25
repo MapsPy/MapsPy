@@ -131,7 +131,7 @@ def main(main_dict, logger, force_fit=0, no_fit=False):
 	# that in the analysis the biggest files are analysed first.
 
 	# Calculate intermediate result
-
+	seconds_start = time.time()
 	#detector_number_arr_orig = np.zeros((no_files), dtype=int)
 	suffix = ''
 	for this_detector in range(main_dict['detector_to_start_with'], total_number_detectors):
