@@ -404,25 +404,33 @@
         
         $("#Btn-Brouse-2IDE").click(function(e) 
         {
-            $.ajax(
+            $('.overlay').show();
+            $('#jstree').jstree(
             {
-                type: 'POST',
-                url:"/get_dataset_dirs_list",
-                data: {'job_path': 'all', 'depth': 2},
-                datatype: "json",
-                success: function(data) 
+                'core':
                 {
-                    var $ul = $('#browse-jobs-list');
-                    var $job_dirs = $.parseJSON(data);
-                    $('#jstree').jstree($job_dirs);
-                    $('.overlay').show();
-                },
-                error: function(xhr, textStatus, errorThrown)
-                {
-                    $.notify(xhr.responseText,  {
-                        autoHide: false,
-                        clickToHide: true
-                    });
+                    'data' : function (obj, callback) 
+                    {
+                        var me = this;
+                         $.ajax(
+                        {
+                            type: 'POST',
+                            url:"/get_dataset_dirs_list",
+                            data: {'job_path': 'all', 'depth': 2},
+                            datatype: "json",
+                            success: function(rdata) 
+                            {
+                                callback.call(me, JSON.parse(rdata));
+                            },
+                            error: function(xhr, textStatus, errorThrown)
+                            {
+                                $.notify(xhr.responseText,  {
+                                    autoHide: false,
+                                    clickToHide: true
+                                });
+                            }
+                        });
+                    }
                 }
             });
         });
@@ -514,7 +522,7 @@
             $queued_table.ajax.reload(null, false);
             $processing_table.ajax.reload(null, false);
             $finished_table.ajax.reload(null, false);
-        }, 3000);
+        }, 3000000);
 	
         //----------------------------------------------------------------------
         

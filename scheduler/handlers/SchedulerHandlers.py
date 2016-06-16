@@ -173,14 +173,23 @@ class SchedulerHandler(object):
 	def get_dataset_dirs_list(self, job_path, depth=0):
 		depth = int(depth)
 		job_roots_dict = self.settings.getSetting(Settings.SECTION_JOB_DIR_ROOTS)
-		path = job_roots_dict[job_path]
-		dir_list = [{'id': path, 'parent': '#', 'text': job_path, 'state': {'opened': True}}]
-		dir_list += get_dirs(path, depth)
-		dd = dict()
-		dd['core'] = dict()
-		dd['core']['data'] = dir_list
-		jenc = json.JSONEncoder()
-		return jenc.encode(dd)
+		if job_path == 'all':
+			#path = job_roots_dict[job_path]
+			dir_list = [{'id': '/', 'parent': '#', 'text': 'All', 'state': {'opened': True}}]
+			#dir_list = {'id': 0, 'parent': '#', 'text': 'All', 'state': {'opened': True}}
+			#return json.JSONEncoder().encode(dir_list)
+			for key, value in job_roots_dict.iteritems():
+				dir_list += [{'id': value, 'parent': '/', 'text': key, 'state': {'opened': False}}]
+				dir_list += get_dirs(value, depth)
+			jenc = json.JSONEncoder()
+			return jenc.encode(dir_list)
+		else:
+			path = job_roots_dict[job_path]
+			dir_list = [{'id': path, 'parent': '#', 'text': path, 'state': {'opened': True}}]
+			for key, value in job_roots_dict.iteritems():
+				dir_list += get_dirs(path, depth)
+			jenc = json.JSONEncoder()
+			return jenc.encode(dir_list)
 
 	@cherrypy.expose
 	@cherrypy.tools.json_out()
