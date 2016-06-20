@@ -619,6 +619,7 @@ class analyze:
 		scan = self.read_and_parse_scan(header, mdafilename, beamline, this_detector, total_number_detectors)
 
 		if scan == None:
+			self.logger.error("Could not read and parse scan " + mdafilename)
 			return
 
 		extra_pv = scan.extra_pv
@@ -1671,22 +1672,20 @@ class analyze:
 
 	# ----------------------------------------------------------------------
 
-	def generate_average_img_dat(self, total_number_detectors, make_maps_conf, energy_channels, this_file= '', extra_pv=None):
+	def generate_average_img_dat(self, main_dict, make_maps_conf, energy_channels, extra_pv=None):
 		self.logger.info("Generating average image")
-
+		total_number_detectors = main_dict['total_number_detectors']
 		h5p = maps_hdf5.h5(self.logger)
 
 		imgdat_filenames = []
-		if this_file != '':
-			temp_filename = os.path.basename(this_file)
-			basename, extension = os.path.splitext(temp_filename)
-			imgdat_filenames.append(temp_filename)
-		else:
-			#self.logger.debug('XRFmaps_dir %s', self.main_dict['XRFmaps_dir'])
-			dirList=os.listdir(self.main_dict['XRFmaps_dir'])
+		if main_dict['dataset_files_to_proc'][0] == 'all':
+			imgdat_filenames = []
+			dirList=os.listdir(main_dict['XRFmaps_dir'])
 			for fname in dirList:
 				if fname[-4:] == '.h50':
 					imgdat_filenames.append(fname)
+		else:
+			imgdat_filenames = [mdafile.replace('.mda', '.h50') for mdafile in main_dict['dataset_files_to_proc']]
 
 		#self.logger.debug('imgdat_filename %s', imgdat_filenames)
 		no_files = len(imgdat_filenames)

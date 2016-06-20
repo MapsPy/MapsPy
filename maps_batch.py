@@ -1080,6 +1080,7 @@ def maps_batch(wdir, option_a_roi_plus, option_b_extract_spectra, option_c_per_p
 		# Section a converts mda to h5 and does ROI and ROI+ fits
 		if option_a_roi_plus > 0:
 			_option_a_(main_dict, maps_conf, logger)
+			option_g_avg_hdf = 1
 	except:
 		error_occured = True
 		logger.exception("Error occured for roi plus fitting")
@@ -1097,6 +1098,8 @@ def maps_batch(wdir, option_a_roi_plus, option_b_extract_spectra, option_c_per_p
 		# Section c converts mda to h5 files and does ROI/ROI+/FITS
 		if option_c_per_pixel > 0:
 			_option_c_(main_dict, logger)
+			# enable g option if we are performing c
+			option_g_avg_hdf = 1
 	except:
 		error_occured = True
 		logger.exception("Error occured for per pixel fitting")
@@ -1117,7 +1120,7 @@ def maps_batch(wdir, option_a_roi_plus, option_b_extract_spectra, option_c_per_p
 				else:
 					energy_channels = None
 				makemaps = maps_generate_img_dat.analyze(logger, info_elements, main_dict, maps_conf)
-				makemaps.generate_average_img_dat(main_dict['total_number_detectors'], maps_conf, energy_channels)
+				makemaps.generate_average_img_dat(main_dict, maps_conf, energy_channels)
 	except:
 		error_occured = True
 		logger.exception("Error occured generating avg")
