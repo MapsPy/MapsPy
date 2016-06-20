@@ -264,6 +264,10 @@
                 procMask += 32;
             }
             */
+            if ($('#analysis-type-g')[0].checked === true)
+            {
+                procMask += 64;
+            }
             return procMask;
         }
         
@@ -295,6 +299,7 @@
                     $.notify("Got dataset list ", "success");
                     
                     $("#datasets_list").html("");
+                    $datasets.mda_files.sort();
                     for (i = 0; i < $datasets.mda_files.length; i++) 
                     { 
                         var node = $datasets.mda_files[i];
@@ -667,6 +672,7 @@
             });
             
             var $node_list1 = $pn_table.data();
+            //$node_list1.sort();
             $node_list1.each( function (node)
             {
                 if ( $("#proc_node_option option[value='"+node.Id+"']").length < 1 )
@@ -820,7 +826,8 @@
                    <input type="checkbox" id="analysis-type-c" value="C">C: Analyze datasets using ROI, ROI+ and per pixel fitting<br>
                    <!--<input type="checkbox" id="analysis-type-d" value="D">D: N/A<br> -->
                    <input type="checkbox" id="analysis-type-e" value="E">E: Add exchange information to analyzed files<br>
-                   <input type="checkbox" id="analysis-type-f" value="F">F: Create hdf5 file from single line netcdf files for flyscan<br>
+                   <!--<input type="checkbox" id="analysis-type-f" value="F">F: Create hdf5 file from single line netcdf files for flyscan<br>-->
+                   <input type="checkbox" id="analysis-type-g" value="G">G: Generate average .h5 from each detector<br>
                    Total Number of Detectors:
                    <input type="text" id="option-detector-elements" value="4"><br>
                    Detector to start with:

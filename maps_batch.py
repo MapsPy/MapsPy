@@ -1111,7 +1111,7 @@ def maps_batch(wdir, option_a_roi_plus, option_b_extract_spectra, option_c_per_p
 	try:
 		if option_g_avg_hdf > 0:
 			# Generate average images
-			if main_dict['total_number_detectors'] > 1 and (option_a_roi_plus > 0 or option_c_per_pixel > 0):
+			if main_dict['total_number_detectors'] > 1:
 				logger.info(' we are now going to create the maps_generate_average...')
 				n_channels = 2048
 				if option_b_extract_spectra > 0:
