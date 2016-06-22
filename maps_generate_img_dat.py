@@ -390,8 +390,6 @@ class analyze:
 		scan.detector_description_arr = new_detector_description_arr
 
 		no_detectors = 1
-		self.maps_conf.n_used_dmaps = len(new_detector_description_arr)
-		self.maps_conf.n_used_chan = 1
 		img_type = 0
 		n_channels = 2048
 		n_energy = 2048
@@ -995,7 +993,6 @@ class analyze:
 					these_counts = these_counts.sum(axis=2)
 				these_counts = these_counts / elt_arr
 				counts = counts + these_counts
-
 			thisdata.dataset_orig[:, :, jj, 0] = counts
 
 		# below is the routine for using matrix math to calculate elemental

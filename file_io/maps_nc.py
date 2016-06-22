@@ -144,7 +144,9 @@ class nc:
 				else:
 					continue
 
-				xmapdat = read_xmap_netcdf(ncfile, self.logger, True)
+				#xmapdat = read_xmap_netcdf(ncfile, self.logger, True)
+				xmapdat = read_xmap_netcdf2(ncfile, self.logger, True)
+
 				if xmapdat == None:
 					return None
 				for ix in range(n_cols):
@@ -170,16 +172,8 @@ class nc:
 						scan.detector_arr[ix, i_lines, new_det_len-3] = xmapdat.outputCounts[ix, 1] / xmapdat.realTime[ix, 1]
 						scan.detector_arr[ix, i_lines, new_det_len-2] = xmapdat.outputCounts[ix, 2] / xmapdat.realTime[ix, 2]
 						scan.detector_arr[ix, i_lines, new_det_len-1] = xmapdat.outputCounts[ix, 3] / xmapdat.realTime[ix, 3]
-
-						'''
-						scan.detector_arr[ix, i_lines, new_det_len - 1] = xmapdat.liveTime[ix, 0]
-						scan.detector_arr[ix, i_lines, new_det_len - 2] = xmapdat.liveTime[ix, 1]
-						scan.detector_arr[ix, i_lines, new_det_len - 3] = xmapdat.liveTime[ix, 2]
-						scan.detector_arr[ix, i_lines, new_det_len - 4] = xmapdat.liveTime[ix, 3]
-						'''
 			except:
-				self.logger.error('Error loading netcdf line at %d, filename: %s', last_line, filename)
-				break
+				self.logger.exception('Skipping netcdf line at %d, filename: %s', last_line, filename)
 		return scan
 
 #----------------------------------------------------------------------
@@ -314,6 +308,113 @@ def read_xmap_netcdf(fname, logger, verbose=False):
 			if mapmode == 2:
 				t_data = aslong(t_data)
 			xmapdat.data[p1:p2, :, :] = t_data.reshape(npix, 4, nchans)
+
+	t2 = time.time()
+	xmapdat.numPixels = npix_total
+	xmapdat.data = xmapdat.data[:npix_total]
+	xmapdat.realTime = clocktick * xmapdat.realTime[:npix_total]
+	xmapdat.liveTime = clocktick * xmapdat.liveTime[:npix_total]
+	xmapdat.inputCounts = xmapdat.inputCounts[:npix_total]
+	xmapdat.outputCounts = xmapdat.outputCounts[:npix_total]
+	if verbose:
+		logger.debug('   time to read file    = %5.1f ms', ((t1 - t0) * 1000))
+		logger.debug('   time to extract data = %5.1f ms', ((t2 - t1) * 1000))
+		logger.debug('   read %i pixels ', npix_total)
+		logger.debug('   data shape:	%s', xmapdat.data.shape)
+	fh.close()
+	return xmapdat
+
+def read_xmap_netcdf2(fname, logger, verbose=False):
+	# Reads a netCDF file created with the DXP xMAP driver
+	# with the netCDF plugin buffers
+
+	if verbose:
+		logger.debug('reading %s', fname)
+
+	t0 = time.time()
+	# read data from array_data variable of netcdf file
+	fh = call_function_with_retry(netcdf_open, 5, 0.1, 1.1, (fname, 'r'))
+	#fh = netcdf_open(fname,'r')
+	if fh == None:
+		return None
+	data_var = fh.variables['array_data']
+	array_data = data_var.data
+	if len(array_data) == 0:
+		array_data = np.zeros((5,1,1047808), dtype='f')
+	t1 = time.time()
+	# array_data will normally be 3d:
+	#  shape = (narrays, nmodules, buffersize)
+	# but nmodules and narrays could be 1, so that
+	# array_data could be 1d or 2d.
+	#
+	# here we force the data to be 3d
+	shape = array_data.shape
+	if len(shape) == 1:
+		array_data.shape = (1,1,shape[0])
+	elif len(shape) == 2:
+		array_data.shape = (1,shape[0],shape[1])
+
+	narrays,nmodules,buffersize = array_data.shape
+	modpixs = array_data[0,0,8]
+	ndetectors = 4
+	#if modpixs < 124: modpixs = 124
+	npix_total = 0
+	clocktick  = 320.e-9
+	offset = 256
+	for array in range(narrays):
+		for module in range(nmodules):
+			d	= array_data[array,module,:]
+			bh	= xMAPBufferHeader(d)
+			#if verbose and array==0:
+			#print	' nc data shape: ', d.shape, d.size
+			# logger.debug(modpixs, (d.size-256), (d.size-256)/modpixs
+			# logger.debug(modpixs*(d.size-256)/(1.0*modpixs)
+			#dat = d[256:].reshape(modpixs, (d.size-256)/modpixs )
+
+			npix = bh.numPixels
+			if module == 0:
+				npix_total += npix
+				if array == 0:
+					# first time through, (array,module)=(0,0) we
+					# read mapping mode, set up how to slice the
+					# data, and build data arrays in xmapdat
+					#mapmode = dat[0, 3]
+					if bh.mappingMode == 1:  # mapping, full spectra
+						nchans = d[20]
+						data_slice = slice(256, 8448)
+					elif bh.mappingMode == 2:  # ROI mode
+						# Note:  nchans = number of ROIS !!
+						nchans = max(d[264:268])
+						data_slice = slice(64, 64 + 8 * nchans)
+					else:
+						nchans = 0
+						data_slice = 0
+					xmapdat = xMAPData(narrays*modpixs, nmodules, nchans)
+					xmapdat.firstPixel = bh.startingPixel
+
+			# acquistion times and i/o counts data are stored
+			# as longs in locations 32:64
+			#t_times = aslong(dat[:npix, 32:64]).reshape(npix, 4, 4)
+			#p1 = npix_total - npix
+			#p2 = npix_total
+			for pix in range(npix_total):
+				if (offset+64) < d.size:
+					t_times = aslong(d[offset + 32: offset + 64]).reshape(4, 4)
+					for j in range(ndetectors):
+						xmapdat.realTime[pix, j] = t_times[j, 0]
+						xmapdat.liveTime[pix, j] = t_times[j, 1]
+						xmapdat.inputCounts[pix, j] = t_times[j, 2]
+						xmapdat.outputCounts[pix, j] = t_times[j, 3]
+					# the data, extracted as per data_slice and mapmode
+					#t_data = dat[:npix, data_slice]
+					spec_size = d[offset + 6]
+					spec_offset = offset + spec_size
+					t_data = d[offset + 256: spec_offset]
+					if t_data.size == 4*nchans:
+						if bh.mappingMode == 2:
+							t_data = aslong(t_data)
+						xmapdat.data[pix, :, :] = t_data.reshape(4, nchans)
+						offset += spec_size
 
 	t2 = time.time()
 	xmapdat.numPixels = npix_total
