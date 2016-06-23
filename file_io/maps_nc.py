@@ -144,8 +144,8 @@ class nc:
 				else:
 					continue
 
-				#xmapdat = read_xmap_netcdf(ncfile, self.logger, True)
-				xmapdat = read_xmap_netcdf2(ncfile, self.logger, True)
+				xmapdat = read_xmap_netcdf(ncfile, self.logger, True)
+				#xmapdat = read_xmap_netcdf2(ncfile, self.logger, True)
 
 				if xmapdat == None:
 					return None
