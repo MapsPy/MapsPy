@@ -144,8 +144,8 @@ class nc:
 				else:
 					continue
 
-				xmapdat = read_xmap_netcdf(ncfile, self.logger, True)
-				#xmapdat = read_xmap_netcdf2(ncfile, self.logger, True)
+				#xmapdat = read_xmap_netcdf(ncfile, self.logger, True)
+				xmapdat = read_xmap_netcdf2(ncfile, self.logger, True)
 
 				if xmapdat == None:
 					return None
@@ -360,8 +360,9 @@ def read_xmap_netcdf2(fname, logger, verbose=False):
 	#if modpixs < 124: modpixs = 124
 	npix_total = 0
 	clocktick  = 320.e-9
-	offset = 256
+	cpix = 0
 	for array in range(narrays):
+		offset = 256
 		for module in range(nmodules):
 			d	= array_data[array,module,:]
 			bh	= xMAPBufferHeader(d)
@@ -397,14 +398,14 @@ def read_xmap_netcdf2(fname, logger, verbose=False):
 			#t_times = aslong(dat[:npix, 32:64]).reshape(npix, 4, 4)
 			#p1 = npix_total - npix
 			#p2 = npix_total
-			for pix in range(npix_total):
+			for pix in range(npix):
 				if (offset+64) < d.size:
 					t_times = aslong(d[offset + 32: offset + 64]).reshape(4, 4)
 					for j in range(ndetectors):
-						xmapdat.realTime[pix, j] = t_times[j, 0]
-						xmapdat.liveTime[pix, j] = t_times[j, 1]
-						xmapdat.inputCounts[pix, j] = t_times[j, 2]
-						xmapdat.outputCounts[pix, j] = t_times[j, 3]
+						xmapdat.realTime[cpix, j] = t_times[j, 0]
+						xmapdat.liveTime[cpix, j] = t_times[j, 1]
+						xmapdat.inputCounts[cpix, j] = t_times[j, 2]
+						xmapdat.outputCounts[cpix, j] = t_times[j, 3]
 					# the data, extracted as per data_slice and mapmode
 					#t_data = dat[:npix, data_slice]
 					spec_size = d[offset + 6]
@@ -413,8 +414,9 @@ def read_xmap_netcdf2(fname, logger, verbose=False):
 					if t_data.size == 4*nchans:
 						if bh.mappingMode == 2:
 							t_data = aslong(t_data)
-						xmapdat.data[pix, :, :] = t_data.reshape(4, nchans)
+						xmapdat.data[cpix, :, :] = t_data.reshape(4, nchans)
 						offset += spec_size
+				cpix += 1
 
 	t2 = time.time()
 	xmapdat.numPixels = npix_total
