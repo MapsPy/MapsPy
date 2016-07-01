@@ -754,15 +754,17 @@ class h5:
 	def read_hdf5_core(self, gid, entryname, verbose=False):
 		valid_read = 0
 		this_data = 0
+		try:
+			if entryname not in gid:
+				if verbose:
+					self.logger.error('read error: did not find the entry: %s in %s', entryname, gid)
+				return this_data, valid_read
 
-		if entryname not in gid:
-			if verbose:
-				self.logger.error('read error: did not find the entry: %s in %s', entryname, gid)
-			return this_data, valid_read
-
-		dataset_id = gid[entryname]
-		this_data = dataset_id[...]
-		valid_read = 1
+			dataset_id = gid[entryname]
+			this_data = dataset_id[...]
+			valid_read = 1
+		except:
+			self.logger.exception('Could not read '+entryname)
 
 		return this_data, valid_read
 
