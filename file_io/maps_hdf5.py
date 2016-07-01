@@ -345,8 +345,9 @@ class h5:
 		entryname = 'extra_strings'
 		comment = 'additional string values saved in the dataset'
 		data = thisdata.extra_str_arr
-		ds_data = mapsGrp.create_dataset(entryname, data=data)
-		ds_data.attrs['comments'] = comment 
+		if data.size > 0:
+			ds_data = mapsGrp.create_dataset(entryname, data=data)
+			ds_data.attrs['comments'] = comment
 
 		entryname = 'add_long'
 		comment = 'additional long values'

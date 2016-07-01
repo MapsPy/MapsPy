@@ -105,6 +105,10 @@
             {
                 $str += '(F) Create hdf5 file from single line netcdf files for flyscan :: ';
             }
+            if( (aData.ProcMask & 64) === 64)
+            {
+                $str += '(G) Generate average .h5 from each detector :: ';
+            }
             return $str;
         }
         
