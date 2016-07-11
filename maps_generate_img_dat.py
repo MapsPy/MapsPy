@@ -1655,7 +1655,10 @@ class analyze:
 			h5file = os.path.join(self.main_dict['img_dat_dir'], header + xrf_bin_ext + '.h5' + suffix)
 			self.logger.info('now trying to write HDF5 file %s', h5file)
 			energy_channels = spectra[0].calib['off'] + spectra[0].calib['lin'] * np.arange((n_channels), dtype=np.float)
-			h5.write_hdf5(thisdata, h5file, scan.mca_arr, energy_channels, extra_pv=extra_pv, extra_pv_order=scan.extra_pv_key_list, update=True)
+			try:
+				h5.write_hdf5(thisdata, h5file, scan.mca_arr, energy_channels, extra_pv=extra_pv, extra_pv_order=scan.extra_pv_key_list, update=True)
+			except:
+				self.logger.exception("Error writing "+h5file)
 		'''
 		#Generate average images
 		if (total_number_detectors > 1):
@@ -1695,6 +1698,8 @@ class analyze:
 		for n_filenumber in range(no_files):
 			# is the avergae .dat file older than the dat0 file ? if so, generate a
 			# new avg file, otherwise skip it.
+			valid_read = 0
+			avg_XRFmaps_info = None
 			try:
 				added_number_detectors = 0
 				for this_detector_element in range(total_number_detectors):
@@ -1710,7 +1715,7 @@ class analyze:
 						continue
 
 					XRFmaps_info, n_cols, n_rows, n_channels, valid_read = h5p.maps_change_xrf_read_hdf5(sfile, make_maps_conf)
-					if valid_read == 0:
+					if valid_read == 0 and XRFmaps_info == None:
 						self.logger.error('Error calling h5p.maps_change_xrf_read_hdf5(%s,%s)', sfile, make_maps_conf)
 						break
 					f = call_function_with_retry(h5py.File, 5, 0.1, 1.1, (sfile, 'r'))
@@ -1736,7 +1741,7 @@ class analyze:
 					if added_number_detectors == 0:
 
 						avg_XRFmaps_info, n_cols, n_rows, n_channels, valid_read = h5p.maps_change_xrf_read_hdf5(sfile, make_maps_conf)
-						if valid_read == 0:
+						if valid_read == 0 and avg_XRFmaps_info == None:
 							self.logger.error('Error calling h5p.maps_change_xrf_read_hdf5(%s, %s)', sfile, make_maps_conf)
 							break
 						avg_mca_arr = mca_arr.copy()
@@ -1757,15 +1762,16 @@ class analyze:
 					self.logger.warning('WARNING: did not find any of these: %s skipping to next level', sfile)
 					continue
 
-				avg_XRFmaps_info.dmaps_set[:, :, :] = avg_XRFmaps_info.dmaps_set[:, :, :] / added_number_detectors
-				avg_XRFmaps_info.dataset[:, :, :] = avg_XRFmaps_info.dataset[:, :, :] / added_number_detectors
-				avg_XRFmaps_info.dataset_orig[:, :, :, :] = avg_XRFmaps_info.dataset_orig[:, :, :, :] / added_number_detectors
-				avg_XRFmaps_info.dataset_calibration[:, :, :] = avg_XRFmaps_info.dataset_calibration[:, :, :] / added_number_detectors
-				avg_XRFmaps_info.energy_spec[:] = avg_XRFmaps_info.energy_spec[:] / added_number_detectors
-				avg_XRFmaps_info.max_chan_spec[:, :] = avg_XRFmaps_info.max_chan_spec[:, :] / added_number_detectors
-				avg_XRFmaps_info.raw_spec[:, :] = avg_XRFmaps_info.raw_spec[:, :] / added_number_detectors
+				if avg_XRFmaps_info != None:
+					avg_XRFmaps_info.dmaps_set[:, :, :] = avg_XRFmaps_info.dmaps_set[:, :, :] / added_number_detectors
+					avg_XRFmaps_info.dataset[:, :, :] = avg_XRFmaps_info.dataset[:, :, :] / added_number_detectors
+					avg_XRFmaps_info.dataset_orig[:, :, :, :] = avg_XRFmaps_info.dataset_orig[:, :, :, :] / added_number_detectors
+					avg_XRFmaps_info.dataset_calibration[:, :, :] = avg_XRFmaps_info.dataset_calibration[:, :, :] / added_number_detectors
+					avg_XRFmaps_info.energy_spec[:] = avg_XRFmaps_info.energy_spec[:] / added_number_detectors
+					avg_XRFmaps_info.max_chan_spec[:, :] = avg_XRFmaps_info.max_chan_spec[:, :] / added_number_detectors
+					avg_XRFmaps_info.raw_spec[:, :] = avg_XRFmaps_info.raw_spec[:, :] / added_number_detectors
 
-				h5p.write_hdf5(avg_XRFmaps_info, os.path.join(self.main_dict['XRFmaps_dir'], imgdat_filenames[n_filenumber] + '.h5'), avg_mca_arr, energy_channels, extra_pv=extra_pv)
+					h5p.write_hdf5(avg_XRFmaps_info, os.path.join(self.main_dict['XRFmaps_dir'], imgdat_filenames[n_filenumber] + '.h5'), avg_mca_arr, energy_channels, extra_pv=extra_pv)
 			except:
 				self.logger.exception('exception occured')
 		return

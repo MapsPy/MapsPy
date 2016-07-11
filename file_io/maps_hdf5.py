@@ -345,7 +345,7 @@ class h5:
 		entryname = 'extra_strings'
 		comment = 'additional string values saved in the dataset'
 		data = thisdata.extra_str_arr
-		if data.size > 0:
+		if len(data) > 0:
 			ds_data = mapsGrp.create_dataset(entryname, data=data)
 			ds_data.attrs['comments'] = comment
 
@@ -649,100 +649,163 @@ class h5:
 			XRFmaps_info.dataset_orig[:, :, i, 0] = this_xrfdata[:,:,i]
 		this_xrfdata = 0
 
-		this_data, valid_read = self.read_hdf5_core(maps_group_id, 'scan_time_stamp')
+		dset_name = 'scan_time_stamp'
+		this_data, valid_read = self.read_hdf5_core(maps_group_id, dset_name)
 		if valid_read:
 			XRFmaps_info.scan_time_stamp = this_data
+		else:
+			self.logger.warning('could not read '+dset_name+' in file '+sfile)
 
-		this_data, valid_read = self.read_hdf5_core(maps_group_id, 'write_date')
+		dset_name = 'write_date'
+		this_data, valid_read = self.read_hdf5_core(maps_group_id, dset_name)
 		if valid_read:
 			XRFmaps_info.write_date = this_data
+		else:
+			self.logger.warning('could not read '+dset_name+' in file '+sfile)
 
-		this_data, valid_read = self.read_hdf5_core(maps_group_id, 'x_axis')
+		dset_name = 'x_axis'
+		this_data, valid_read = self.read_hdf5_core(maps_group_id, dset_name)
 		if valid_read:
 			XRFmaps_info.x_coord_arr = this_data
+		else:
+			self.logger.warning('could not read '+dset_name+' in file '+sfile)
 
-		this_data, valid_read = self.read_hdf5_core(maps_group_id, 'y_axis')
+		dset_name = 'y_axis'
+		this_data, valid_read = self.read_hdf5_core(maps_group_id, dset_name)
 		if valid_read:
 			XRFmaps_info.y_coord_arr = this_data
+		else:
+			self.logger.warning('could not read '+dset_name+' in file '+sfile)
 
-		this_data, valid_read = self.read_hdf5_core(maps_group_id, 'scaler_names')
+		dset_name = 'scaler_names'
+		this_data, valid_read = self.read_hdf5_core(maps_group_id, dset_name)
 		if valid_read:
 			XRFmaps_info.dmaps_names = this_data
+		else:
+			self.logger.warning('could not read '+dset_name+' in file '+sfile)
 
-		this_data, valid_read = self.read_hdf5_core(maps_group_id, 'scaler_units')
+		dset_name = 'scaler_units'
+		this_data, valid_read = self.read_hdf5_core(maps_group_id, dset_name)
 		if valid_read:
 			XRFmaps_info.dmaps_units = this_data
+		else:
+			self.logger.warning('could not read '+dset_name+' in file '+sfile)
 
-		this_data, valid_read = self.read_hdf5_core(maps_group_id, 'channel_names')
+		dset_name = 'channel_names'
+		this_data, valid_read = self.read_hdf5_core(maps_group_id, dset_name)
 		if valid_read:
 			XRFmaps_info.chan_names = this_data
+		else:
+			self.logger.warning('could not read '+dset_name+' in file '+sfile)
 
-		this_data, valid_read = self.read_hdf5_core(maps_group_id, 'channel_units')
+		dset_name = 'channel_units'
+		this_data, valid_read = self.read_hdf5_core(maps_group_id, dset_name)
 		if valid_read:
 			XRFmaps_info.chan_units = zip(*this_data)
+		else:
+			self.logger.warning('could not read '+dset_name+' in file '+sfile)
 
-		this_data, valid_read = self.read_hdf5_core(maps_group_id, 'XRF_fits')
+		dset_name = 'XRF_fits'
+		this_data, valid_read = self.read_hdf5_core(maps_group_id, dset_name)
 		this_data = np.transpose(this_data)
 		if valid_read:
 			for i in range(n_used_chan):
 				XRFmaps_info.dataset_orig[:, :, i, 1] = this_data[:, :, i]
+		else:
+			self.logger.warning('could not read '+dset_name+' in file '+sfile)
 
-		this_data, valid_read = self.read_hdf5_core(maps_group_id, 'XRF_sigma')
+		dset_name = 'XRF_sigma'
+		this_data, valid_read = self.read_hdf5_core(maps_group_id, dset_name)
 		this_data = np.transpose(this_data)
 		if valid_read:
 			for i in range(n_used_chan):
 				XRFmaps_info.dataset_orig[:, :, i, 2] = this_data[:, :, i]
+		else:
+			self.logger.warning('could not read '+dset_name+' in file '+sfile)
 
-		this_data, valid_read = self.read_hdf5_core(maps_group_id, 'XRF_roi_plus')
+		dset_name = 'XRF_roi_plus'
+		this_data, valid_read = self.read_hdf5_core(maps_group_id, dset_name)
 		this_data = np.transpose(this_data)
 		if valid_read:
 			for i in range(n_used_chan):
 				XRFmaps_info.dataset_orig[:, :, i, 2] = this_data[:, :, i]
 			XRFmaps_info.dataset_names[2] = 'XRF_roi+'
+		else:
+			self.logger.warning('could not read '+dset_name+' in file '+sfile)
 
-		this_data, valid_read = self.read_hdf5_core(maps_group_id, 'XRF_roi_quant')
+		dset_name = 'XRF_roi_quant'
+		this_data, valid_read = self.read_hdf5_core(maps_group_id, dset_name)
 		this_data = np.transpose(this_data)
 		if valid_read:
 			XRFmaps_info.dataset_calibration[:, 0, :] = this_data[:, 0, :]
+		else:
+			self.logger.warning('could not read '+dset_name+' in file '+sfile)
 
-		this_data, valid_read = self.read_hdf5_core(maps_group_id, 'XRF_roi_plus_quant')
+		dset_name = 'XRF_roi_plus_quant'
+		this_data, valid_read = self.read_hdf5_core(maps_group_id, dset_name)
 		this_data = np.transpose(this_data)
 		if valid_read:
 			XRFmaps_info.dataset_calibration[:, 2, :] = this_data[:, 0, :]
+		else:
+			self.logger.warning('could not read '+dset_name+' in file '+sfile)
 
-		this_data, valid_read = self.read_hdf5_core(maps_group_id, 'XRF_fits_quant')
+		dset_name = 'XRF_fits_quant'
+		this_data, valid_read = self.read_hdf5_core(maps_group_id, dset_name)
 		this_data = np.transpose(this_data)
 		if valid_read:
 			XRFmaps_info.dataset_calibration[:, 1, :] = this_data[:, 0, :]
+		else:
+			self.logger.warning('could not read '+dset_name+' in file '+sfile)
 
-		this_data, valid_read = self.read_hdf5_core(maps_group_id, 'energy')
+		dset_name = 'energy'
+		this_data, valid_read = self.read_hdf5_core(maps_group_id, dset_name)
 		if valid_read:
 			XRFmaps_info.energy_spec = this_data
+		else:
+			self.logger.warning('could not read '+dset_name+' in file '+sfile)
 
-		this_data, valid_read = self.read_hdf5_core(maps_group_id, 'int_spec')
+		dset_name = 'int_spec'
+		this_data, valid_read = self.read_hdf5_core(maps_group_id, dset_name)
 		if valid_read:
 			XRFmaps_info.energy_spec = this_data
+		else:
+			self.logger.warning('could not read '+dset_name+' in file '+sfile)
 
-		this_data, valid_read = self.read_hdf5_core(maps_group_id, 'energy_calib')
+		dset_name = 'energy_calib'
+		this_data, valid_read = self.read_hdf5_core(maps_group_id, dset_name)
 		if valid_read:
 			XRFmaps_info.energy_fit = this_data
+		else:
+			self.logger.warning('could not read '+dset_name+' in file '+sfile)
 
-		this_data, valid_read = self.read_hdf5_core(maps_group_id, 'max_chan_spec')
+		dset_name = 'max_chan_spec'
+		this_data, valid_read = self.read_hdf5_core(maps_group_id, dset_name)
 		this_data = np.transpose(this_data)
 		if valid_read:
 			XRFmaps_info.max_chan_spec = this_data
+		else:
+			self.logger.warning('could not read '+dset_name+' in file '+sfile)
 
-		this_data, valid_read = self.read_hdf5_core(maps_group_id, 'us_amp')
+		dset_name = 'us_amp'
+		this_data, valid_read = self.read_hdf5_core(maps_group_id, dset_name)
 		if valid_read:
 			XRFmaps_info.us_amp = this_data
+		else:
+			self.logger.warning('could not read '+dset_name+' in file '+sfile)
 
-		this_data, valid_read = self.read_hdf5_core(maps_group_id, 'ds_amp')
+		dset_name = 'ds_amp'
+		this_data, valid_read = self.read_hdf5_core(maps_group_id, dset_name)
 		if valid_read:
 			XRFmaps_info.ds_amp = this_data
+		else:
+			self.logger.warning('could not read '+dset_name+' in file '+sfile)
 
-		this_data, valid_read = self.read_hdf5_core(maps_group_id, 'extra_strings')
+		dset_name = 'extra_strings'
+		this_data, valid_read = self.read_hdf5_core(maps_group_id, dset_name)
 		if valid_read:
 			XRFmaps_info.extra_str_arr = this_data
+		else:
+			self.logger.warning('could not read '+dset_name+' in file '+sfile)
 
 		XRFmaps_info.img_type = 7
 		

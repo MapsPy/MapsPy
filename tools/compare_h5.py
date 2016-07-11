@@ -43,9 +43,74 @@ sys.path.append('file_io')
 import h5py
 import maps_hdf5
 
+import logging
+
+def comp0(entryname, h51, maps_group_id1, h52, maps_group_id2):
+    this_xrfdata1, valid_read = h51.read_hdf5_core(maps_group_id1, entryname)
+    this_xrfdata2, valid_read = h52.read_hdf5_core(maps_group_id2, entryname)
+    if not np.allclose(this_xrfdata1, this_xrfdata2, atol=np.finfo(float).eps):
+        print entryname, ' differs. RMS='
+        for i in range(this_xrfdata1.shape[0]):
+            print '\t', i,  np.sqrt(np.mean(( this_xrfdata1[i,:] -  this_xrfdata2[i,:])**2))
+    #else: print entryname, ' is the same.'
+
+def comp1(entryname, h51, maps_group_id1, h52, maps_group_id2):
+    this_xrfdata1, valid_read = h51.read_hdf5_core(maps_group_id1, entryname)
+    this_xrfdata2, valid_read = h52.read_hdf5_core(maps_group_id2, entryname)
+    this_xrfdata1 = np.nan_to_num(this_xrfdata1)
+    this_xrfdata2 = np.nan_to_num(this_xrfdata2)
+    if not np.allclose(this_xrfdata1, this_xrfdata2, atol=np.finfo(float).eps):
+        print entryname, ' differ.'
+        for i in range(this_xrfdata1.shape[0]):
+                if np.sum(np.abs(this_xrfdata1[i,:,:])) > 0:
+                    print '\t', i,  'RMS= ', np.sqrt(np.mean(( this_xrfdata1[i,:,:] -  this_xrfdata2[i,:,:])**2)), ',', 100*np.sum(np.abs(this_xrfdata1[i,:,:] -  this_xrfdata2[i,:,:]))/np.sum(np.abs(this_xrfdata1[i,:,:])), '%'
+                else:
+                    print '\t', i,  'RMS= ', np.sqrt(np.mean(( this_xrfdata1[i,:,:] -  this_xrfdata2[i,:,:])**2))
+    #else: print entryname, 'are the same.'
+
+def comp2(entryname, h51, maps_group_id1, h52, maps_group_id2):
+    this_xrfdata1, valid_read = h51.read_hdf5_core(maps_group_id1, entryname)
+    this_xrfdata2, valid_read = h52.read_hdf5_core(maps_group_id2, entryname)
+    this_xrfdata1 = np.nan_to_num(this_xrfdata1)
+    this_xrfdata2 = np.nan_to_num(this_xrfdata2)
+    if this_xrfdata1.shape == this_xrfdata2.shape:
+        if not np.allclose(this_xrfdata1[:,:,:], this_xrfdata2[:,:,:], atol=np.finfo(float).eps):
+            print entryname, ' differs.'
+            for i in range(this_xrfdata1.shape[0]):
+                if np.sum(np.abs(this_xrfdata1[i,:,:])) > np.finfo(float).eps:
+                    print '\t', i,  'RMS= ', np.sqrt(np.mean(( this_xrfdata1[i,:,:] -  this_xrfdata2[i,:,:])**2)), ',', 100*np.sum(np.abs(this_xrfdata1[i,:,:] -  this_xrfdata2[i,:,:]))/np.sum(np.abs(this_xrfdata1[i,:,:])), '%'
+                else:
+                    print '\t', i,  'RMS= ', np.sqrt(np.mean(( this_xrfdata1[i,:,:] -  this_xrfdata2[i,:,:])**2))
+        #else: print entryname, ' is the same.'
+    else:
+        if len(this_xrfdata1.shape) == len(this_xrfdata2.shape):
+            min_range = min(this_xrfdata1.shape[0], this_xrfdata2.shape[0])
+            if not np.allclose(this_xrfdata1[0:min_range,:,:], this_xrfdata2[0:min_range,:,:], atol=np.finfo(float).eps):
+               print entryname, ' differs.'
+               for i in range(min_range):
+                    if np.sum(np.abs(this_xrfdata1[i,:,:])) > np.finfo(float).eps:
+                        print '\t', i,  'RMS= ', np.sqrt(np.mean(( this_xrfdata1[i,:,:] -  this_xrfdata2[i,:,:])**2)), ',', 100*np.sum(np.abs(this_xrfdata1[i,:,:] -  this_xrfdata2[i,:,:]))/np.sum(np.abs(this_xrfdata1[i,:,:])), '%'
+                    else:
+                        print '\t', i,  'RMS= ', np.sqrt(np.mean(( this_xrfdata1[i,:,:] -  this_xrfdata2[i,:,:])**2))
+            #else: print entryname, ' is the same.'
+        else:
+            print entryname, ' have different shapes.'
+
 """ ------------------------------------------------------------------------------------------------"""
 def main(file1, file2):
     
+
+    logger = logging.getLogger('compare')
+    fHandler = logging.FileHandler('compare')
+    logger.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(asctime)s | %(levelname)s | PID[%(process)d] | %(funcName)s(): %(message)s')
+    fHandler.setFormatter(formatter)
+    logger.addHandler(fHandler)
+    ch = logging.StreamHandler()
+    formatter = logging.Formatter('%(asctime)s | %(levelname)s | PID[%(process)d] | %(funcName)s(): %(message)s')
+    ch.setFormatter(formatter)
+    ch.setLevel(logging.WARNING)
+    logger.addHandler(ch)
 
     verbose = 1
     
@@ -75,7 +140,7 @@ def main(file1, file2):
     
     
     
-    f1 = h5py.File(file1, 'r')                
+    f1 = h5py.File(file1, 'r')
     if 'MAPS' not in f1:
             print 'error, hdf5 file does not contain the required MAPS group. I am aborting this action'
             return 
@@ -85,7 +150,7 @@ def main(file1, file2):
     l1 = list(maps_group_id1)
         
 
-    f2 = h5py.File(file2, 'r')                
+    f2 = h5py.File(file2, 'r')
     if 'MAPS' not in f2:
             print 'error, hdf5 file does not contain the required MAPS group. I am aborting this action'
             return 
@@ -98,244 +163,56 @@ def main(file1, file2):
     s2 = set(l2)
     
     if len(s1.difference(s2)):
-        print '\nElements in ',os.path.basename(file1),' that are not in ', os.path.basename(file2), ':'
+        print '\nElements in ', os.path.basename(file1), ' that are not in ', os.path.basename(file2), ':'
         for i in s1.difference(s2): print i
     elif len(s2.difference(s1)):
-        print '\nElements in ',os.path.basename(file2),' that are not in ', os.path.basename(file1), ':'
+        print '\nElements in ', os.path.basename(file2), ' that are not in ', os.path.basename(file1), ':'
         print s2.difference(s1)
-    else:
-        print 'Files have the same groups.'
+    #else:
+    #    print 'Files have the same groups.'
         
         
-    print '\nCompare HDF5 fields in the files.'
-    h51 = maps_hdf5.h5()
-    h52 = maps_hdf5.h5()    
-    
+    #print '\nCompare HDF5 fields in the files.'
+    h51 = maps_hdf5.h5(logger)
+    h52 = maps_hdf5.h5(logger)
+    '''
     entryname = 'mca_arr'
     this_xrfdata1, valid_read = h51.read_hdf5_core(maps_group_id1, entryname)
     this_xrfdata2, valid_read = h52.read_hdf5_core(maps_group_id2, entryname)
     if not np.allclose(this_xrfdata1, this_xrfdata2, atol=1.0e-6): 
         print entryname, ' differs.'
     else: print entryname, ' is the same.'
-         
-    entryname = 'us_amp'
-    this_xrfdata1, valid_read = h51.read_hdf5_core(maps_group_id1, entryname)
-    this_xrfdata2, valid_read = h52.read_hdf5_core(maps_group_id2, entryname)
-    if not np.allclose(this_xrfdata1, this_xrfdata2, atol=np.finfo(float).eps): 
-        print entryname, ' differs. RMS=', np.sqrt(np.mean(( this_xrfdata1 -  this_xrfdata2)**2)) 
-    else: print entryname, ' is the same.' 
-    
-    entryname = 'ds_amp'
-    this_xrfdata1, valid_read = h51.read_hdf5_core(maps_group_id1, entryname)
-    this_xrfdata2, valid_read = h52.read_hdf5_core(maps_group_id2, entryname)
-    if not np.allclose(this_xrfdata1, this_xrfdata2, atol=np.finfo(float).eps): 
-        print entryname, ' differs. RMS=', np.sqrt(np.mean(( this_xrfdata1 -  this_xrfdata2)**2)) 
-    else: print entryname, ' is the same.'        
-        
-    entryname = 'energy'
-    this_xrfdata1, valid_read = h51.read_hdf5_core(maps_group_id1, entryname)
-    this_xrfdata2, valid_read = h52.read_hdf5_core(maps_group_id2, entryname)
-    if not np.allclose(this_xrfdata1, this_xrfdata2, atol=np.finfo(float).eps): 
-        print entryname, ' differs.'
-        print this_xrfdata1
-        print this_xrfdata2
-    else: print entryname, ' is the same.'        
-    
-    entryname = 'energy_calib'
-    this_xrfdata1, valid_read = h51.read_hdf5_core(maps_group_id1, entryname)
-    this_xrfdata2, valid_read = h52.read_hdf5_core(maps_group_id2, entryname)
-    if not np.allclose(this_xrfdata1, this_xrfdata2, atol=np.finfo(float).eps): 
-        print entryname, ' differs. RMS=', np.sqrt(np.mean(( this_xrfdata1 -  this_xrfdata2)**2)) 
-    else: print entryname, ' is the same.'      
-        
-    entryname = 'int_spec'
-    this_xrfdata1, valid_read = h51.read_hdf5_core(maps_group_id1, entryname)
-    this_xrfdata2, valid_read = h52.read_hdf5_core(maps_group_id2, entryname)
-    if not np.allclose(this_xrfdata1, this_xrfdata2, atol=np.finfo(float).eps): 
-        rms = np.sqrt(np.mean((this_xrfdata1-this_xrfdata2)**2))
-        print entryname, ' differs. RMS =', rms
-    else: print entryname, ' is the same.'  
-    
-    
-    entryname = 'max_chan_spec'
-    this_xrfdata1, valid_read = h51.read_hdf5_core(maps_group_id1, entryname)
-    this_xrfdata2, valid_read = h52.read_hdf5_core(maps_group_id2, entryname)
-    if not np.allclose(this_xrfdata1, this_xrfdata2, atol=np.finfo(float).eps): 
-        print entryname, ' differs. RMS='
-        for i in range(this_xrfdata1.shape[0]):
-            print '\t', i,  np.sqrt(np.mean(( this_xrfdata1[i,:] -  this_xrfdata2[i,:])**2))
-    else: print entryname, ' is the same.' 
-    
+    '''
+    comp0('us_amp', h51, maps_group_id1, h52, maps_group_id2)
+    comp0('ds_amp', h51, maps_group_id1, h52, maps_group_id2)
+    comp0('energy', h51, maps_group_id1, h52, maps_group_id2)
+    comp0('energy_calib', h51, maps_group_id1, h52, maps_group_id2)
+    comp0('int_spec', h51, maps_group_id1, h52, maps_group_id2)
+    comp0('max_chan_spec', h51, maps_group_id1, h52, maps_group_id2)
+    '''
     if verbose == 2:
         import matplotlib.pyplot as plt 
         for i in range(5):
             plt.plot(this_xrfdata1[i,:])
             plt.plot(this_xrfdata2[i,:])
             plt.show()
-    
-    
-    entryname = 'scalers'
-    this_xrfdata1, valid_read = h51.read_hdf5_core(maps_group_id1, entryname)
-    this_xrfdata2, valid_read = h52.read_hdf5_core(maps_group_id2, entryname)
-    #IDL scalers  have Nan on row 16 (17th scaler) - zero out
-    this_xrfdata1 = np.nan_to_num(this_xrfdata1)
-    this_xrfdata2 = np.nan_to_num(this_xrfdata2)    
-    if not np.allclose(this_xrfdata1, this_xrfdata2, atol=1.e-6): 
-        print entryname, ' differ.'
-        for i in range(this_xrfdata1.shape[0]):
-                if np.sum(np.abs(this_xrfdata1[i,:,:])) > 0:
-                    print '\t', i,  'RMS= ', np.sqrt(np.mean(( this_xrfdata1[i,:,:] -  this_xrfdata2[i,:,:])**2)), ',', 100*np.sum(np.abs(this_xrfdata1[i,:,:] -  this_xrfdata2[i,:,:]))/np.sum(np.abs(this_xrfdata1[i,:,:])), '%'
-                else:
-                    print '\t', i,  'RMS= ', np.sqrt(np.mean(( this_xrfdata1[i,:,:] -  this_xrfdata2[i,:,:])**2))
-    else: print entryname, 'are the same.' 
-    
+    '''
 
-                
-    entryname = 'XRF_roi'
-    this_xrfdata1, valid_read = h51.read_hdf5_core(maps_group_id1, entryname)
-    this_xrfdata2, valid_read = h52.read_hdf5_core(maps_group_id2, entryname)
-    if this_xrfdata1.shape == this_xrfdata2.shape:
-        if not np.allclose(this_xrfdata1[:,:,:], this_xrfdata2[:,:,:], atol=np.finfo(float).eps): 
-            print 'XRF_roi differs.'
-            for i in range(this_xrfdata1.shape[0]):
-                if np.sum(np.abs(this_xrfdata1[i,:,:])) > 0:
-                    print '\t', i,  'RMS= ', np.sqrt(np.mean(( this_xrfdata1[i,:,:] -  this_xrfdata2[i,:,:])**2)), ',', 100*np.sum(np.abs(this_xrfdata1[i,:,:] -  this_xrfdata2[i,:,:]))/np.sum(np.abs(this_xrfdata1[i,:,:])), '%'
-                else:
-                    print '\t', i,  'RMS= ', np.sqrt(np.mean(( this_xrfdata1[i,:,:] -  this_xrfdata2[i,:,:])**2))
-        else: print entryname, ' is the same.' 
-    else: 
-        if len(this_xrfdata1.shape) == len(this_xrfdata2.shape):
-            min_range = min(this_xrfdata1.shape[0], this_xrfdata2.shape[0])
-            if not np.allclose(this_xrfdata1[0:min_range,:,:], this_xrfdata2[0:min_range,:,:], atol=np.finfo(float).eps): 
-               print 'XRF_roi differs.'
-               for i in range(min_range):
-                    if np.sum(np.abs(this_xrfdata1[i,:,:])) > 0:
-                        print '\t', i,  'RMS= ', np.sqrt(np.mean(( this_xrfdata1[i,:,:] -  this_xrfdata2[i,:,:])**2)), ',', 100*np.sum(np.abs(this_xrfdata1[i,:,:] -  this_xrfdata2[i,:,:]))/np.sum(np.abs(this_xrfdata1[i,:,:])), '%'
-                    else:
-                        print '\t', i,  'RMS= ', np.sqrt(np.mean(( this_xrfdata1[i,:,:] -  this_xrfdata2[i,:,:])**2))
-            else: print entryname, ' is the same.' 
-        else:
-            print entryname, ' have different shapes.'
-        
-    
-    entryname = 'XRF_fits'
-    channames, valid_read = h51.read_hdf5_core(maps_group_id1, 'channel_names')
-    if (entryname in maps_group_id1) and (entryname in maps_group_id2):
-        this_xrfdata1, valid_read1 = h51.read_hdf5_core(maps_group_id1, entryname)
-        this_xrfdata2, valid_read2 = h52.read_hdf5_core(maps_group_id2, entryname)
-        if this_xrfdata1.shape == this_xrfdata2.shape:
-            if not np.allclose(this_xrfdata1, this_xrfdata2, atol=np.finfo(float).eps): 
-                print 'XRF_fits differs. RMS='
-                for i in range(this_xrfdata1.shape[0]):
-                    ind = np.where(this_xrfdata2[i,:,:] > 0)
-                    
-                    data = this_xrfdata1[i,:,:]
-                    #print ind
-                    #print '\t', i,  np.sqrt(np.mean(( this_xrfdata1[i,:,:] -  this_xrfdata2[i,:,:])**2))
-                    print channames[i], 'fits max:', np.amax(data[ind]), np.amax(this_xrfdata2[i,:,:]), '\t diff=', np.abs(np.amax(data[ind])-np.amax(this_xrfdata2[i,:,:])), ',\t', np.abs(np.amax(data[ind])-np.amax(this_xrfdata2[i,:,:]))/np.abs(np.amax(data[ind])), '%'
-                    #print channames[i], 'fits max:', this_xrfdata1[i,20, 31], this_xrfdata2[i,20,31], '\t diff=', np.abs(this_xrfdata1[i,20,31]-this_xrfdata2[i,20,31])
-            else: print entryname, ' is the same.' 
-        else: 
-            if len(this_xrfdata1.shape) == len(this_xrfdata2.shape):
-                min_range = min(this_xrfdata1.shape[0], this_xrfdata2.shape[0])
-                if not np.allclose(this_xrfdata1[0:min_range,:,:], this_xrfdata2[0:min_range,:,:], atol=np.finfo(float).eps): 
-                    print 'XRF_fits differs. RMS='
-                    for i in range(min_range):
-                        ind = np.where(this_xrfdata2[i,:,:] > 0)
-                        data = this_xrfdata1[i,:,:]
-                        #print ind
-                        #print '\t', i,  np.sqrt(np.mean(( this_xrfdata1[i,:,:] -  this_xrfdata2[i,:,:])**2))
-                        print channames[i], 'fits max:', np.amax(data[ind]), np.amax(this_xrfdata2[i,:,:]), '\t diff=', np.abs(np.amax(data[ind])-np.amax(this_xrfdata2[i,:,:])), ',\t', np.abs(np.amax(data[ind])-np.amax(this_xrfdata2[i,:,:]))/np.abs(np.amax(data[ind])), '%'
-                        #print channames[i], 'fits max:', this_xrfdata1[i,20, 31], this_xrfdata2[i,20,31], '\t diff=', np.abs(this_xrfdata1[i,20,31]-this_xrfdata2[i,20,31])
-                else: print entryname, ' is the same.' 
-            else:
-                print entryname, ' have different shapes.'
-    
-    entryname = 'XRF_roi_plus'
-    this_xrfdata1, valid_read = h51.read_hdf5_core(maps_group_id1, entryname)
-    this_xrfdata2, valid_read = h52.read_hdf5_core(maps_group_id2, entryname)
-    if this_xrfdata1.shape == this_xrfdata2.shape:
-        if not np.allclose(this_xrfdata1, this_xrfdata2, atol=np.finfo(float).eps): 
-            print 'XRF_roi_plus differs.'
-            for i in range(this_xrfdata1.shape[0]):
-                if np.sum(np.abs(this_xrfdata1[i,:,:])) > 0:
-                    print '\t', i,  'RMS= ', np.sqrt(np.mean(( this_xrfdata1[i,:,:] -  this_xrfdata2[i,:,:])**2)), ',', 100*np.sum(np.abs(this_xrfdata1[i,:,:] -  this_xrfdata2[i,:,:]))/np.sum(np.abs(this_xrfdata1[i,:,:])), '%'
-                else:
-                    print '\t', i,  'RMS= ', np.sqrt(np.mean(( this_xrfdata1[i,:,:] -  this_xrfdata2[i,:,:])**2))
-        else: print entryname, ' is the same.' 
-    else: 
-        if len(this_xrfdata1.shape) == len(this_xrfdata2.shape):
-            min_range = min(this_xrfdata1.shape[0], this_xrfdata2.shape[0])
-            if not np.allclose(this_xrfdata1[0:min_range,:,:], this_xrfdata2[0:min_range,:,:], atol=np.finfo(float).eps): 
-                print 'XRF_roi_plus differs.'
-                for i in range(min_range):
-                    if np.sum(np.abs(this_xrfdata1[i,:,:])) > 0:
-                        print '\t', i,  'RMS= ', np.sqrt(np.mean(( this_xrfdata1[i,:,:] -  this_xrfdata2[i,:,:])**2)), ',', 100*np.sum(np.abs(this_xrfdata1[i,:,:] -  this_xrfdata2[i,:,:]))/np.sum(np.abs(this_xrfdata1[i,:,:])), '%'
-                    else:
-                        print '\t', i,  'RMS= ', np.sqrt(np.mean(( this_xrfdata1[i,:,:] -  this_xrfdata2[i,:,:])**2))
-            else: print entryname, ' is the same.' 
-        else:
-            print entryname, ' have different shapes.'
-    
-    entryname = 'x_axis'
-    this_xrfdata1, valid_read = h51.read_hdf5_core(maps_group_id1, entryname)
-    this_xrfdata2, valid_read = h52.read_hdf5_core(maps_group_id2, entryname)
-    if not np.allclose(this_xrfdata1, this_xrfdata2, atol=np.finfo(float).eps): 
-        print 'x_axis differs. RMS=', np.sqrt(np.mean(( this_xrfdata1 -  this_xrfdata2)**2)) 
-    else: print entryname, ' is same.' 
+    comp1('scalers', h51, maps_group_id1, h52, maps_group_id2)
 
-    entryname = 'y_axis'
-    this_xrfdata1, valid_read = h51.read_hdf5_core(maps_group_id1, entryname)
-    this_xrfdata2, valid_read = h52.read_hdf5_core(maps_group_id2, entryname)
-    if not np.allclose(this_xrfdata1, this_xrfdata2, atol=np.finfo(float).eps): 
-        print 'y_axis differs. RMS=', np.sqrt(np.mean(( this_xrfdata1 -  this_xrfdata2)**2)) 
-    else: print entryname, ' is the same.' 
-    
-            
-    entryname = 'XRF_roi_quant'
-    this_xrfdata1, valid_read = h51.read_hdf5_core(maps_group_id1, entryname)
-    this_xrfdata2, valid_read = h52.read_hdf5_core(maps_group_id2, entryname)
-    if this_xrfdata1.shape == this_xrfdata2.shape:
-        if not np.allclose(this_xrfdata1, this_xrfdata2, atol=np.finfo(float).eps): 
-            print 'XRF_roi_quant differs. '
-            for i in range(this_xrfdata1.shape[0]):
-                if np.sum(np.abs(this_xrfdata1[i,:,:])) > 0:
-                    print '\t', i,  'RMS= ', np.sqrt(np.mean(( this_xrfdata1[i,:,:] -  this_xrfdata2[i,:,:])**2)), ',', 100*np.sum(np.abs(this_xrfdata1[i,:,:] -  this_xrfdata2[i,:,:]))/np.sum(np.abs(this_xrfdata1[i,:,:])), '%'
-                else:
-                    print '\t', i,  'RMS= ', np.sqrt(np.mean(( this_xrfdata1[i,:,:] -  this_xrfdata2[i,:,:])**2))
-        else: print entryname, ' is the same.' 
-    else: print entryname, ' have different shapes.'
-    
-    entryname = 'XRF_roi_plus_quant'
-    this_xrfdata1, valid_read = h51.read_hdf5_core(maps_group_id1, entryname)
-    this_xrfdata2, valid_read = h52.read_hdf5_core(maps_group_id2, entryname)
-    if this_xrfdata1.shape == this_xrfdata2.shape:
-        if not np.allclose(this_xrfdata1, this_xrfdata2, atol=np.finfo(float).eps): 
-            print 'XRF_roi_plus_quant differs. '
-            for i in range(this_xrfdata1.shape[0]):
-                if np.sum(np.abs(this_xrfdata1[i,:,:])) > 0:
-                    print '\t', i,  'RMS= ', np.sqrt(np.mean(( this_xrfdata1[i,:,:] -  this_xrfdata2[i,:,:])**2)), ',', 100*np.sum(np.abs(this_xrfdata1[i,:,:] -  this_xrfdata2[i,:,:]))/np.sum(np.abs(this_xrfdata1[i,:,:])), '%'
-                else:
-                    print '\t', i,  'RMS= ', np.sqrt(np.mean(( this_xrfdata1[i,:,:] -  this_xrfdata2[i,:,:])**2))
-        else: print entryname, ' is the same.' 
-    else: print entryname, ' have different shapes.'
-    
-    entryname = 'XRF_fits_quant'
-    if (entryname in maps_group_id1) and (entryname in maps_group_id2):
-        this_xrfdata1, valid_read = h51.read_hdf5_core(maps_group_id1, entryname)
-        this_xrfdata2, valid_read = h52.read_hdf5_core(maps_group_id2, entryname)
-        if this_xrfdata1.shape == this_xrfdata2.shape:
-            if not np.allclose(this_xrfdata1, this_xrfdata2, atol=np.finfo(float).eps): 
-                print 'XRF_fits_quant differs. RMS='
-                for i in range(this_xrfdata1.shape[0]):
-                    if np.sum(np.abs(this_xrfdata1[i,:,:])) > 0:
-                        print '\t', i,  'RMS= ', np.sqrt(np.mean(( this_xrfdata1[i,:,:] -  this_xrfdata2[i,:,:])**2)), ',', 100*np.sum(np.abs(this_xrfdata1[i,:,:] -  this_xrfdata2[i,:,:]))/np.sum(np.abs(this_xrfdata1[i,:,:])), '%'
-                    else:
-                        print '\t', i,  'RMS= ', np.sqrt(np.mean(( this_xrfdata1[i,:,:] -  this_xrfdata2[i,:,:])**2))
-            else: print entryname, ' is the same.'   
-        else: print entryname, ' have different shapes.'  
-    
-    
+
+    comp2('XRF_roi', h51, maps_group_id1, h52, maps_group_id2)
+    comp2('XRF_fits', h51, maps_group_id1, h52, maps_group_id2)
+    comp2('XRF_roi_plus', h51, maps_group_id1, h52, maps_group_id2)
+
+    comp0('x_axis', h51, maps_group_id1, h52, maps_group_id2)
+    comp0('y_axis', h51, maps_group_id1, h52, maps_group_id2)
+
+
+    comp1('XRF_roi_quant', h51, maps_group_id1, h52, maps_group_id2)
+    comp1('XRF_roi_plus_quant', h51, maps_group_id1, h52, maps_group_id2)
+    comp1('XRF_fits_quant', h51, maps_group_id1, h52, maps_group_id2)
+
     entryname = 'channel_names'
     this_xrfdata1, valid_read = h51.read_hdf5_core(maps_group_id1, entryname)
     this_xrfdata2, valid_read = h52.read_hdf5_core(maps_group_id2, entryname)
@@ -347,7 +224,7 @@ def main(file1, file2):
             print entryname,' differ.'
             for i in range(len(this_xrfdata1)):
                 print '\t', i,  this_xrfdata1[i], this_xrfdata2[i]
-        else: print entryname, 'are the same.'  
+        #else: print entryname, 'are the same.'
     else: 
         print entryname,' differ:'  
         print this_xrfdata1 
@@ -357,9 +234,7 @@ def main(file1, file2):
     entryname = 'channel_units'
     this_xrfdata1, valid_read = h51.read_hdf5_core(maps_group_id1, entryname)
     this_xrfdata2, valid_read = h52.read_hdf5_core(maps_group_id2, entryname)
-    if len(this_xrfdata1) == len(this_xrfdata2): 
-        print entryname, 'are the same.'              
-    else: 
+    if len(this_xrfdata1) != len(this_xrfdata2):
         print entryname,' differ:'
         print this_xrfdata1
         print this_xrfdata2
@@ -376,7 +251,7 @@ def main(file1, file2):
             print entryname,' differ.'
             for i in range(len(this_xrfdata1)):
                 print '\t', i,  this_xrfdata1[i], this_xrfdata2[i]
-        else: print entryname, 'are the same.'  
+        #else: print entryname, 'are the same.'
     else: print entryname,' differ.'   
     
     entryname = 'scaler_units'
@@ -390,24 +265,13 @@ def main(file1, file2):
             print entryname,' differs.'
             for i in range(len(this_xrfdata1)):
                 print '\t', i,  this_xrfdata1[i], this_xrfdata2[i]
-        else: print entryname, 'are the same.'  
+        #else: print entryname, 'are the same.'
     else: print entryname,' differ.'   
     
-    
-    entryname = 'add_long'
-    this_xrfdata1, valid_read = h51.read_hdf5_core(maps_group_id1, entryname)
-    this_xrfdata2, valid_read = h52.read_hdf5_core(maps_group_id2, entryname)
-    if not np.allclose(this_xrfdata1, this_xrfdata2, atol=np.finfo(float).eps): 
-        print entryname, 'differs. RMS=', np.sqrt(np.mean(( this_xrfdata1 -  this_xrfdata2)**2)) 
-    else: print entryname, ' is same.' 
-    
-    entryname = 'add_float'
-    this_xrfdata1, valid_read = h51.read_hdf5_core(maps_group_id1, entryname)
-    this_xrfdata2, valid_read = h52.read_hdf5_core(maps_group_id2, entryname)
-    if not np.allclose(this_xrfdata1, this_xrfdata2, atol=np.finfo(float).eps): 
-        print entryname, 'differs. RMS=', np.sqrt(np.mean(( this_xrfdata1 -  this_xrfdata2)**2)) 
-    else: print entryname, ' is same.' 
-    
+
+    comp0('add_long', h51, maps_group_id1, h52, maps_group_id2)
+    comp0('add_float', h51, maps_group_id1, h52, maps_group_id2)
+
     entryname = 'add_string'
     this_xrfdata1, valid_read = h51.read_hdf5_core(maps_group_id1, entryname)
     this_xrfdata2, valid_read = h52.read_hdf5_core(maps_group_id2, entryname)
@@ -418,7 +282,7 @@ def main(file1, file2):
                 same = 0
         if same == 0:
             print entryname,' differs.'                
-        else: print entryname, 'are the same.'  
+        #else: print entryname, 'are the same.'
     else: print entryname,' differ.'     
     
 #     #Extra_strings are the same if extra_pvs are the same
@@ -459,15 +323,15 @@ def main(file1, file2):
     elif len(s2.difference(s1)):
         print '\nElements in 2 that are not in 1:'
         print s2.difference(s1)
-    else:
-        print 'Files have the same extra_pvs.' 
+    #else:
+    #    print 'Files have the same extra_pvs.'
         
        
     f1.close()
     f2.close()
     
         
-    print '\nCompare XRFmaps.'
+    #print '\nCompare XRFmaps.'
 
     XRFmaps1, valid_read1 = h51.read_hdf5(file1)
     
@@ -482,7 +346,7 @@ def main(file1, file2):
         print 'Could not read ', file2
         return
     
-    print '\nComparing XRFmaps_info'
+    #print '\nComparing XRFmaps_info'
     
     found_diff = 0
     
@@ -516,8 +380,8 @@ def main(file1, file2):
     elif len(s2.difference(s1)):
         print '\nElements in XRFmaps2.dmaps_names that are not in XRFmaps1.dmaps_names:'
         print s2.difference(s1)
-    else:
-        print 'Files have same XRFmaps.dmaps_names' 
+    #else:
+    #    print 'Files have same XRFmaps.dmaps_names'
         
         
     if XRFmaps1.n_used_chan != XRFmaps2.n_used_chan:
@@ -533,8 +397,8 @@ def main(file1, file2):
     elif len(s2.difference(s1)):
         print '\nElements in XRFmaps2.chan_names that are not in XRFmaps1.chan_names:'
         print s2.difference(s1)
-    else:
-        print '\nFiles have same XRFmaps.chan_names' 
+    #else:
+    #    print '\nFiles have same XRFmaps.chan_names'
 
     if not np.allclose(XRFmaps1.x_coord_arr, XRFmaps2.x_coord_arr, atol=np.finfo(float).eps): 
         print 'x_coord_arr differs.'
@@ -575,8 +439,8 @@ def main(file1, file2):
     elif len(s2.difference(s1)):
         print '\nElements in XRFmaps2.dataset_names that are not in XRFmaps1.dataset_names:'
         print s2.difference(s1)
-    else:
-        print 'Files have same XRFmaps.dataset_names' 
+    #else:
+    #    print 'Files have same XRFmaps.dataset_names'
         
 
     try:
@@ -640,11 +504,11 @@ def main(file1, file2):
     elif len(s2.difference(s1)):
         print '\nElements in XRFmaps2.extra_str_arr that are not in XRFmaps1.extra_str_arr:'
         print s2.difference(s1)
-    else:
-        print 'Files have same XRFmaps.extra_str_arr' 
+    #else:
+    #    print 'Files have same XRFmaps.extra_str_arr'
         
         
-    print 'Compare maps_config:'
+    #print 'Compare maps_config:'
     found_diff_mmc = 0
     mmc1 = XRFmaps1.make_maps_conf
     mmc2 = XRFmaps2.make_maps_conf
@@ -718,15 +582,12 @@ def main(file1, file2):
     if found_diff_mmc == 1: 
         print 'XRFmaps.make_maps_conf differ.' 
         found_diff = 1  
-    else:
-        print 'XRFmaps.make_maps_conf are the same.'          
+    #else:
+    #    print 'XRFmaps.make_maps_conf are the same.'
 
     
     if found_diff == 1: print 'XRFmaps differ.'
     print 'Finished!'
-    
-                
-                
 
 #-----------------------------------------------------------------------------   
 if __name__ == '__main__':
