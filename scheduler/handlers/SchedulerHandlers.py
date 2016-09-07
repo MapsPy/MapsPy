@@ -377,7 +377,7 @@ class SchedulerProcessNodeWebService(object):
 		rawbody = cherrypy.request.body.read(int(cl))
 		proc_node = json.loads(rawbody)
 		#print proc_node
-		self.db.insert_process_node(proc_node)
+		#self.db.insert_process_node(proc_node)
 		cherrypy.engine.publish('process_node_update', proc_node)
 		return 'updated process node'
 

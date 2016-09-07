@@ -67,10 +67,10 @@
                     if ($minDiff > 10)
                         return $bk_color;
                     // passed
-                    if (aData.Status === "Processing")
-                        $bk_color = "#F3F781";  // yellow
-                    else
+                    if (aData.Status === "Idle")
                         $bk_color = "#9FF781";  //green
+                    else
+                        $bk_color = "#F3F781";  // yellow
                 }
             }
             return $bk_color;
@@ -533,12 +533,16 @@
 
         setInterval(function()
         {
-            $pn_table.ajax.reload(null, false);
             $queued_table.ajax.reload(null, false);
             $processing_table.ajax.reload(null, false);
-            $finished_table.ajax.reload(null, false);
-        }, 3500);
+        }, 4000);
 	
+        setInterval(function()
+        {
+            $pn_table.ajax.reload(null, false);
+            $finished_table.ajax.reload(null, false);
+        }, 10000);
+        
         //----------------------------------------------------------------------
         
         //$('#table_finished_jobs').on( 'click', 'tr td.details-control', function () 

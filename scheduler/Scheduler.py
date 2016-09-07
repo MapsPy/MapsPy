@@ -50,6 +50,9 @@ import Constants
 import h5py
 import StringIO
 import scipy.misc
+import glob
+import time
+import shutil
 
 db = DatabasePlugin(cherrypy.engine, SQLiteDB)
 
@@ -60,6 +63,7 @@ class Scheduler(RestBase):
 		self.all_settings = settings
 		self.settings = settings.getSetting(Settings.SECTION_SERVER)
 		self.job_lock = threading.RLock()
+		self.pn_lock = threading.RLock()
 		cherrypy.config.update({
 			'server.socket_host': self.settings[Settings.SERVER_HOSTNAME],
 			'server.socket_port': int(self.settings[Settings.SERVER_PORT]),
@@ -70,6 +74,14 @@ class Scheduler(RestBase):
 								self.settings[Settings.SERVER_FROM_ADDRESS],
 								self.settings[Settings.SERVER_MAIL_USERNAME],
 								self.settings[Settings.SERVER_MAIL_PASSWORD])
+		# this flag is for checking old idl process node status stored in files
+		self.schedule_files = str(self.settings[Settings.SCHEDULE_FILES_PATH]).strip(' ')
+		# dictionary of idl process node status
+		self.idl_process_node_statuses = {}
+		# last time we checked the files status directory
+		self.idl_last_time_check = 0
+		# check every 10 seconds
+		self.idl_check_time = 10.0
 		self.logger = logging.getLogger(__name__)
 		self._setup_logging_(self.logger, "rot_file", "logs/MapsPy.log", True)
 		cherrypy.engine.subscribe("new_job", self.callback_new_job)
@@ -185,7 +197,15 @@ class Scheduler(RestBase):
 			self.logger.exception("Error")
 
 	def callback_process_node_update(self, node):
+		self.pn_lock.acquire(True)
+		# if we should check idl process nodes status
+		if len(self.schedule_files) > 0:
+			curtime = time.time()
+			if (curtime - self.idl_last_time_check) > self.idl_check_time:
+				self.idl_last_time_check = time.time()
+				self._read_idl_process_node_status()
 		#self.logger.info('callback %s', node[Constants.PROCESS_NODE_COMPUTERNAME])
+		self.pn_lock.release()
 		try:
 			if not Constants.PROCESS_NODE_ID in node:
 				self.logger.info('getting id for node %s', node)
@@ -196,6 +216,10 @@ class Scheduler(RestBase):
 				url = 'http://' + str(node[Constants.PROCESS_NODE_HOSTNAME]) + ':' + str(node[Constants.PROCESS_NODE_PORT]) + '/update_id'
 				r = s.post(url, data={Constants.PROCESS_NODE_ID: node[Constants.PROCESS_NODE_ID]})
 				self.logger.info('update result: %s, %s', r.status_code, r.text)
+			# This is a hack that should be removed in the future
+			if node[Constants.PROCESS_NODE_COMPUTERNAME] in self.idl_process_node_statuses:
+				if self.idl_process_node_statuses[node[Constants.PROCESS_NODE_COMPUTERNAME]] == Constants.PROCESS_NODE_STATUS_PROCESSING_IDL:
+					node[Constants.PROCESS_NODE_STATUS] = Constants.PROCESS_NODE_STATUS_PROCESSING_IDL
 			if node[Constants.PROCESS_NODE_STATUS] == Constants.PROCESS_NODE_STATUS_IDLE:
 				self.job_lock.acquire(True)
 				job_list = db.get_all_unprocessed_jobs_for_pn_id(int(node[Constants.PROCESS_NODE_ID]))
@@ -208,9 +232,10 @@ class Scheduler(RestBase):
 					if r.status_code == 200:
 						db.update_job_pn(job[Constants.JOB_ID], node[Constants.PROCESS_NODE_ID])
 				self.job_lock.release()
+			db.insert_process_node(node)
 		except:
-			self.job_lock.release()
 			self.logger.exception('Error')
+			self.job_lock.release()
 
 	def call_delete_job(self, job):
 		p_node = db.get_process_node_by_id(int(job[Constants.JOB_PROCESS_NODE_ID]))
@@ -221,6 +246,63 @@ class Scheduler(RestBase):
 		self.logger.info('update result %s, %s', r.status_code, r.text)
 		if r.status_code == 200:
 			db.delete_job_by_id(job[Constants.JOB_ID])
+
+	# This is a hack, should be removed in the future!
+	# we are trying to keep track to two states for one node.
+	def _read_idl_process_node_status(self):
+		pn_list = db.get_all_process_nodes()
+		jobs_list = []
+		idle_process_nodes = {}
+		for file_name in glob.glob(self.schedule_files + '*.txt'):
+			split_str = file_name.split('_')
+			if len(split_str) > 2:
+				# check if process node status
+				if split_str[0] == self.schedule_files + 'status':
+					if split_str[2] == 'idle.txt':
+						self.idl_process_node_statuses[split_str[1]] = Constants.PROCESS_NODE_STATUS_IDLE
+					elif split_str[2] == 'working.txt':
+						self.idl_process_node_statuses[split_str[1]] = Constants.PROCESS_NODE_STATUS_PROCESSING_IDL
+					# try to find the process node
+					process_node = None
+					for pn in pn_list:
+						if pn[Constants.PROCESS_NODE_COMPUTERNAME] == split_str[1]:
+							process_node = pn
+							break
+					# check if both are idle
+					status = 0
+					if process_node != None:
+						if process_node[Constants.PROCESS_NODE_STATUS] == Constants.PROCESS_NODE_STATUS_IDLE:
+							status = 1
+					# if it is None we set it to idle to process on idl
+					else:
+						status = 1
+					if status and split_str[2] == 'idle.txt':
+						idle_process_nodes[ split_str[1] ] = file_name
+			if len(split_str) > 1:
+				# check if process node status
+				if split_str[0] == self.schedule_files + 'job':
+					jobs_list += [file_name]
+		# if we have idle idl process nodes, submit a job to them
+		for file_name in jobs_list:
+			if len(idle_process_nodes) > 0:
+				file_name = os.path.basename(file_name)
+				key, value = idle_process_nodes.popitem()
+				try:
+					shutil.move(self.schedule_files + file_name, self.schedule_files + key + '/' + file_name)
+					os.remove(value)
+					process_node = None
+					for pn in pn_list:
+						if pn[Constants.PROCESS_NODE_COMPUTERNAME] == key:
+							process_node = pn
+							break
+					if process_node != None:
+						process_node[Constants.PROCESS_NODE_STATUS] = Constants.PROCESS_NODE_STATUS_PROCESSING_IDL
+						self.idl_process_node_statuses[key] = Constants.PROCESS_NODE_STATUS_PROCESSING_IDL
+						db.insert_process_node(process_node)
+				except:
+					self.logger.exception("Error moving file " + value)
+			else:
+				break
 
 	def _get_images_from_hdf(self, job):
 		images_dict = None

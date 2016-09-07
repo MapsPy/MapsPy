@@ -873,7 +873,10 @@ def _option_b_(main_dict, maps_conf, maps_def, total_number_detectors, info_elem
 		filelist = os.listdir(os.path.join(current_directory, 'output_old'))
 		for fl in filelist:
 			thisfile = os.path.join(os.path.join(current_directory, 'output_old'), fl)
-			os.remove(thisfile)
+			try:
+				os.remove(thisfile)
+			except:
+				logger.exception("error removing: "+thisfile)
 	else:
 		os.makedirs(os.path.join(current_directory, 'output_old'))
 	#todo: create directory if it does not exist
@@ -883,7 +886,10 @@ def _option_b_(main_dict, maps_conf, maps_def, total_number_detectors, info_elem
 		full_file_name = os.path.join(os.path.join(current_directory, 'output'), fn)
 		if os.path.isfile(full_file_name):
 			shutil.copy(full_file_name, os.path.join(current_directory, 'output_old'))
-			os.remove(full_file_name)
+			try:
+				os.remove(full_file_name)
+			except:
+				logger.exception("error removing "+full_file_name)
 
 	return spectra
 

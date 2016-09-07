@@ -726,7 +726,7 @@ class analyze:
 		n_channels = 2048
 		n_mca_channels = mca_arr_dimensions[2]
 
-		if total_number_detectors > 1 :
+		if total_number_detectors > 1 or (total_number_detectors == 1 and len(scan.mca_arr.shape) == 4):
 			if (self.netcdf_fly_scan != 1) and (beamline != 'GSE-CARS') and (beamline != 'Bio-CAT'):
 				# if it is a fly scan, ie netcdf_fly_scan is 1, the even a multi
 				# element detector scan is read in as a single element

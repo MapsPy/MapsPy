@@ -41,6 +41,7 @@ JOB_STATUS_GENERAL_ERROR = 10
 # ===================================== Job Status =======================================
 PROCESS_NODE_STATUS_IDLE = 'Idle'
 PROCESS_NODE_STATUS_PROCESSING = 'Processing'
+PROCESS_NODE_STATUS_PROCESSING_IDL = 'Processing IDL'
 PROCESS_NODE_STATUS_OFFLINE = 'Offline'
 PROCESS_NODE_STATUS_BOOT_UP = 'BootUp'
 
