@@ -254,10 +254,10 @@ class Scheduler(RestBase):
 		jobs_list = []
 		idle_process_nodes = {}
 		for file_name in glob.glob(self.schedule_files + '*.txt'):
-			split_str = file_name.split('_')
+			split_str = os.path.basename(file_name).split('_')
 			if len(split_str) > 2:
 				# check if process node status
-				if split_str[0] == self.schedule_files + 'status':
+				if split_str[0] == 'status':
 					if split_str[2] == 'idle.txt':
 						self.idl_process_node_statuses[split_str[1]] = Constants.PROCESS_NODE_STATUS_IDLE
 					elif split_str[2] == 'working.txt':
@@ -280,7 +280,7 @@ class Scheduler(RestBase):
 						idle_process_nodes[ split_str[1] ] = file_name
 			if len(split_str) > 1:
 				# check if process node status
-				if split_str[0] == self.schedule_files + 'job':
+				if split_str[0] == 'job':
 					jobs_list += [file_name]
 		# if we have idle idl process nodes, submit a job to them
 		for file_name in jobs_list:
