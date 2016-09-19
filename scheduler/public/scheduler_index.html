@@ -34,6 +34,7 @@
         
         function check_heartbeat_timestamp(aData)
         {
+            var $red_bk_color = "#F78181"; //red
             var $bk_color = "#F78181"; //red
             //sample format
             //'2015-10-26 11:23:47.325000'
@@ -52,24 +53,24 @@
                         $bk_color = "#F3F781";  // yellow
                     var $mDate = $date_arr[0].split("-");
                     if ($mDate.length < 3)
-                        return $bk_color;
+                        return $red_bk_color;
                     var $mTime = $date_arr[1].split(":");
                     if ($mTime.length < 3)
-                        return $bk_color;
+                        return $red_bk_color;
                     // Get the current date and check it to heartbeat
                     var $now = new Date();
                     if ($now.getFullYear() !== parseInt($mDate[0]))
-                        return $bk_color;
+                        return $red_bk_color;
                     if ($now.getMonth() + 1 !== parseInt($mDate[1]))
-                        return $bk_color;
+                        return $red_bk_color;
                     if ($now.getDate() !== parseInt($mDate[2]))
-                        return $bk_color;
+                        return $red_bk_color;
                     var $hourDiff = $now.getHours() - parseInt($mTime[0]);
                     var $minDiff = $now.getMinutes() - parseInt($mTime[1]);
                     if ($hourDiff > 1)
-                        return $bk_color;
+                        return $red_bk_color;
                     if ($minDiff > 10)
-                        return $bk_color;
+                        return $red_bk_color;
                 }
             }
             return $bk_color;
