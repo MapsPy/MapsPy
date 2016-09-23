@@ -902,12 +902,7 @@ def _option_c_(main_dict, logger):
 	make_maps.main(main_dict, logger=logger, force_fit=1, no_fit=False)
 
 	dirlist = os.listdir(current_directory)
-	if 'output.fits' in dirlist:
-		filelist = os.listdir(os.path.join(current_directory, 'output.fits'))
-		for fl in filelist:
-			thisfile = os.path.join(os.path.join(current_directory, 'output.fits'), fl)
-			os.remove(thisfile)
-	else:
+	if not 'output.fits' in dirlist:
 		os.makedirs(os.path.join(current_directory, 'output.fits'))
 
 	#Copy files to output_fits

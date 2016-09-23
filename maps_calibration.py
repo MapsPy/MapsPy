@@ -49,11 +49,13 @@ from file_io import maps_mda
 from file_io.file_util import open_file_with_retry
 #from file_io.mca_io import load_mca
 
+
 def index_full_str_search(str_list, search_str):
 	try:
 		return str_list.index(search_str)
 	except:
 		return -1
+
 
 def index_partial_str_search(str_list, search_str):
 	for idx in range(len(str_list)):
@@ -67,6 +69,28 @@ def find_str_idx(str_list, search_list):
 		idx = index_full_str_search(str_list, search_str)
 		if idx > -1:
 			return idx
+
+
+def translate_amps_val(amp_val):
+	if amp_val == 0:
+		return 1
+	if amp_val == 1:
+		return 2
+	if amp_val == 2:
+		return 5
+	if amp_val == 3:
+		return 10
+	if amp_val == 4:
+		return 20
+	if amp_val == 5:
+		return 50
+	if amp_val == 6:
+		return 100
+	if amp_val == 7:
+		return 200
+	if amp_val == 8:
+		return 500
+
 
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
@@ -1394,11 +1418,11 @@ class calibration:
 		print>>f, 'DS_IC[cts/s]:,	' + line.strip()
 		line = str(make_maps_conf.element_standard.us_amp[0]) + ', '
 		for ii in range(2):
-			line = line + str(make_maps_conf.element_standard.us_amp[ii]) + ', '
+			line = line + str( translate_amps_val( make_maps_conf.element_standard.us_amp[ii] ) ) + ', '
 		print>>f, 'US_AMP[sensitivity/units/factor]:,	' + line.strip()
 		line = str(make_maps_conf.element_standard.ds_amp[0]) + ', '
 		for ii in range(2):
-			line = line + str(make_maps_conf.element_standard.ds_amp[ii]) + ', '
+			line = line + str( translate_amps_val( make_maps_conf.element_standard.ds_amp[ii] ) ) + ', '
 		print>>f, 'DS_AMP[sensitivity/units/factor]:,	' + line.strip()
 		line = ' '
 		print>>f, line
