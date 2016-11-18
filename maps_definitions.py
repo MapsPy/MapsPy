@@ -248,9 +248,9 @@ class maps_definitions:
 
 		element_list = ['Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar', 'K', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Fe', 'Co',
 				'Ni', 'Cu', 'Zn', 'Ga', 'Ge', 'As', 'Se', 'Br', 'Kr', 'Rb', 'Sr', 'Y', 'Zr', 'Nb', 'Mo', 'Tc',
-				'Ru', 'Rh', 'Pd', 'Ag', 'Cd', 'In', 'Sn', 'Sb', 'Te', 'I', 'dummy', 'dummy',
+				'Ru', 'Rh', 'Pd', 'Ag', 'Cd', 'In', 'Sn', 'Sb', 'Te', 'I', 'Hf', 'dummy',
 				'Mo_L', 'Ag_L', 'Sn_L', 'Cd_L', 'i_L', 'Cs_L', 'Ba_L', 'Eu_L', 'Gd_L', 'W_L', 'Pt_L', 'Au_L',
-				'Hg_L', 'Pb_L', 'U_L', 'Pu_L', 'Sm_L', 'Y_L', 'Pr_L', 'Ce_L', 'Zr_L', 'Os_L', 'Rb_L', 'Ru_L',
+				'Hg_L', 'Pb_L', 'U_L', 'Pu_L', 'Sm_L', 'Y_L', 'Pr_L', 'Ce_L', 'Zr_L', 'Os_L', 'Rb_L', 'Ru_L', 'Hf_L'
 				'Au_M', 'Pb_M', 'U_M', 'noise', 'dummy', 's_i', 's_e', 's_a', 'TFY', 'Bkgnd']
 
 		list_use_these = ['Si', 'P', 'S', 'Cl', 'Ar', 'K', 'Ca', 'Ti', 'Cr', 'Mn', 'Fe', 'Co',
