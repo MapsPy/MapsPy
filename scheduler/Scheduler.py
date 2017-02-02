@@ -309,6 +309,7 @@ class Scheduler(RestBase):
 		try:
 			# create image dictionary
 			images_dict = {}
+			full_file_name = ''
 			# check how many datasets are in job
 			file_name = ''
 			file_dir = os.path.join(job[Constants.JOB_DATA_PATH], Constants.DIR_IMG_DAT)
@@ -322,23 +323,50 @@ class Scheduler(RestBase):
 					self.logger.warning('Warning: Can only parse one dataset for images, dataset list is %s', job[Constants.JOB_DATASET_FILES_TO_PROC])
 					return None
 				temp_name = job[Constants.JOB_DATASET_FILES_TO_PROC]
-				hdf_file_name = temp_name.replace('.mda', '.h5')
-				full_file_name = os.path.join(file_dir, hdf_file_name)
+				if job[Constants.JOB_XANES_SCAN] == 1:
+					if job[Constants.JOB_DETECTOR_ELEMENTS] == 1:
+						full_file_name = os.path.join(file_dir, temp_name + '.h5' + str(job[Constants.JOB_DETECTOR_TO_START_WITH]))
+					else:
+						full_file_name = os.path.join(file_dir, temp_name + '.h5' + str)
+				else:
+					hdf_file_name = temp_name.replace('.mda', '.h5')
+					full_file_name = os.path.join(file_dir, hdf_file_name)
 
 			hdf_file = h5py.File(full_file_name, 'r')
 			maps_group = hdf_file[Constants.HDF5_GRP_MAPS]
 			proc_mask = job[Constants.JOB_PROC_MASK]
-			if proc_mask & 1 == 1:
-				xrf_roi_dataset = maps_group[Constants.HDF5_GRP_XRF_ROI]
-			elif proc_mask & 4 == 4:
-				xrf_roi_dataset = maps_group[Constants.HDF5_GRP_XRF_FITS]
+			if job[Constants.JOB_XANES_SCAN] == 1:
+				h5_grp = None
+				analyzed_grp = maps_group[Constants.HDF5_GRP_ANALYZED]
+				if analyzed_grp == None:
+					self.logger.warning('Warning: %s did not find '+Constants.HDF5_GRP_ANALYZED, file_name)
+					return None
+				if job[Constants.JOB_NNLS] == 1:
+					h5_grp = analyzed_grp[Constants.HDF5_GRP_NNLS]
+				elif proc_mask & 4 == 4:
+					h5_grp = analyzed_grp[Constants.HDF5_GRP_FITS]
+				elif proc_mask & 1 == 1:
+					h5_grp = analyzed_grp[Constants.HDF5_GRP_ROI]
+				else:
+					self.logger.warning('Warning: %s did not process XRF_ROI or XRF_FITS', file_name)
+					return None
+				if not h5_grp == None:
+					xrf_roi_dataset = h5_grp[Constants.HDF5_DSET_COUNTS]
+					channel_names = h5_grp[Constants.HDF5_DSET_CHANNELS]
+				else:
+					return None
 			else:
-				self.logger.warning('Warning: %s did not process XRF_ROI or XRF_FITS', file_name)
-				return None
+				if proc_mask & 1 == 1:
+					xrf_roi_dataset = maps_group[Constants.HDF5_DSET_XRF_ROI]
+				elif proc_mask & 4 == 4:
+					xrf_roi_dataset = maps_group[Constants.HDF5_DSET_XRF_FITS]
+				else:
+					self.logger.warning('Warning: %s did not process XRF_ROI or XRF_FITS', file_name)
+					return None
+				channel_names = maps_group[Constants.HDF5_GRP_CHANNEL_NAMES]
 
-			channel_names = maps_group[Constants.HDF5_GRP_CHANNEL_NAMES]
 			if channel_names.shape[0] != xrf_roi_dataset.shape[0]:
-				self.logger.warning('Warning: file %s : Datasets: %s [%s] and %s [%s] length missmatch', file_name, Constants.HDF5_GRP_XRF_ROI, xrf_roi_dataset.shape[0], Constants.HDF5_GRP_CHANNEL_NAMES, channel_names.shape[0])
+				self.logger.warning('Warning: file %s : Datasets: %s [%s] and %s [%s] length missmatch', file_name, Constants.HDF5_DSET_XRF_ROI, xrf_roi_dataset.shape[0], Constants.HDF5_GRP_CHANNEL_NAMES, channel_names.shape[0])
 				return None
 
 			for i in range(channel_names.size):

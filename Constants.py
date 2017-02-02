@@ -95,11 +95,16 @@ EMAIL_MESSAGE_COMPLETED = 'MapsPy Job Completed: \n'
 
 # ===================================== HDF5 Groups =======================================
 HDF5_GRP_MAPS = 'MAPS'
-HDF5_GRP_XRF_ROI = 'XRF_roi'
-HDF5_GRP_XRF_ROI_PLUS = 'XRF_roi_plus'
-HDF5_GRP_XRF_FITS = 'XRF_fits'
+HDF5_DSET_XRF_ROI = 'XRF_roi'
+HDF5_DSET_XRF_ROI_PLUS = 'XRF_roi_plus'
+HDF5_DSET_XRF_FITS = 'XRF_fits'
 HDF5_GRP_CHANNEL_NAMES = 'channel_names'
-
+HDF5_GRP_ANALYZED = 'XRF_Analyzed'
+HDF5_GRP_NNLS = 'NNLS'
+HDF5_GRP_ROI = 'ROI'
+HDF5_GRP_FITS = 'Fitted'
+HDF5_DSET_COUNTS = 'Counts_Per_Sec'
+HDF5_DSET_CHANNELS = 'Channel_Names'
 # ===================================== Directories =======================================
 DIR_MDA = 'mda'
 DIR_OUTPUT_OLD = 'output_old'

@@ -207,7 +207,7 @@
                     'Version: '+d.Version+'<br>'+
                     'Quick and Dirty: '+d.QuickAndDirty+'<br>'+
                     'NNLS: '+d.NNLS+'<br>'+
-                    'XANES_Scan: '+d.XANES_Scan+'<br>'+
+                    'XRF-Maps: '+d.XANES_Scan+'<br>'+
                     'BeamLine: '+d.BeamLine+'<br>'+
                     'Priority: '+d.Priority+'<br>'+
                     'Lines processed in parrallel: '+d.MaxLinesToProc+'<br>'+
@@ -332,18 +332,13 @@
             });
         }
         
-       
-        //----------------------------------------------------------------------
-        //--------------------------- button clicks ----------------------------
-        //----------------------------------------------------------------------
-        
-        $("#Btn-Submit-Job").click(function(e) 
+        function submit_new_job(is_xrf_maps_job)
         {
             var $procMask = gen_job_mask();
             var $quickNdirty = get_check_value('#option-quick-and-dirty');
-            var $xrfbin = get_check_value('#option-xrf-bin');
+            var $xrfbin = 0; // get_check_value('#option-xrf-bin');
             var $nnls = get_check_value('#option-nnls');
-            var $xanes = get_check_value('#option-xanes');
+            var $xanes = is_xrf_maps_job; //0 = mapspy , 1 = xrf maps  get_check_value('#option-xanes');
             var $is_live_job = get_check_value('#option-is-live-job');
             var $dataset_filenames = 'all';
             var $pn_id = $( "#proc_node_option option:selected" ).attr('value');
@@ -368,7 +363,7 @@
                     'BeamLine': '2-ID-E',
                     'DataPath': $("#DataPath").val(),
                     'Version': '9.00',
-                    'Standards': '',
+                    'Standards': $("#option-standard").val(),
                     'DetectorToStartWith': parseInt($("#option-detector-to-start-with").val(), 10),
                     'XRF_Bin': $xrfbin,
                     'MaxLinesToProc': parseInt($("#option-proc-per-line").val(), 10),
@@ -402,6 +397,21 @@
                     });
                 }
             });
+        }
+       
+        //----------------------------------------------------------------------
+        //--------------------------- button clicks ----------------------------
+        //----------------------------------------------------------------------        
+        $("#Btn-Submit-Job").click(function(e) 
+        {
+            submit_new_job(0);
+        });
+        
+        //----------------------------------------------------------------------
+        
+        $("#Btn-Submit-Xrf-Maps-Job").click(function(e) 
+        {
+            submit_new_job(1);
         });
         
         //----------------------------------------------------------------------
@@ -516,6 +526,7 @@
         $("#priority").val(5);
         $("#chk_all_datasets").prop("checked", true);
         $("#analysis-type-a").prop("checked", true);
+        $("#analysis-type-g").prop("checked", true);
         $("#datasets_list").hide();
         $('.overlay').hide();
         var $detailPnRows = [];
@@ -839,17 +850,25 @@
                    <input type="checkbox" id="analysis-type-b" value="B">B: Extract integrated spectra from analyzed files and fit the spectra to optimize fit parameters<br>
                    <input type="checkbox" id="analysis-type-c" value="C">C: Analyze datasets using ROI, ROI+ and per pixel fitting<br>
                    <!--<input type="checkbox" id="analysis-type-d" value="D">D: N/A<br> -->
-                   <input type="checkbox" id="analysis-type-e" value="E">E: Add exchange information to analyzed files<br>
+                   <input type="checkbox" id="analysis-type-e" value="E">E: Add exchange information to analyzed files (only for MapsPy)<br>
                    <!--<input type="checkbox" id="analysis-type-f" value="F">F: Create hdf5 file from single line netcdf files for flyscan<br>-->
                    <input type="checkbox" id="analysis-type-g" value="G">G: Generate average .h5 from each detector<br>
-                   Total Number of Detectors:
-                   <input type="text" id="option-detector-elements" value="4"><br>
+                   <input type="checkbox" id="option-quick-and-dirty">Quick and Dirty
+                <!--   <input type="checkbox" id="option-xrf-bin">XRF Bin -->
+                   <input type="checkbox" id="option-nnls">NNLS
+                <!--   <input type="checkbox" id="option-xanes">XANES Scan -->
+                   <input type="checkbox" id="option-is-live-job">Live Job
+                   <br>
                    Detector to start with:
                    <input type="text" id="option-detector-to-start-with" value="0"><br>
-                   Number of <b>files</b> to process simultaneously:
-                   <input type="text" id="option-proc-per-file" value="1"> <br>
-                   Number of <b>lines</b> to process simultaneously:
-                   <input type="text" id="option-proc-per-line" value="1"><br>
+                   Total Number of Detectors:
+                   <input type="text" id="option-detector-elements" value="4"><br>
+                   Number of <b>files</b> to process simultaneously: 
+                   <input type="text" id="option-proc-per-file" value="1"> (only for MapsPy) <br> 
+                   Number of <b>lines</b> to process simultaneously: 
+                   <input type="text" id="option-proc-per-line" value="-1"> (-1 means max available) <br>
+                   Quantify counts with standard: 
+                   <input type="text" id="option-standard" value=""> (usually maps_standardinfo.txt) <br>
                    Priority (1 highest - 10 lowest): 
                    <select id="priority">
                        <option value="1">1</option>
@@ -863,12 +882,6 @@
                        <option value="9">9</option>
                        <option value="10">10</option>
                    </select><br>
-                   <input type="checkbox" id="option-quick-and-dirty">Quick and Dirty
-                   <input type="checkbox" id="option-xrf-bin">XRF Bin
-                   <input type="checkbox" id="option-nnls">NNLS
-                   <input type="checkbox" id="option-xanes">XANES Scan
-                   <input type="checkbox" id="option-is-live-job">Live Job
-                   <br>
                    Process Node:
                    <select id="proc_node_option">
                        <option value="-1">Any
@@ -878,7 +891,10 @@
                    </form>
                   <br>
                   <br>
-                  <button id="Btn-Submit-Job">Submit Job</button>
+                  <button id="Btn-Submit-Job">Submit MapsPy Job</button>
+                  <br>
+                  <br>
+                  <button id="Btn-Submit-Xrf-Maps-Job">Submit XRF-Maps Job (beta)</button>
                 </fieldset>
             </div>
         </div>

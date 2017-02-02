@@ -46,6 +46,7 @@ import threading
 import signal
 import psutil
 import multiprocessing
+import subprocess
 from datetime import datetime
 from RestBase import RestBase
 from plugins.DatabasePlugin import DatabasePlugin
@@ -118,6 +119,8 @@ class ProcessNode(RestBase):
 		self.scheduler_host = serverSettings[Settings.SERVER_SCHEDULER_HOSTNAME]
 		self.scheduler_port = serverSettings[Settings.SERVER_SCHEDULER_PORT]
 		self.path_alias_dict = self.parse_aliases(pnSettings[Settings.PROCESS_NODE_PATH_ALIAS])
+		self.xrf_maps_path = pnSettings[Settings.PROCESS_NODE_XRF_MAPS_PATH]
+		self.xrf_maps_exe = pnSettings[Settings.PROCESS_NODE_XRF_MAPS_EXE]
 		self.logger.info('alias paths %s', self.path_alias_dict)
 		self.session = requests.Session()
 		self.scheduler_pn_url = 'http://' + self.scheduler_host + ':' + self.scheduler_port + '/process_node'
@@ -268,14 +271,18 @@ class ProcessNode(RestBase):
 				job_dict[Constants.JOB_START_PROC_TIME] = datetime.ctime(datetime.now())
 				log_name = 'Job_' + str(job_dict[Constants.JOB_ID]) + '_' + datetime.strftime(datetime.now(), "%y_%m_%d_%H_%M_%S") + '.log'
 				job_dict[Constants.JOB_LOG_PATH] = log_name
-				job_logger = logging.getLogger(log_name)
-				self._setup_logging_(job_logger, "file", "job_logs/" + log_name)
 
+				job_logger = None
 				self.db.update_job(job_dict)
 				self.send_job_update(job_dict)
 				self.send_status_update()
 
-				proc = multiprocessing.Process(target=maps_batch.new_process_func, args=(log_name, alias_path, job_dict))
+				if job_dict[Constants.JOB_XANES_SCAN] == 1:
+					proc = multiprocessing.Process(target=start_xrf_maps, args=(log_name, alias_path, job_dict, self.xrf_maps_path, self.xrf_maps_exe))
+				else:
+					job_logger = logging.getLogger(log_name)
+					self._setup_logging_(job_logger, "file", "job_logs/" + log_name)
+					proc = multiprocessing.Process(target=maps_batch.new_process_func, args=(log_name, alias_path, job_dict))
 				proc.start()
 				self.this_process = psutil.Process(proc.pid)
 				proc.join()
@@ -288,10 +295,11 @@ class ProcessNode(RestBase):
 				else:
 					self.logger.info('finished processing job with status COMPLETED')
 					job_dict[Constants.JOB_STATUS] = Constants.JOB_STATUS_COMPLETED
-				handlers = job_logger.handlers[:]
-				for handler in handlers:
-					handler.close()
-					job_logger.removeHandler(handler)
+				if not job_logger == None:
+					handlers = job_logger.handlers[:]
+					for handler in handlers:
+						handler.close()
+						job_logger.removeHandler(handler)
 			except:
 				self.logger.exception('Error processing %s', job_dict[Constants.JOB_DATA_PATH])
 				job_dict[Constants.JOB_FINISH_PROC_TIME] = datetime.ctime(datetime.now())
@@ -344,3 +352,64 @@ class ProcessNode(RestBase):
 			self.logger.info('sent job status %s', job_dict)
 		except:
 			self.logger.exception('Error sending job update')
+
+
+# Function used to create a new process for jobs
+def start_xrf_maps(log_name, alias_path, job_dict, xrf_maps_path, xrf_maps_exe):
+	#setup_logger('job_logs/' + log_name)
+	ret = 0
+	try:
+		args = [xrf_maps_exe]
+		args += ['--dir', alias_path]
+		#f.write('VERSION:' + str(job_dict[Constants.JOB_VERSION]).strip() + '\n')
+		#f.write('XRF_BIN:' + str(job_dict[Constants.JOB_XRF_BIN]).strip() + '\n')
+		#f.write('BEAMLINE:' + str(job_dict[Constants.JOB_BEAM_LINE]).strip() + '\n')
+		if str(job_dict[Constants.JOB_NNLS]).strip() == '1':
+			args += ['--nnls']
+		if str(job_dict[Constants.JOB_QUICK_AND_DIRTY]).strip() == '1':
+			args += ['--quick-and-dirty']
+		mda_files = str(job_dict[Constants.JOB_DATASET_FILES_TO_PROC]).strip()
+		if len (mda_files) > 0 and (not mda_files == 'all'):
+			args += ['--files', mda_files]
+		num_threads = str(job_dict[Constants.JOB_MAX_LINES_TO_PROC]).strip()
+		if not num_threads == '-1':
+			args += ['--nthreads', num_threads]
+
+		detector_start = int( str(job_dict[Constants.JOB_DETECTOR_TO_START_WITH]).strip() )
+		detector_amount = int( str(job_dict[Constants.JOB_DETECTOR_ELEMENTS]).strip() )
+		detector_end = detector_start + (detector_amount -1)
+
+		if detector_start < 0 or detector_start > 3: # we only have 4 detectors
+			detector_start = 0
+		if detector_end < detector_start or detector_end > 3: # we only have 4 detectors
+			detector_end = 3
+
+		str_detector_range = str(detector_start) + ':' + str(detector_end)
+		args += ['--detector-range', str_detector_range]
+
+		if len(str(job_dict[Constants.JOB_STANDARDS])) > 0:
+			args += ['--quantify-with', str(job_dict[Constants.JOB_STANDARDS])]
+
+		proc_mask = int(job_dict[Constants.JOB_PROC_MASK])
+		key_d = 0
+		key_f = 0 # for netcdf to hdf5 future feature
+		if proc_mask & 1 == 1:
+			args += ['--roi', '--roi_plus']
+		if proc_mask & 2 == 2:
+			args += ['--optimize-fit-override-params']
+		if proc_mask & 4 == 4:
+			args += ['--roi', '--roi_plus', '--matrix']
+		if proc_mask & 8 == 8:
+			key_d = 1
+		if proc_mask & 16 == 16:
+			args += ['--add-exchange']
+		if proc_mask & 32 == 32:
+			key_f = 1
+		if proc_mask & 64 == 64:
+			args += ['--generate-avg-h5']
+		log_file = open('job_logs/' + log_name, 'w')
+		ret = subprocess.call(args, cwd=xrf_maps_path, stdout=log_file, stderr=log_file)
+		log_file.close()
+	except:
+		return -1
+	return ret
