@@ -42,6 +42,7 @@ import cherrypy
 import json
 import logging
 import logging.handlers
+import traceback
 import threading
 import signal
 import psutil
@@ -408,8 +409,12 @@ def start_xrf_maps(log_name, alias_path, job_dict, xrf_maps_path, xrf_maps_exe):
 		if proc_mask & 64 == 64:
 			args += ['--generate-avg-h5']
 		log_file = open('job_logs/' + log_name, 'w')
-		ret = subprocess.call(args, cwd=xrf_maps_path, stdout=log_file, stderr=log_file)
+		print args
+		ret = subprocess.call(args, cwd=xrf_maps_path, stdout=log_file, stderr=log_file, shell=True)
+		print 'ret = ', ret
 		log_file.close()
 	except:
+		exc_str = traceback.format_exc()
+		print exc_str
 		return -1
 	return ret
