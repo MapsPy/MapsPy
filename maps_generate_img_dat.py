@@ -939,6 +939,7 @@ class analyze:
 		for i in range(np.amin(fitp.keywords.kele_pos), np.amax(fitp.keywords.mele_pos)):
 			text = text + 'perror_' + str(fitp.s.name[i]) + ', '
 
+		roi_start = datetime.datetime.now()
 		# below is the routine for straight ROI mapping
 		for jj in range(len(elements_to_use)):
 			counts = 0.
@@ -994,6 +995,11 @@ class analyze:
 				these_counts = these_counts / elt_arr
 				counts = counts + these_counts
 			thisdata.dataset_orig[:, :, jj, 0] = counts
+
+		roi_end = datetime.datetime.now()
+		total_roi_time = roi_end - roi_start
+		total_time_str = '\n\n %%%%%%%% roi total time = '+str(total_roi_time.total_seconds())+'  %%%%%%% \n\n'
+		self.logger.info(total_time_str)
 
 		# below is the routine for using matrix math to calculate elemental
 		# content with overlap removal
@@ -1329,6 +1335,7 @@ class analyze:
 
 					self.logger.info('Started fitting')
 
+					fitting_start = datetime.datetime.now()
 					results_pool = []
 					start = 0
 					for i_fit in range(count):
@@ -1357,6 +1364,11 @@ class analyze:
 					results = []
 					for r in results_pool:
 						results.append(r.get())
+
+					fitting_end = datetime.datetime.now()
+					total_fitting_time = fitting_end - fitting_start
+					total_time_str = '\n\n %%%%%%%% fitting total time = '+str(total_fitting_time.total_seconds())+'  %%%%%%% \n\n'
+					self.logger.info(total_time_str)
 
 					for iline in range(count):
 						results_line = results[iline]
@@ -1399,6 +1411,7 @@ class analyze:
 
 				else:
 					count = n_cols
+					fitting_start = datetime.datetime.now()
 					for i_fit in range(count):
 
 						self.logger.info('fitting row number %s of %s', i_fit, count)
@@ -1436,6 +1449,11 @@ class analyze:
 						values[i_fit, :, :] = values_line[:, :]
 						bkgnd[i_fit, :] = bkgnd_line[:]
 						tfy[i_fit, :] = tfy_line[:]
+
+					fitting_end = datetime.datetime.now()
+					total_fitting_time = fitting_end - fitting_start
+					total_time_str = '\n\n %%%%%%%% fitting total time = '+str(total_fitting_time.total_seconds())+'  %%%%%%% \n\n'
+					self.logger.info(total_time_str)
 
 					self.logger.debug('before %s', thisdata.energy_fit[0, kk])
 
