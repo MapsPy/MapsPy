@@ -164,10 +164,12 @@ class ProcessNode(RestBase):
 			#self.db.update_job(job)
 			self.db.delete_job_by_id(job[Constants.JOB_ID])
 			if self.this_process != psutil.Process(os.getpid()):
+				parent = psutil.Process(self.this_process.pid)
+				for child in parent.children(recursive=True):  # or parent.children() for recursive=False
+					child.kill()
 				self.this_process.kill()
 				self.this_process = psutil.Process(os.getpid())
 				job[Constants.JOB_STATUS] = Constants.JOB_STATUS_CANCELED
-				#self.db.update_job(job)
 			self.send_job_update(job)
 		except:
 			self.logger.exception('callback_delete_job: Error')
@@ -279,7 +281,9 @@ class ProcessNode(RestBase):
 				self.send_status_update()
 
 				if job_dict[Constants.JOB_XANES_SCAN] == 1:
-					proc = multiprocessing.Process(target=start_xrf_maps, args=(log_name, alias_path, job_dict, self.xrf_maps_path, self.xrf_maps_exe))
+					exitcode = -2
+					proc = multiprocessing.Process(target=start_xrf_maps, args=(log_name, alias_path, job_dict, self.xrf_maps_path, self.xrf_maps_exe, exitcode))
+					#exitcode = start_xrf_maps(log_name, alias_path, job_dict, self.xrf_maps_path, self.xrf_maps_exe)
 				else:
 					job_logger = logging.getLogger(log_name)
 					self._setup_logging_(job_logger, "file", "job_logs/" + log_name)
@@ -287,10 +291,12 @@ class ProcessNode(RestBase):
 				proc.start()
 				self.this_process = psutil.Process(proc.pid)
 				proc.join()
+				if job_dict[Constants.JOB_XANES_SCAN] == 0:
+					exitcode = proc.exitcode
 				self.this_process = psutil.Process(os.getpid())
-				self.logger.debug("Process finished with exitcode %s", proc.exitcode)
+				self.logger.debug("Process finished with exitcode %s", exitcode)
 				job_dict[Constants.JOB_FINISH_PROC_TIME] = datetime.ctime(datetime.now())
-				if proc.exitcode != 0:
+				if exitcode != 0:
 					self.logger.info('finished processing job with status ERROR')
 					job_dict[Constants.JOB_STATUS] = Constants.JOB_STATUS_GENERAL_ERROR
 				else:
@@ -356,9 +362,8 @@ class ProcessNode(RestBase):
 
 
 # Function used to create a new process for jobs
-def start_xrf_maps(log_name, alias_path, job_dict, xrf_maps_path, xrf_maps_exe):
+def start_xrf_maps(log_name, alias_path, job_dict, xrf_maps_path, xrf_maps_exe, exitcode):
 	#setup_logger('job_logs/' + log_name)
-	ret = 0
 	try:
 		args = [xrf_maps_exe]
 		args += ['--dir', alias_path]
@@ -410,11 +415,14 @@ def start_xrf_maps(log_name, alias_path, job_dict, xrf_maps_path, xrf_maps_exe):
 			args += ['--generate-avg-h5']
 		log_file = open('job_logs/' + log_name, 'w')
 		print args
-		ret = subprocess.call(args, cwd=xrf_maps_path, stdout=log_file, stderr=log_file, shell=True)
-		print 'ret = ', ret
+		if os.name == "nt":
+			exitcode = subprocess.call(args, cwd=xrf_maps_path, stdout=log_file, stderr=log_file, shell=True)
+		else:
+			exitcode = subprocess.call(args, cwd=xrf_maps_path, stdout=log_file, stderr=log_file, shell=False)
+		print 'exitcode = ', exitcode
 		log_file.close()
 	except:
 		exc_str = traceback.format_exc()
 		print exc_str
 		return -1
-	return ret
+	return exitcode
