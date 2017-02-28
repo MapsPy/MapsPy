@@ -1105,6 +1105,7 @@ class analyze:
 		self.logger.debug('c %s', tm.time())
 
 		if nnls == 0:
+			fitting_start = datetime.datetime.now()
 			for i_temp in range(n_cols):
 				for j_temp in range(n_rows):
 					these_counts = np.zeros((len(x)))
@@ -1117,7 +1118,10 @@ class analyze:
 					for mm in range(len(elements_to_use)):
 						if element_lookup_in_reduced[mm] != -1:
 							thisdata.dataset_orig[i_temp, j_temp, mm, 2] = solution[element_lookup_in_reduced[mm]]
-
+			fitting_end = datetime.datetime.now()
+			total_fitting_time = fitting_end - fitting_start
+			total_time_str = '\n\n %%%%%%%% SVD total time = '+str(total_fitting_time.total_seconds())+'  %%%%%%% \n\n'
+			self.logger.info(total_time_str)
 		if nnls > 0:
 			results_line = np.zeros((n_rows, len(elements_to_use)))
 			if (no_processors_to_use > 1):
