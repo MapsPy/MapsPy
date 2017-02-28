@@ -286,7 +286,6 @@ def main(main_dict, logger, force_fit=0, no_fit=False):
 		fitmatrix_reduced[:, mm] = fitmatrix[:, np.max(fitp.keywords.mele_pos) - np.min(fitp.keywords.kele_pos) + 2]  # inelastic scatter
 
 		if main_dict['nnls'] == 0:
-			fitting_start = datetime.datetime.now()
 			logger.info('Calculating nnls. Start time: %s', time.time())
 			# Compute the singular value decomposition of A:
 			# SVDC, fitmatrix_reduced, W, U, V, /double
@@ -305,10 +304,6 @@ def main(main_dict, logger, force_fit=0, no_fit=False):
 				# solution = V ## WP ## TRANSPOSE(U) ## B
 
 			sol_intermediate = np.dot(np.dot(V.T, wp), U.T)
-			fitting_end = datetime.datetime.now()
-			total_fitting_time = fitting_end - fitting_start
-			total_time_str = '\n\n %%%%%%%% SVD total time = '+str(total_fitting_time.total_seconds())+'  %%%%%%% \n\n'
-			logger.info(total_time_str)
 			logger.info('SVD finished. Time: %s', time.time())
 		else:
 			# make sure that sol_intermediate is defined, even if we do not
