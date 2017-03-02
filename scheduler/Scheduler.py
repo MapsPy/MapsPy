@@ -313,6 +313,7 @@ class Scheduler(RestBase):
 			# check how many datasets are in job
 			file_name = ''
 			file_dir = os.path.join(job[Constants.JOB_DATA_PATH], Constants.DIR_IMG_DAT)
+			proc_mask = job[Constants.JOB_PROC_MASK]
 			# will only check one file for images
 			if job[Constants.JOB_DATASET_FILES_TO_PROC] == 'all':
 				self.logger.warning('Warning: Too many datasets to parse images from')
@@ -324,17 +325,16 @@ class Scheduler(RestBase):
 					return None
 				temp_name = job[Constants.JOB_DATASET_FILES_TO_PROC]
 				if job[Constants.JOB_XANES_SCAN] == 1:
-					if job[Constants.JOB_DETECTOR_ELEMENTS] == 1:
-						full_file_name = os.path.join(file_dir, temp_name + '.h5' + str(job[Constants.JOB_DETECTOR_TO_START_WITH]))
+					if proc_mask & 64 == 64: #generate avg
+						full_file_name = os.path.join(file_dir, temp_name + '.h5')
 					else:
-						full_file_name = os.path.join(file_dir, temp_name + '.h5' + str)
+						full_file_name = os.path.join(file_dir, temp_name + '.h5' + str(job[Constants.JOB_DETECTOR_TO_START_WITH]))
 				else:
 					hdf_file_name = temp_name.replace('.mda', '.h5')
 					full_file_name = os.path.join(file_dir, hdf_file_name)
 
 			hdf_file = h5py.File(full_file_name, 'r')
 			maps_group = hdf_file[Constants.HDF5_GRP_MAPS]
-			proc_mask = job[Constants.JOB_PROC_MASK]
 			if job[Constants.JOB_XANES_SCAN] == 1:
 				h5_grp = None
 				analyzed_grp = maps_group[Constants.HDF5_GRP_ANALYZED]

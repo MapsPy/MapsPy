@@ -347,7 +347,7 @@
                 $dataset_filenames = $('#datasets_list').val().join();
             }
             
-            if($procMask === 0)
+            if($procMask === 0 && $nnls === 0)
             {
                 $.notify("No analysis type selected! Select A, B, C, D, E, or F", "error");
                 return;
@@ -363,7 +363,7 @@
                     'BeamLine': '2-ID-E',
                     'DataPath': $("#DataPath").val(),
                     'Version': '9.00',
-                    'Standards': $("#option-standard").val(),
+                    'Standards': 'maps_standardinfo.txt', //$("#option-standard").val(),
                     'DetectorToStartWith': parseInt($("#option-detector-to-start-with").val(), 10),
                     'XRF_Bin': $xrfbin,
                     'MaxLinesToProc': parseInt($("#option-proc-per-line").val(), 10),
@@ -867,8 +867,8 @@
                    <input type="text" id="option-proc-per-file" value="1"> (only for MapsPy) <br> 
                    Number of <b>lines</b> to process simultaneously: 
                    <input type="text" id="option-proc-per-line" value="-1"> (-1 means max available) <br>
-                   Quantify counts with standard: 
-                   <input type="text" id="option-standard" value=""> (usually maps_standardinfo.txt) <br>
+                   <!--Quantify counts with standard: 
+                   <input type="text" id="option-standard" value=""> (usually maps_standardinfo.txt) <br>-->
                    Priority (1 highest - 10 lowest): 
                    <select id="priority">
                        <option value="1">1</option>
