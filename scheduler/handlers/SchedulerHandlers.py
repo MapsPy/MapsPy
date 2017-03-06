@@ -186,8 +186,7 @@ class SchedulerHandler(object):
 		else:
 			path = job_roots_dict[job_path]
 			dir_list = [{'id': path, 'parent': '#', 'text': path, 'state': {'opened': True}}]
-			for key, value in job_roots_dict.iteritems():
-				dir_list += get_dirs(path, depth)
+			dir_list += get_dirs(path, depth)
 			jenc = json.JSONEncoder()
 			return jenc.encode(dir_list)
 
