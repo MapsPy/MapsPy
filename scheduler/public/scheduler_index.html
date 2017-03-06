@@ -427,7 +427,7 @@
         
         //----------------------------------------------------------------------
         
-        $("#Btn-Brouse-2IDE").click(function(e) 
+        $("#Btn-Browse-verify").click(function(e) 
         {
             $('.overlay').show();
             $('#jstree').jstree(
@@ -441,7 +441,7 @@
                         {
                             type: 'POST',
                             url:"/get_dataset_dirs_list",
-                            data: {'job_path': 'all', 'depth': 2},
+                            data: {'job_path': 'verify', 'depth': 2},
                             datatype: "json",
                             success: function(rdata) 
                             {
@@ -459,6 +459,73 @@
                 }
             });
         });
+        
+         $("#Btn-Browse-production").click(function(e) 
+        {
+            $('.overlay').show();
+            $('#jstree').jstree(
+            {
+                'core':
+                {
+                    'data' : function (obj, callback) 
+                    {
+                        var me = this;
+                         $.ajax(
+                        {
+                            type: 'POST',
+                            url:"/get_dataset_dirs_list",
+                            data: {'job_path': 'production', 'depth': 2},
+                            datatype: "json",
+                            success: function(rdata) 
+                            {
+                                callback.call(me, JSON.parse(rdata));
+                            },
+                            error: function(xhr, textStatus, errorThrown)
+                            {
+                                $.notify(xhr.responseText,  {
+                                    autoHide: false,
+                                    clickToHide: true
+                                });
+                            }
+                        });
+                    }
+                }
+            });
+        });
+        
+        $("#Btn-Browse-cnm").click(function(e) 
+        {
+            $('.overlay').show();
+            $('#jstree').jstree(
+            {
+                'core':
+                {
+                    'data' : function (obj, callback) 
+                    {
+                        var me = this;
+                         $.ajax(
+                        {
+                            type: 'POST',
+                            url:"/get_dataset_dirs_list",
+                            data: {'job_path': 'cnm', 'depth': 1},
+                            datatype: "json",
+                            success: function(rdata) 
+                            {
+                                callback.call(me, JSON.parse(rdata));
+                            },
+                            error: function(xhr, textStatus, errorThrown)
+                            {
+                                $.notify(xhr.responseText,  {
+                                    autoHide: false,
+                                    clickToHide: true
+                                });
+                            }
+                        });
+                    }
+                }
+            });
+        });
+
 
         //----------------------------------------------------------------------
         
@@ -829,7 +896,10 @@
                 <fieldset>
                   <legend>Job Information:</legend>
                   Job Path:
-                  <input type="text" id="DataPath" value="/"> <button id='Btn-Brouse-2IDE'>Browse</button>
+                  <input type="text" id="DataPath" value="/"> 
+                  <button id='Btn-Browse-production'>Browse xfm0</button>
+                  <button id='Btn-Browse-verify'>Browse xfm0-data2</button>
+                  <button id='Btn-Browse-cnm'>Browse CNM</button>
                   <div id="browse-jobs" class="overlay">
                        <div class="popup">
                            <h2>Jobs</h2>
