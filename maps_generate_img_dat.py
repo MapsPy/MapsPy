@@ -555,7 +555,10 @@ class analyze:
 			else:
 				# Read mda scan:
 				self.logger.info('Reading scan from %s', mdafilename)
-				scan = mda.read_scan(mdafilename, extra_pvs=True)
+				try:
+					scan = mda.read_scan(mdafilename, extra_pvs=True)
+				except:
+					scan = None
 				self.logger.info('Finished reading scan from %s', mdafilename)
 
 		if beamline == 'DLS-I08':
