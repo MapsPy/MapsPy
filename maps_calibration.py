@@ -1022,8 +1022,8 @@ class calibration:
 	# -----------------------------------------------------------------------------
 	def read_calibration(self, filename, srcurrent_name='', us_ic_name='', ds_ic_name=''):
 
-		ic_us = 0
-		ic_ds = 0
+		IC_US = 0
+		IC_DS = 0
 		us_amp = np.zeros((3))
 		ds_amp = np.zeros((3))
 

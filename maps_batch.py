@@ -1111,6 +1111,7 @@ def maps_batch(wdir, option_a_roi_plus, option_b_extract_spectra, option_c_per_p
 
 	try:
 		if option_g_avg_hdf > 0:
+			avg_start = datetime.now()
 			# Generate average images
 			if main_dict['total_number_detectors'] > 1:
 				logger.info(' we are now going to create the maps_generate_average...')
@@ -1122,6 +1123,10 @@ def maps_batch(wdir, option_a_roi_plus, option_b_extract_spectra, option_c_per_p
 					energy_channels = None
 				makemaps = maps_generate_img_dat.analyze(logger, info_elements, main_dict, maps_conf)
 				makemaps.generate_average_img_dat(main_dict, maps_conf, energy_channels)
+			avg_end = datetime.now()
+			total_roi_time = avg_end - avg_start
+			total_time_str = '\n\n %%%%%%%% avg total time = '+str(total_roi_time.total_seconds())+'  %%%%%%% \n\n'
+			logger.info(total_time_str)
 	except:
 		error_occured = True
 		logger.exception("Error occured generating avg")
