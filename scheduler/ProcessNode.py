@@ -291,7 +291,7 @@ class ProcessNode(RestBase):
 				proc.start()
 				self.this_process = psutil.Process(proc.pid)
 				proc.join()
-				if job_dict[Constants.JOB_XANES_SCAN] == 0:
+				if job_dict[Constants.JOB_XANES_SCAN] == 1:
 					exitcode = proc.exitcode
 				self.this_process = psutil.Process(os.getpid())
 				self.logger.debug("Process finished with exitcode %s", exitcode)

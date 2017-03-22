@@ -883,6 +883,8 @@ def _option_b_(main_dict, maps_conf, maps_def, total_number_detectors, info_elem
 	#Copy files to output_fits
 	src_files = os.listdir(os.path.join(current_directory, 'output'))
 	for fn in src_files:
+		if fn == "Thumbs.db":
+			continue
 		full_file_name = os.path.join(os.path.join(current_directory, 'output'), fn)
 		if os.path.isfile(full_file_name):
 			shutil.copy(full_file_name, os.path.join(current_directory, 'output_old'))
@@ -908,6 +910,8 @@ def _option_c_(main_dict, logger):
 	#Copy files to output_fits
 	src_files = os.listdir(os.path.join(current_directory, 'output'))
 	for file_name in src_files:
+		if file_name == "Thumbs.db":
+			continue
 		full_file_name = os.path.join(os.path.join(current_directory, 'output'), file_name)
 		if (os.path.isfile(full_file_name)):
 			shutil.copy(full_file_name, os.path.join(current_directory, 'output.fits'))
