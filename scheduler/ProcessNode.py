@@ -291,8 +291,9 @@ class ProcessNode(RestBase):
 				proc.start()
 				self.this_process = psutil.Process(proc.pid)
 				proc.join()
-				if job_dict[Constants.JOB_XANES_SCAN] == 1:
-					exitcode = proc.exitcode
+				exitcode = proc.exitcode
+				#if job_dict[Constants.JOB_XANES_SCAN] == 0:
+				#	exitcode = proc.exitcode
 				self.this_process = psutil.Process(os.getpid())
 				self.logger.debug("Process finished with exitcode %s", exitcode)
 				job_dict[Constants.JOB_FINISH_PROC_TIME] = datetime.ctime(datetime.now())
@@ -424,5 +425,4 @@ def start_xrf_maps(log_name, alias_path, job_dict, xrf_maps_path, xrf_maps_exe, 
 	except:
 		exc_str = traceback.format_exc()
 		print exc_str
-		return -1
-	return exitcode
+		exitcode = -1
