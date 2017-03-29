@@ -110,10 +110,10 @@ class Scheduler(RestBase):
 				'tools.staticdir.on': True,
 				'tools.staticdir.dir': './public',
 				'tools.sessions.on': False,
-        		'tools.caching.on': True,
-        		'tools.caching.force' : True,
+        		'tools.caching.on': False,
+        		'tools.caching.force' : False,
         		'tools.caching.delay' : 0,
-        		'tools.expires.on' : True,
+        		'tools.expires.on' : False,
         		'tools.expires.secs' : 60*24*365
 			}
 		}
