@@ -176,6 +176,7 @@ class ProcessNode(RestBase):
 
 	def run(self):
 		webapp = ProcessNodeHandler()
+		webapp.append_software_dir(Constants.XRF_SOFTWARE_NAME, self.xrf_maps_path + '/../Version.html')
 		self.db.subscribe()
 		self.db.create_tables()
 		webapp.job_queue = ProcessNodeJobsWebService(self.db, self.logger)

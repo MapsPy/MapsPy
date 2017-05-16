@@ -42,6 +42,12 @@ STR_JOB_LOG_DIR_NAME = 'job_logs'
 
 class ProcessNodeHandler(object):
 
+	def __init__(self):
+		self.software_ver_dic = {}
+
+	def append_software_dir(self, software_name, software_path):
+		self.software_ver_dic[software_name] = software_path
+
 	@cherrypy.expose
 	def index(self):
 		return file('public/process_node_index.html')
@@ -59,6 +65,13 @@ class ProcessNodeHandler(object):
 		except:
 			exc_str = traceback.format_exc()
 			return exc_str
+
+	@cherrypy.expose
+	def version(self, software):
+		if self.software_ver_dic.has_key(software):
+			return file(self.software_ver_dic[software])
+		else:
+			return 'Unknown software: '+software
 
 	@cherrypy.expose
 	def update_id(self, Id):

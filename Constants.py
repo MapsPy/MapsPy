@@ -114,3 +114,5 @@ DIR_IMG_DAT = 'img.dat'
 DIR_LINE_DAT = 'line.dat'
 DIR_XANES_DAT = 'xanes.dat'
 DIR_FLY_DAT = 'fly.dat'
+# ===================================== Sofware Names for Version Info =======================================
+XRF_SOFTWARE_NAME = 'XRF-Maps'

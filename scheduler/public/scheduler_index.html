@@ -237,7 +237,8 @@
                     'Process Mem Percent: '+d.ProcessMemPercent + '%<br>'+
                     'System Cpu Percent: '+d.SystemCpuPercent + '%<br>'+
                     'System Mem Percent: '+d.SystemMemPercent + '%<br>'+
-                    'System Swap Percent: '+d.SystemSwapPercent + '%';
+                    'System Swap Percent: '+d.SystemSwapPercent + '%<br>'+
+                    '<a href=http://'+d.Hostname+':'+d.Port+'/version?software=XRF-Maps> XRF-Maps Version</a>';
             ;
         }
         
@@ -586,6 +587,18 @@
           }
        });
        
+        $("#pty_chk_all_datasets").change(function()
+       {
+          if(this.checked)
+          {
+            $("#pty_datasets_list").hide();   
+          }
+          else
+          {
+            $("#pty_datasets_list").show();
+          }
+       });
+       
         //----------------------------------------------------------------------
         //--------------------------- init -------------------------------------
         //----------------------------------------------------------------------
@@ -594,10 +607,14 @@
         var $processing_table = create_job_data_table("#table_processing_jobs", "/get_all_processing_jobs");
         var $finished_table = create_job_data_table("#table_finished_jobs", "/get_all_finished_jobs?limit=100");
         $("#priority").val(5);
+        $("#pty-priority").val(5);
+        $("#pty-rotate").val(0);
         $("#chk_all_datasets").prop("checked", true);
+        $("#pty_chk_all_datasets").prop("checked", true);
         $("#analysis-type-a").prop("checked", true);
         $("#analysis-type-g").prop("checked", true);
         $("#datasets_list").hide();
+        $("#pty_datasets_list").hide();
         $('.overlay').hide();
         var $detailPnRows = [];
         var $detailJobRows = [];
@@ -815,10 +832,13 @@
     <title> MapsPy Scheduler </title>
   </head>
   <body>
+      <div><img src="/static/resources/anl_logo_new.min.png"/> </div>
     <div class="tabs">
         <ul class="tab-links">
             <li class="active"><a href="#tab1">Job Status</a></li>
-            <li><a href="#tab2">Submit a new Job</a></li> 
+            <li><a href="#tab2">Submit XRF Job</a></li> 
+            <li><a href="#tab3">Submit Ptychography Job</a></li> 
+            <li><a href="#tab4">Globus</a></li> 
         </ul>
 
         <div class="tab-content">
@@ -970,6 +990,93 @@
                   <button id="Btn-Submit-Xrf-Maps-Job">Submit XRF-Maps Job (beta)</button>
                 </fieldset>
             </div>
+            
+            
+            <div id="tab3" class="tab">
+                <fieldset>
+                  <legend>Job Information:</legend>
+                  Job Path:
+                  <input type="text" id="DataPath" value="/"> 
+                  <button id='Btn-Browse-production'>Browse xfm0</button>
+                  <button id='Btn-Browse-verify'>Browse xfm0-data2</button>
+                  <div id="browse-pty-jobs" class="overlay">
+                       <div class="popup">
+                           <h2>Jobs</h2>
+                           <a class="close" href="/">&times;</a>
+                           <div class="content"> 
+                               <div id='jstree'>
+
+                               </div>
+                           </div>
+                           <button id='Btn-Select-Pty-Dir'>Select</button>
+                       </div>
+                   </div>
+                  <input type="checkbox" id="pty_chk_all_datasets">All Datasets
+                           <select id="pty_datasets_list" multiple>
+                           </select>
+                  <br>
+
+                  <input type="checkbox" id="pty-chk-calc-stxm" value=""> Calculated STXM & DPC only<br>
+                  <br>
+                  Algorithm:  <input type="checkbox" id="pty-chk-alg-epie"> ePIE   <input type="checkbox" id="pty-chk-alg-dm"> DM<br>
+                  
+                  Detector: Distance (m) <input type="text" id="pty-dect-dist" value="2.0">  Pixel size (nm) <input type="text" id="pty-dect-pix-size" value="172">  <br> 
+                  
+                  Diffraction Pattern: Center (Y, X) <input type="text" id="pty-diff-center-y" value="310">,  <input type="text" id="pty-diff-center-x" value="243">   Size <input type="text" id="pty-diff-size" value="256">  Rotate 90&#730 
+                  <select id="pty-rotate">
+                       <option value="0">0</option>
+                       <option value="1">1</option>
+                       <option value="2">2</option>
+                       <option value="3">3</option>
+                  </select>
+                   <br> 
+                   
+                   Probe Size (nm): <input type="text" id="pty-probe-size" value="100"> Probe Modes: <input type="text" id="pty-probe-modes" value="1"> <br>
+                   
+                   Threshold: <input type="text" id="pty-threshold" value="0">  <br>
+                   
+                   Iterations: <input type="text" id="pty-iterations" value="100">  <br>
+                   
+                   Priority (1 highest - 10 lowest): 
+                   <select id="pty-priority">
+                       <option value="1">1</option>
+                       <option value="2">2</option>
+                       <option value="3">3</option>
+                       <option value="4">4</option>
+                       <option value="5">5</option>
+                       <option value="6">6</option>
+                       <option value="7">7</option>
+                       <option value="8">8</option>
+                       <option value="9">9</option>
+                       <option value="10">10</option>
+                   </select><br>
+                   Process Node: XFM1<br>
+                   GPU Node: 
+                   <!-- TODO: get this from process nodes when we have more than one -->
+                   <select id="pty-gpu-node">
+                       <option value="1">1</option>
+                       <option value="2">2</option>
+                       <option value="3">3</option>
+                       <option value="4">4</option>
+                       <option value="5">5</option>
+                       <option value="6">6</option>
+                   </select><br>
+                   <form autocomplete="on">
+                   Email Address on Completion (comma separated)<input type="text" name="email" id="pty-option-emails" value="">
+                   </form>
+                  <br>
+                  <br>
+                  <button id="Btn-Submit-PTY-Job">Submit Job</button>
+                  <br>
+                </fieldset>
+            </div>
+            
+            
+            <div id="tab4" class="tab">
+                <iframe src="https://auth.globus.org/p/login?redirect_uri=%2Fv2%2Foauth2%2Fauthorize%3Fclient_id%3D89ba3e72-768f-4ddb-952d-e0bb7305e2c7%26client_name%3Dglobus_webapp%26scope%3Durn%253Aglobus%253Aauth%253Ascope%253Aauth.globus.org%253Aview_identities%2520urn%253Aglobus%253Aauth%253Ascope%253Anexus.api.globus.org%253Agroups%2520urn%253Aglobus%253Aauth%253Ascope%253Atransfer.api.globus.org%253Aall%26response_type%3Dtoken%26redirect_uri%3Dhttps%253A%252F%252Fwww.globus.org%252Fapp%252Flogin%26redirect_name%3DGlobus%2520Web%2520App%26state%3D75n56yx2cjt&client_id=89ba3e72-768f-4ddb-952d-e0bb7305e2c7" allowfullscreen="" style="position:absolute;top:20%;left:0;width:100%;height:80%;" width="580" height="246" frameborder="0"></iframe>
+            </div>
+            
+            
         </div>
     </div>
           
