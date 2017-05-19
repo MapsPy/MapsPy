@@ -34,21 +34,29 @@ SUCH DAMAGE.
 import sqlite3 as sql
 
 CREATE_PROCESS_NODES_TABLE_STR = 'CREATE TABLE IF NOT EXISTS ProcessNodes(Id INTEGER PRIMARY KEY, ComputerName TEXT, NumThreads INTEGER, Hostname TEXT, Port INTEGER, Status TEXT, Heartbeat TIMESTAMP, ProcessCpuPercent REAL, ProcessMemPercent REAL, SystemCpuPercent REAL, SystemMemPercent REAL, SystemSwapPercent REAL);'
-CREATE_JOBS_TABLE_STR = 'CREATE TABLE IF NOT EXISTS Jobs(Id INTEGER PRIMARY KEY, DataPath TEXT, ProcMask INTEGER, Version TEXT, DetectorElements INTEGER, MaxFilesToProc INTEGER, MaxLinesToProc INTEGER, QuickAndDirty INTEGER, XRF_Bin INTEGER, NNLS INTEGER, XANES_Scan INTEGER, DetectorToStartWith INTEGER, BeamLine TEXT, Standards TEXT, DatasetFilesToProc TEXT, Priority INTEGER, Status INTEGER, StartProcTime TIMESTAMP, FinishProcTime TIMESTAMP, Log_Path TEXT, Process_Node_Id INTEGER, Emails, TEXT, Is_Live_Job INTEGER);'
-CREATE_JOB_QUEUE_TABLE_STR = 'CREATE TABLE IF NOT EXISTS JobQueue(Id INTEGER PRIMARY KEY, JobId INTEGER, PnId INTEGER, Status INTEGER, StartTime TIMESTAMP, StopStime TIMESTAMP, FOREIGN KEY(JobId) REFERENCES Jobs(Id), FOREIGN KEY(PnId) REFERENCES ProcessNodes(Id));'
+CREATE_JOBS_TABLE_STR = 'CREATE TABLE IF NOT EXISTS Jobs(Id INTEGER PRIMARY KEY, DataPath TEXT, DatasetFilesToProc TEXT, Version TEXT, BeamLine TEXT, Priority INTEGER, Status INTEGER, StartProcTime TIMESTAMP, FinishProcTime TIMESTAMP, Log_Path TEXT, Process_Node_Id INTEGER, Emails, TEXT);'
+CREATE_JOBS_XRF_ARGS_TABLE_STR = 'CREATE TABLE IF NOT EXISTS JobsXrfArgs(Id INTEGER, ProcMask INTEGER, DetectorElements INTEGER, MaxFilesToProc INTEGER, MaxLinesToProc INTEGER, QuickAndDirty INTEGER, XRF_Bin INTEGER, NNLS INTEGER, XANES_Scan INTEGER, DetectorToStartWith INTEGER, Standards TEXT, Is_Live_Job INTEGER, FOREIGN KEY(Id) REFERENCES Jobs(Id));'
+CREATE_JOBS_PTY_ARGS_TABLE_STR = 'CREATE TABLE IF NOT EXISTS JobsPtyArgs(Id INTEGER, CalcSTXM INTEGER, AlgorithmEPIE INTEGER, AlgorithmDM INTEGER, DetectorDistance INTEGER, PixelSize INTEGER, CenterY INTEGER, CenterX INTEGER, DiffractionSize INTEGER, Rotation INTEGER, GPU_ID INTEGER, ProbeSize INTEGER, ProbeModes INTEGER, Threshold INTEGER, Iterations INTEGER,  FOREIGN KEY(Id) REFERENCES Jobs(Id));'
 
-DROP_PROCESS_NODES_STR = 'DROP TABLE IF EXISTS ProcessNodes;'
-DROP_JOBS_STR = 'DROP TABLE IF EXISTS Jobs;'
-DROP_JOB_QUEUE_STR = 'DROP TABLE IF EXISTS JobQueue;'
+DROP_ALL_TABLES_STR = 'DROP TABLE IF EXISTS ProcessNodes; \
+                       DROP TABLE IF EXISTS Jobs; \
+                       DROP TABLE IF EXISTS JobsXrfArgs; \
+                       DROP TABLE IF EXISTS JobsPtyArgs;'
 
 INSERT_PROCESS_NODE = 'INSERT INTO ProcessNodes (ComputerName, NumThreads, Hostname, Port, Status, Heartbeat, ProcessCpuPercent, ProcessMemPercent, SystemCpuPercent, SystemMemPercent, SystemSwapPercent) VALUES(:ComputerName, :NumThreads, :Hostname, :Port, :Status, :Heartbeat, :ProcessCpuPercent, :ProcessMemPercent, :SystemCpuPercent, :SystemMemPercent, :SystemSwapPercent)'
-INSERT_JOB = 'INSERT INTO Jobs (DataPath, ProcMask, Version, DetectorElements, MaxFilesToProc, MaxLinesToProc, QuickAndDirty, XRF_Bin, NNLS, XANES_Scan, DetectorToStartWith, BeamLine, Standards, DatasetFilesToProc, Priority, Status, StartProcTime, FinishProcTime, Log_Path, Process_Node_Id, Emails, Is_Live_Job) VALUES(:DataPath, :ProcMask, :Version, :DetectorElements, :MaxFilesToProc, :MaxLinesToProc, :QuickAndDirty, :XRF_Bin, :NNLS, :XANES_Scan, :DetectorToStartWith, :BeamLine, :Standards, :DatasetFilesToProc, :Priority, :Status, :StartProcTime, :FinishProcTime, :Log_Path, :Process_Node_Id, :Emails, :Is_Live_Job)'
-INSERT_JOB_WITH_ID = 'INSERT INTO Jobs (Id, DataPath, ProcMask, Version, DetectorElements, MaxFilesToProc, MaxLinesToProc, QuickAndDirty, XRF_Bin, NNLS, XANES_Scan, DetectorToStartWith, BeamLine, Standards, DatasetFilesToProc, Priority, Status, StartProcTime, FinishProcTime, Log_Path, Process_Node_Id, Emails, Is_Live_Job) VALUES(:Id, :DataPath, :ProcMask, :Version, :DetectorElements, :MaxFilesToProc, :MaxLinesToProc, :QuickAndDirty, :XRF_Bin, :NNLS, :XANES_Scan, :DetectorToStartWith, :BeamLine, :Standards, :DatasetFilesToProc, :Priority, :Status, :StartProcTime, :FinishProcTime, :Log_Path, :Process_Node_Id, :Emails, :Is_Live_Job)'
 
+INSERT_JOB = 'INSERT INTO Jobs (DataPath, Version, BeamLine, DatasetFilesToProc, Priority, Status, StartProcTime, FinishProcTime, Log_Path, Process_Node_Id, Emails) VALUES(:DataPath, :Version, :BeamLine, :DatasetFilesToProc, :Priority, :Status, :StartProcTime, :FinishProcTime, :Log_Path, :Process_Node_Id, :Emails)'
+INSERT_XRF_JOB = 'INSERT INTO JobsXrfArgs (Id, ProcMask, DetectorElements, MaxFilesToProc, MaxLinesToProc, QuickAndDirty, XRF_Bin, NNLS, XANES_Scan, DetectorToStartWith, Standards, Is_Live_Job) VALUES(last_insert_rowid(), :ProcMask, :DetectorElements, :MaxFilesToProc, :MaxLinesToProc, :QuickAndDirty, :XRF_Bin, :NNLS, :XANES_Scan, :DetectorToStartWith, :Standards, :Is_Live_Job)'
+INSERT_PTY_JOB = 'INSERT INTO JobsPtyArgs (Id, CalcSTXM, AlgorithmEPIE, AlgorithmDM, DetectorDistance, PixelSize, CenterY, CenterX, DiffractionSize, Rotation, GPU_ID, ProbeSize, ProbeModes, Threshold, Iterations) VALUES(last_insert_rowid(), :CalcSTXM, :AlgorithmEPIE, :AlgorithmDM, :DetectorDistance, :PixelSize, :CenterY, :CenterX, :DiffractionSize, :Rotation, :GPU_ID, :ProbeSize, :ProbeModes, :Threshold, :Iterations)'
+
+INSERT_JOB_WTIH_ID = 'INSERT INTO Jobs (Id, DataPath, Version, BeamLine, DatasetFilesToProc, Priority, Status, StartProcTime, FinishProcTime, Log_Path, Process_Node_Id, Emails) VALUES(:Id, :DataPath, :Version, :BeamLine, :DatasetFilesToProc, :Priority, :Status, :StartProcTime, :FinishProcTime, :Log_Path, :Process_Node_Id, :Emails)'
+INSERT_XRF_JOB_WTIH_ID = 'INSERT INTO JobsXrfArgs (Id, ProcMask, DetectorElements, MaxFilesToProc, MaxLinesToProc, QuickAndDirty, XRF_Bin, NNLS, XANES_Scan, DetectorToStartWith, Standards, Is_Live_Job) VALUES(:Id, :ProcMask, :DetectorElements, :MaxFilesToProc, :MaxLinesToProc, :QuickAndDirty, :XRF_Bin, :NNLS, :XANES_Scan, :DetectorToStartWith, :Standards, :Is_Live_Job)'
+INSERT_PTY_JOB_WITH_ID = 'INSERT INTO JobsPtyArgs (Id, CalcSTXM, AlgorithmEPIE, AlgorithmDM, DetectorDistance, PixelSize, CenterY, CenterX, DiffractionSize, Rotation, GPU_ID, ProbeSize, ProbeModes, Threshold, Iterations) VALUES(:Id, :CalcSTXM, :AlgorithmEPIE, :AlgorithmDM, :DetectorDistance, :PixelSize, :CenterY, :CenterX, :DiffractionSize, :Rotation, :GPU_ID, :ProbeSize, :ProbeModes, :Threshold, :Iterations)'
 
 UPDATE_PROCESS_NODE_BY_ID = 'UPDATE ProcessNodes SET ComputerName=:ComputerName NumThreads=:NumThreads Hostname=:Hostname, Port=:Port Status=:Status Heartbeat=:Heartbeat, ProcessCpuPercent=:ProcessCpuPercent, ProcessMemPercent=:ProcessMemPercent, SystemCpuPercent=:SystemCpuPercent, SystemMemPercent=:SystemMemPercent, SystemSwapPercent=:SystemSwapPercent WHERE Id=:Id'
 UPDATE_PROCESS_NODE_BY_NAME = 'UPDATE ProcessNodes SET NumThreads=:NumThreads, Hostname=:Hostname, Port=:Port, Status=:Status, Heartbeat=:Heartbeat, ProcessCpuPercent=:ProcessCpuPercent, ProcessMemPercent=:ProcessMemPercent, SystemCpuPercent=:SystemCpuPercent, SystemMemPercent=:SystemMemPercent, SystemSwapPercent=:SystemSwapPercent WHERE ComputerName=:ComputerName'
-UPDATE_JOB_BY_ID = 'UPDATE Jobs SET DataPath=:DataPath, ProcMask=:ProcMask, Version=:Version, DetectorElements=:DetectorElements, MaxFilesToProc=:MaxFilesToProc, MaxLinesToProc=:MaxLinesToProc, QuickAndDirty=:QuickAndDirty, XRF_Bin=:XRF_Bin, NNLS=:NNLS, XANES_Scan=:XANES_Scan, DetectorToStartWith=:DetectorToStartWith, BeamLine=:BeamLine, Standards=:Standards, DatasetFilesToProc=:DatasetFilesToProc, Priority=:Priority, Status=:Status, StartProcTime=:StartProcTime, FinishProcTime=:FinishProcTime, Log_Path=:Log_Path, Process_Node_Id=:Process_Node_Id, Emails=:Emails, Is_Live_Job=:Is_Live_Job WHERE Id=:Id'
+
+UPDATE_JOB_BY_ID = 'UPDATE Jobs SET DataPath=:DataPath, Version=:Version, BeamLine=:BeamLine, DatasetFilesToProc=:DatasetFilesToProc, Priority=:Priority, Status=:Status, StartProcTime=:StartProcTime, FinishProcTime=:FinishProcTime, Log_Path=:Log_Path, Process_Node_Id=:Process_Node_Id, Emails=:Emails WHERE Id=:Id'
 UPDATE_JOB_PN = 'UPDATE Jobs SET Process_Node_Id=:Process_Node_Id WHERE Id=:Id'
 
 RESET_PN_STATUS = 'UPDATE ProcessNodes SET Status="Offline", ProcessCpuPercent=0.0, ProcessMemPercent=0.0 WHERE Id>0;'
@@ -56,16 +64,18 @@ RESET_PN_STATUS = 'UPDATE ProcessNodes SET Status="Offline", ProcessCpuPercent=0
 SELECT_ALL_PROCESS_NODES = 'SELECT Id, ComputerName, NumThreads, Hostname, Port, Status, Heartbeat, ProcessCpuPercent, ProcessMemPercent, SystemCpuPercent, SystemMemPercent, SystemSwapPercent FROM ProcessNodes'
 SELECT_PROCESS_NODE_BY_NAME = SELECT_ALL_PROCESS_NODES + ' WHERE ComputerName=:ComputerName'
 SELECT_PROCESS_NODE_BY_ID = SELECT_ALL_PROCESS_NODES + ' WHERE Id=:Id'
-SELECT_ALL_JOBS = 'SELECT Id, DataPath, ProcMask, Version, DetectorElements, MaxFilesToProc, MaxLinesToProc, QuickAndDirty, XRF_Bin, NNLS, XANES_Scan, DetectorToStartWith, BeamLine, Standards, DatasetFilesToProc, Priority, Status, StartProcTime, FinishProcTime, Log_Path, Process_Node_Id, Emails, Is_Live_Job FROM Jobs'
-SELECT_ALL_UNPROCESSED_JOBS = SELECT_ALL_JOBS + ' WHERE Status=0'
-SELECT_ALL_UNPROCESSED_JOBS_ANY_NODE = SELECT_ALL_JOBS + ' WHERE Status=0 and Process_Node_Id=-1'
-SELECT_ALL_PROCESSING_JOBS = SELECT_ALL_JOBS + ' WHERE Status=1'
-SELECT_ALL_FINISHED_JOBS = SELECT_ALL_JOBS + ' WHERE Status>=2'
-SELECT_ALL_FINISHED_JOBS_LIMIT = SELECT_ALL_JOBS + ' WHERE Status>=2 ORDER BY id DESC LIMIT '
-SELECT_ALL_UNPROCESSED_AND_PROCESSING_JOBS = SELECT_ALL_JOBS + ' WHERE Status<=1 ORDER BY Status DESC'
-SELECT_ALL_UNPROCESSED_JOBS_FOR_PN_ID = SELECT_ALL_JOBS + ' WHERE Status<=1 AND Process_Node_Id=:Process_Node_Id ORDER BY Priority ASC'
-SELECT_JOB_BY_ID = SELECT_ALL_JOBS + ' WHERE Id=:Id'
-SELECT_JOBS_BY_STATUS = SELECT_ALL_JOBS + ' WHERE Status=:Status ORDER BY Priority DESC'
+
+SELECT_ALL_JOBS = 'SELECT Jobs.Id, Jobs.BeamLine, Jobs.Version, Jobs.DataPath, Jobs.DatasetFilesToProc, Jobs.Priority, Jobs.Status, Jobs.StartProcTime, Jobs.FinishProcTime, Jobs.Log_Path, Jobs.Process_Node_Id, Jobs.Emails, JobsXrfArgs.ProcMask, JobsXrfArgs.DetectorElements, JobsXrfArgs.MaxFilesToProc, JobsXrfArgs.MaxLinesToProc, JobsXrfArgs.QuickAndDirty, JobsXrfArgs.XRF_Bin, JobsXrfArgs.NNLS, JobsXrfArgs.XANES_Scan, JobsXrfArgs.DetectorToStartWith, JobsXrfArgs.Standards, JobsXrfArgs.Is_Live_Job, JobsPtyArgs.CalcSTXM, JobsPtyArgs.AlgorithmEPIE, JobsPtyArgs.AlgorithmDM, JobsPtyArgs.DetectorDistance, JobsPtyArgs.PixelSize, JobsPtyArgs.CenterY, JobsPtyArgs.CenterX, JobsPtyArgs.DiffractionSize, JobsPtyArgs.Rotation, JobsPtyArgs.GPU_ID, JobsPtyArgs.ProbeSize, JobsPtyArgs.ProbeModes, JobsPtyArgs.Threshold, JobsPtyArgs.Iterations FROM Jobs LEFT JOIN JobsXrfArgs ON Jobs.Id == JobsXrfArgs.Id LEFT JOIN JobsPtyArgs ON Jobs.Id == JobsPtyArgs.Id'
+#SELECT_ALL_JOBS = 'SELECT Id, DataPath, ProcMask, Version, DetectorElements, MaxFilesToProc, MaxLinesToProc, QuickAndDirty, XRF_Bin, NNLS, XANES_Scan, DetectorToStartWith, BeamLine, Standards, DatasetFilesToProc, Priority, Status, StartProcTime, FinishProcTime, Log_Path, Process_Node_Id, Emails, Is_Live_Job FROM Jobs'
+SELECT_ALL_UNPROCESSED_JOBS = SELECT_ALL_JOBS + ' WHERE Jobs.Status=0'
+SELECT_ALL_UNPROCESSED_JOBS_ANY_NODE = SELECT_ALL_JOBS + ' WHERE Jobs.Status=0 and Jobs.Process_Node_Id=-1'
+SELECT_ALL_PROCESSING_JOBS = SELECT_ALL_JOBS + ' WHERE Jobs.Status=1'
+SELECT_ALL_FINISHED_JOBS = SELECT_ALL_JOBS + ' WHERE Jobs.Status>=2'
+SELECT_ALL_FINISHED_JOBS_LIMIT = SELECT_ALL_JOBS + ' WHERE Jobs.Status>=2 ORDER BY Jobs.Id DESC LIMIT '
+SELECT_ALL_UNPROCESSED_AND_PROCESSING_JOBS = SELECT_ALL_JOBS + ' WHERE Jobs.Status<=1 ORDER BY Jobs.Status DESC'
+SELECT_ALL_UNPROCESSED_JOBS_FOR_PN_ID = SELECT_ALL_JOBS + ' WHERE Jobs.Status<=1 AND Jobs.Process_Node_Id=:Process_Node_Id ORDER BY Jobs.Priority ASC'
+SELECT_JOB_BY_ID = SELECT_ALL_JOBS + ' WHERE Jobs.Id=:Id'
+SELECT_JOBS_BY_STATUS = SELECT_ALL_JOBS + ' WHERE Jobs.Status=:Status ORDER BY Jobs.Priority DESC'
 
 DELETE_JOB_BY_ID = 'DELETE FROM Jobs WHERE Id=:Id'
 
@@ -78,12 +88,11 @@ class SQLiteDB:
 		con = sql.connect(self.uri)
 		cur = con.cursor()
 		if drop:
-			cur.execute(DROP_PROCESS_NODES_STR)
-			cur.execute(DROP_JOBS_STR)
-			cur.execute(DROP_JOB_QUEUE_STR)
+			cur.executescript(DROP_ALL_TABLES_STR)
 		cur.execute(CREATE_PROCESS_NODES_TABLE_STR)
 		cur.execute(CREATE_JOBS_TABLE_STR)
-		cur.execute(CREATE_JOB_QUEUE_TABLE_STR)
+		cur.execute(CREATE_JOBS_XRF_ARGS_TABLE_STR)
+		cur.execute(CREATE_JOBS_PTY_ARGS_TABLE_STR)
 		con.commit()
 
 	def insert_process_node(self, proc_node_dict):
@@ -103,17 +112,31 @@ class SQLiteDB:
 
 	def insert_job(self, job_dict):
 		print 'insert job', job_dict
+		INSERT_STR = ''
+		if 'BeamLine' in job_dict:
+			if job_dict['BeamLine'] == 'XRF':
+				INSERT_STR = INSERT_XRF_JOB
+			elif job_dict['BeamLine'] == 'PTY':
+				INSERT_STR = INSERT_PTY_JOB
 		con = sql.connect(self.uri)
 		cur = con.cursor()
 		cur.execute(INSERT_JOB, job_dict)
+		cur.execute(INSERT_STR, job_dict)
 		con.commit()
 		return cur.lastrowid
 
 	def insert_job_with_id(self, job_dict):
 		print 'insert job with id', job_dict
+		INSERT_STR = ''
+		if 'BeamLine' in job_dict:
+			if job_dict['BeamLine'] == 'XRF':
+				INSERT_STR = INSERT_XRF_JOB_WTIH_ID
+			elif job_dict['BeamLine'] == 'PTY':
+				INSERT_STR = INSERT_PTY_JOB_WITH_ID
 		con = sql.connect(self.uri)
 		cur = con.cursor()
-		cur.execute(INSERT_JOB_WITH_ID, job_dict)
+		cur.execute(INSERT_JOB_WTIH_ID, job_dict)
+		cur.execute(INSERT_STR, job_dict)
 		con.commit()
 
 	def get_process_node_by_name(self, proc_node_name):
@@ -159,7 +182,10 @@ class SQLiteDB:
 		ret_list = []
 		#SELECT_ALL_JOBS = 'SELECT Id, DataPath, ProcMask, Version, DetectorElements, MaxFilesToProc, MaxLinesToProc, QuickAndDirty, XRF_Bin, NNLS, XANES_Scan, DetectorToStartWith, BeamLine, Standards, DatasetFilesToProc, Status, StartProcTime, FinishProcTime FROM Jobs'
 		for node in all_nodes:
-			ret_list += [ {'DT_RowId':node[0],  'Id':int(node[0]), 'DataPath':node[1], 'ProcMask': node[2], 'Version': node[3], 'DetectorElements':int(node[4]), 'MaxFilesToProc':int(node[5]), 'MaxLinesToProc':int(node[6]), 'QuickAndDirty':node[7], 'XRF_Bin':node[8], 'NNLS':node[9], 'XANES_Scan':node[10], 'DetectorToStartWith':int(node[11]), 'BeamLine':node[12], 'Standards':node[13], 'DatasetFilesToProc':node[14], 'Priority':int(node[15]), 'Status':int(node[16]), 'StartProcTime':node[17], 'FinishProcTime':node[18], 'Log_Path':node[19], 'Process_Node_Id':int(node[20]), 'Emails':node[21], 'Is_Live_Job':node[22]  } ]
+			if node[1] == 'XRF':
+				ret_list += [ {'DT_RowId':node[0],  'Id':int(node[0]), 'BeamLine':node[1], 'Version': node[2], 'DataPath':node[3], 'DatasetFilesToProc': node[4], 'Priority':int(node[5]), 'Status':int(node[6]), 'StartProcTime':node[7], 'FinishProcTime':node[8], 'Log_Path':node[9], 'Process_Node_Id':node[10], 'Emails':node[11], 'ProcMask':int(node[12]), 'DetectorElements':int(node[13]), 'MaxFilesToProc':int(node[14]), 'MaxLinesToProc':int(node[15]), 'QuickAndDirty':int(node[16]), 'XRF_Bin':int(node[17]), 'NNLS':int(node[18]), 'XANES_Scan':(node[19]), 'DetectorToStartWith':int(node[20]), 'Standards':node[21], 'Is_Live_Job':node[22]  } ]
+			elif node[1] == 'PTY':
+				ret_list += [ {'DT_RowId':node[0],  'Id':int(node[0]), 'BeamLine':node[1], 'Version': node[2], 'DataPath':node[3], 'DatasetFilesToProc': node[4], 'Priority':int(node[5]), 'Status':int(node[6]), 'StartProcTime':node[7], 'FinishProcTime':node[8], 'Log_Path':node[9], 'Process_Node_Id':node[10], 'Emails':node[11], 'CalcSTXM':int(node[23]), 'AlgorithmEPIE':int(node[24]), 'AlgorithmDM':int(node[25]), 'DetectorDistance':int(node[26]), 'PixelSize':int(node[27]), 'CenterY':int(node[28]), 'CenterX':int(node[29]), 'DiffractionSize':int(node[30]), 'Rotation':int(node[31]), 'GPU_ID':int(node[32]), 'ProbeSize':int(node[33]), 'ProbeModes':int(node[34]), 'Threshold':int(node[35]), 'Iterations':int(node[36])  } ]
 		return ret_list
 
 	def get_all_jobs(self):
@@ -242,9 +268,10 @@ if __name__ == '__main__':
 	from datetime import datetime
 	proc_node = { 'ComputerName':'Comp1', 'NumThreads':1, 'Hostname':'127.0.0.2', 'Port':8080, 'Status':'idle', 'Heartbeat':datetime.now(), 'ProcessCpuPercent':0.0, 'ProcessMemPercent':1.0, 'SystemCpuPercent':2.0, 'SystemMemPercent':10.0, 'SystemSwapPercent':0.0}
 	proc_node2 = { 'ComputerName':'Comp2', 'NumThreads':2, 'Hostname':'127.0.0.3', 'Port':8080, 'Status':'idle', 'Heartbeat':datetime.now(), 'ProcessCpuPercent':0.0, 'ProcessMemPercent':1.0, 'SystemCpuPercent':2.0, 'SystemMemPercent':10.0, 'SystemSwapPercent':0.0}
-	job1 = { 'DataPath':'/data/mapspy1/', 'ProcMask':1, 'Version':'1.00', 'DetectorElements':1, 'MaxFilesToProc':1, 'MaxLinesToProc':11, 'QuickAndDirty':0, 'XRF_Bin':0, 'NNLS':0, 'XANES_Scan':0, 'DetectorToStartWith':0, 'BeamLine':'2-ID-E', 'Standards':'', 'DatasetFilesToProc': 'all', 'Priority':5, 'Status':0, 'StartProcTime':datetime.ctime(datetime.now()), 'FinishProcTime':0, 'Log_Path': '', 'Process_Node_Id': -1, 'Emails':'', 'Is_Live_Job':0 }
-	job2 = { 'DataPath':'/data/mapspy2/', 'ProcMask':4, 'Version':'1.00', 'DetectorElements':1, 'MaxFilesToProc':1, 'MaxLinesToProc':11, 'QuickAndDirty':0, 'XRF_Bin':0, 'NNLS':0, 'XANES_Scan':0, 'DetectorToStartWith':0, 'BeamLine':'2-ID-E', 'Standards':'', 'DatasetFilesToProc': 'all', 'Priority':10, 'Status':0, 'StartProcTime':datetime.ctime(datetime.now()), 'FinishProcTime':0, 'Log_Path': '', 'Process_Node_Id': -1, 'Emails':'', 'Is_Live_Job':0 }
-	job3 = { 'DataPath':'/data/mapspy3/', 'ProcMask':8, 'Version':'1.00', 'DetectorElements':1, 'MaxFilesToProc':1, 'MaxLinesToProc':11, 'QuickAndDirty':0, 'XRF_Bin':0, 'NNLS':0, 'XANES_Scan':0, 'DetectorToStartWith':0, 'BeamLine':'2-ID-E', 'Standards':'', 'DatasetFilesToProc': 'all', 'Priority':7, 'Status':0, 'StartProcTime':datetime.ctime(datetime.now()), 'FinishProcTime':0, 'Log_Path': '', 'Process_Node_Id': -1, 'Emails':'', 'Is_Live_Job':1 }
+	xrf_job1 = { 'DataPath':'/data/mapspy1/', 'ProcMask':1, 'Version':'1.00', 'DetectorElements':1, 'MaxFilesToProc':1, 'MaxLinesToProc':11, 'QuickAndDirty':0, 'XRF_Bin':0, 'NNLS':0, 'XANES_Scan':0, 'DetectorToStartWith':0, 'BeamLine':'XRF', 'Standards':'', 'DatasetFilesToProc': 'all', 'Priority':5, 'Status':0, 'StartProcTime':datetime.ctime(datetime.now()), 'FinishProcTime':0, 'Log_Path': '', 'Process_Node_Id': -1, 'Emails':'', 'Is_Live_Job':0 }
+	xrf_job2 = { 'DataPath':'/data/mapspy2/', 'ProcMask':4, 'Version':'1.00', 'DetectorElements':1, 'MaxFilesToProc':1, 'MaxLinesToProc':11, 'QuickAndDirty':0, 'XRF_Bin':0, 'NNLS':0, 'XANES_Scan':0, 'DetectorToStartWith':0, 'BeamLine':'XRF', 'Standards':'', 'DatasetFilesToProc': 'all', 'Priority':10, 'Status':0, 'StartProcTime':datetime.ctime(datetime.now()), 'FinishProcTime':0, 'Log_Path': '', 'Process_Node_Id': -1, 'Emails':'', 'Is_Live_Job':0 }
+	xrf_job3 = { 'DataPath':'/data/mapspy3/', 'ProcMask':8, 'Version':'1.00', 'DetectorElements':1, 'MaxFilesToProc':1, 'MaxLinesToProc':11, 'QuickAndDirty':0, 'XRF_Bin':0, 'NNLS':0, 'XANES_Scan':0, 'DetectorToStartWith':0, 'BeamLine':'XRF', 'Standards':'', 'DatasetFilesToProc': 'all', 'Priority':7, 'Status':0, 'StartProcTime':datetime.ctime(datetime.now()), 'FinishProcTime':0, 'Log_Path': '', 'Process_Node_Id': -1, 'Emails':'', 'Is_Live_Job':1 }
+	pty_job1 = { 'DataPath':'/data/pty1/', 'Version':'1.00', 'BeamLine':'PTY', 'DatasetFilesToProc': 'all', 'Priority':7, 'Status':0, 'StartProcTime':datetime.ctime(datetime.now()), 'FinishProcTime':0, 'Log_Path': '', 'Process_Node_Id': -1, 'Emails':'', 'CalcSTXM':0, 'AlgorithmEPIE':1, 'AlgorithmDM':0, 'DetectorDistance':2, 'PixelSize':3, 'CenterY':4, 'CenterX':5, 'DiffractionSize':6, 'Rotation':0, 'GPU_ID':1, 'ProbeSize':7, 'ProbeModes':8, 'Threshold':9, 'Iterations':10 }
 	db = SQLiteDB('TestDatabase.db')
 	db.create_tables(True)
 	db.insert_process_node(proc_node)
@@ -261,11 +288,13 @@ if __name__ == '__main__':
 	jenc = json.JSONEncoder()
 	print jenc.encode(result)
 	#add job
-	job1['Id'] = db.insert_job(job1)
-	job2['Id'] = db.insert_job(job2)
-	job3['Id'] = db.insert_job(job3)
+	xrf_job1['Id'] = db.insert_job(xrf_job1)
+	pty_job1['Id'] = db.insert_job(pty_job1)
+	xrf_job2['Id'] = db.insert_job(xrf_job2)
 	print db.get_jobs_by_status(0)
-	job3['Status'] = 3
-	db.update_job(job3)
+	xrf_job3['Id'] = 10
+	db.insert_job_with_id(xrf_job3)
 	print db.get_jobs_by_status(0)
+	print ' '
+	print db.get_all_jobs()
 	#print db.get_all_jobs()
