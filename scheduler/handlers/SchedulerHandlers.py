@@ -38,6 +38,7 @@ import os
 import base64
 import Settings
 import unicodedata
+import Constants
 
 def gen_job_dir_dict(text, opened, children):
 	d_dict = dict()
@@ -139,6 +140,16 @@ class SchedulerHandler(object):
 	@cherrypy.expose
 	def help(self):
 		return self.show_api()
+
+	@cherrypy.expose
+	def get_software_versions(self):
+		ret_str = '<!DOCTYPE html><html><head><link rel="stylesheet" href="/static/data_tables/css/jquery.dataTables.css"/><script src="/static/jquery/jquery-2.0.3.min.js"></script><script src="/static/data_tables/js/jquery.dataTables.js"></script> <script type="text/javascript">$(document).ready(function() { $("#xrf_versions").DataTable(); }); </script> </head><body><h2>XRF-Maps Versions</h2><br><table id="xrf_versions" class="display_table display" width="100%" cellspacing="0"><thead><tr><td width="20%"><b>Hostname</b></td><td width="80%"><b>Version</b></td></tr></thead><tbody>'
+		proc_nodes = self.db.get_all_process_nodes()
+		for pn in proc_nodes:
+			if pn[Constants.PROCESS_NODE_STATUS] != Constants.PROCESS_NODE_STATUS_OFFLINE and pn[Constants.PROCESS_NODE_STATUS] != Constants.PROCESS_NODE_STATUS_BOOT_UP:
+				ret_str += '<tr><td>' + str(pn[Constants.PROCESS_NODE_COMPUTERNAME]) + '</td><td width=80%> <iframe width=100% src="http://' + str(pn[Constants.PROCESS_NODE_HOSTNAME]) + ':' + str(pn[Constants.PROCESS_NODE_PORT]) + '/version?software=XRF-Maps"></iframe></td><td><a href=http://' + str(pn[Constants.PROCESS_NODE_HOSTNAME]) + ':' + str(pn[Constants.PROCESS_NODE_PORT]) +'/version_file?software=XRF-Maps> Info </a> </td></tr>'
+		ret_str += '</tbody></table></body></html>'
+		return ret_str
 
 	@cherrypy.expose
 	def get_output_list(self, job_path=None, process_type=None):

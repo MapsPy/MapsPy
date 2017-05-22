@@ -84,6 +84,9 @@ JOB_PROCESS_NODE_ID = 'Process_Node_Id'  # INTEGER
 JOB_IS_LIVE_JOB = 'Is_Live_Job'  # INTEGER
 JOB_EMAILS = 'Emails' # TEXT comma separated
 
+JOB_BEAM_LINE_PTY = 'PTY'
+JOB_BEAM_LINE_XRF = 'XRF'
+
 # ===================================== General Keys =======================================
 STR_JOB_LOG_DIR_NAME = 'job_logs'
 

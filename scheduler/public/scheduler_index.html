@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <link href="/static/css/style.css" rel="stylesheet">
-    <link rel="stylesheet" href="/static/data_tables/css/jquery.dataTables.css">
+    <link rel="stylesheet" href="/static/css/style.css"/>
+    <link rel="stylesheet" href="/static/data_tables/css/jquery.dataTables.css"/>
     <link rel="stylesheet" href="/static/jstree_dist/themes/default/style.min.css" />
     <script src="/static/jquery/jquery-2.0.3.min.js"></script>
     <script src="/static/jstree_dist/jstree.min.js"></script>
@@ -113,6 +113,10 @@
                     $str += '(G) Generate average .h5 from each detector :: ';
                 }
             }
+            else if (aData.BeamLine === 'PTY')
+            {
+                $str = "PtychoLib";
+            }
             return $str;
         }
         
@@ -174,7 +178,7 @@
                 { "data": "Id" },
                 { "data": "DataPath" },
                 { "data": "Status" },
-                { "data": "ProcMask" },
+                { "data": "BeamLine" },
                 {
                     "class":          "delete-control",
                     "orderable":      false,
@@ -185,6 +189,21 @@
                 "order": [[1, 'desc']]
             });
 
+        }
+        
+        //----------------------------------------------------------------------
+        
+        function find_node_id_by_hostname(hostname)
+        {
+            $node_list = $pn_table.data();
+            $node_list.each( function (node)
+            {
+                if (node.Hostname === hostname)
+                {
+                    return d.Process_Node_Id;
+                }
+            });
+            return -1;
         }
         
         //----------------------------------------------------------------------
@@ -263,8 +282,7 @@
                     'Process Mem Percent: '+d.ProcessMemPercent + '%<br>'+
                     'System Cpu Percent: '+d.SystemCpuPercent + '%<br>'+
                     'System Mem Percent: '+d.SystemMemPercent + '%<br>'+
-                    'System Swap Percent: '+d.SystemSwapPercent + '%<br>'+
-                    '<a href=http://'+d.Hostname+':'+d.Port+'/version?software=XRF-Maps> XRF-Maps Version</a>';
+                    'System Swap Percent: '+d.SystemSwapPercent + '%';
         }
         
         //----------------------------------------------------------------------
@@ -448,6 +466,9 @@
             
             var $dataset_filenames = 'all';
             var $gpu_id = $( "#pty-gpu-node option:selected" ).attr('value');
+            
+            var $node_id = find_node_id_by_hostname('xrf1');
+                       
             if ( $("#pty_chk_all_datasets")[0].checked === false )
             {
                 $dataset_filenames = $('#pty_datasets_list').val().join();
@@ -468,7 +489,7 @@
                     'FinishProcTime': 0,
                     'Log_Path': '',
                     'Emails': $("#pty-option-emails").val(),
-                    'Process_Node_Id': 'xfm1',
+                    'Process_Node_Id': $node_id,
                     'CalcSTXM': $calc_stxm,
                     'AlgorithmEPIE': $alg_epie,
                     'AlgorithmDM': $alg_dm,
@@ -979,20 +1000,21 @@
         
     });
     </script>
-    <title> MapsPy Scheduler </title>
+    <title> Scheduler </title>
   </head>
   <body>
-      <div><img src="/static/resources/anl_logo_new.min.png"/> </div>
+      <header class="header">
+        <div><img src="/static/resources/anl_logo_new.min.png"/> </div>
+      </header>
     <div class="tabs">
         <ul class="tab-links">
             <li class="active"><a href="#tab1">Job Status</a></li>
             <li><a href="#tab2">Submit XRF Job</a></li> 
             <li><a href="#tab3">Submit Ptychography Job</a></li> 
+            <li><a href="#tab4"> Software Versions</a></li>
         </ul>
-
         <div class="tab-content">
-            <div id="tab1" class="tab active">
-          
+            <div id="tab1" class="tab active">                
                 <div id="process_nodes_div">
                     <table id="process_node_table" class="display_table display">
                      <thead>
@@ -1220,8 +1242,14 @@
                 </fieldset>
             </div>
             
+            <div id="tab4" class="tab">
+                <iframe width="1800" height="1500" src="/get_software_versions"></iframe>
+            </div>            
         </div>
     </div>
-          
+  <footer class="footer">
+      <center><div><img src="/static/resources/doe_logo_sc.png"/> </div></center>
+  </footer>        
   </body>
+  
 </html>

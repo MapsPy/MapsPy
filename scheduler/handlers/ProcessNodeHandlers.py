@@ -35,6 +35,7 @@ import json
 import cherrypy
 import traceback
 import os
+import re
 
 #todo: this is redefined in ProcessNode.py 
 STR_JOB_LOG_DIR_NAME = 'job_logs'
@@ -69,9 +70,25 @@ class ProcessNodeHandler(object):
 	@cherrypy.expose
 	def version(self, software):
 		if self.software_ver_dic.has_key(software):
+			ver = [re.findall(r'<b>Revision<\/b>:\s*([^\n\r]*)',line) for line in open(self.software_ver_dic[software])]
+			# remove empty's
+			ver = [x for x in ver if x]
+			if len(ver) > 0:
+				#print 'ver ', ver
+				return ver[0]
+				#ret_str = '<!DOCTYPE html><html><head></head><body>' + str(ver[0]) + '</body></html>'
+				#return ret_str
+			else:
+				return file(self.software_ver_dic[software])
+		else:
+			return 'Unknown software: ' + software
+
+	@cherrypy.expose
+	def version_file(self, software):
+		if self.software_ver_dic.has_key(software):
 			return file(self.software_ver_dic[software])
 		else:
-			return 'Unknown software: '+software
+			return 'Unknown software: ' + software
 
 	@cherrypy.expose
 	def update_id(self, Id):

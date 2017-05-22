@@ -48,6 +48,13 @@ tr.header
   content:"-";
 }
 
+.footer {
+    margin-top: 0;
+    padding-top: 0;
+    padding-bottom: 36px;
+    border-top: none;
+}
+
 /*----- Tabs -----*/
 .tabs {
     width:100%;

@@ -281,14 +281,19 @@ class ProcessNode(RestBase):
 				self.send_job_update(job_dict)
 				self.send_status_update()
 
-				if job_dict[Constants.JOB_XANES_SCAN] == 1:
-					exitcode = -2
-					proc = multiprocessing.Process(target=start_xrf_maps, args=(log_name, alias_path, job_dict, self.xrf_maps_path, self.xrf_maps_exe, exitcode))
-					#exitcode = start_xrf_maps(log_name, alias_path, job_dict, self.xrf_maps_path, self.xrf_maps_exe)
+				if job_dict[Constants.JOB_BEAM_LINE] == Constants.JOB_BEAM_LINE_PTY:
+					proc = multiprocessing.Process(target=start_pty, args=(log_name, alias_path, job_dict, self.pty_path, self.pty_exe, exitcode))
+				elif job_dict[Constants.JOB_BEAM_LINE] == Constants.JOB_BEAM_LINE_XRF:
+					if job_dict[Constants.JOB_XANES_SCAN] == 1:
+						exitcode = -2
+						proc = multiprocessing.Process(target=start_xrf_maps, args=(log_name, alias_path, job_dict, self.xrf_maps_path, self.xrf_maps_exe, exitcode))
+						#exitcode = start_xrf_maps(log_name, alias_path, job_dict, self.xrf_maps_path, self.xrf_maps_exe)
+					else:
+						job_logger = logging.getLogger(log_name)
+						self._setup_logging_(job_logger, "file", "job_logs/" + log_name)
+						proc = multiprocessing.Process(target=maps_batch.new_process_func, args=(log_name, alias_path, job_dict))
 				else:
-					job_logger = logging.getLogger(log_name)
-					self._setup_logging_(job_logger, "file", "job_logs/" + log_name)
-					proc = multiprocessing.Process(target=maps_batch.new_process_func, args=(log_name, alias_path, job_dict))
+					pass
 				proc.start()
 				self.this_process = psutil.Process(proc.pid)
 				proc.join()
@@ -421,6 +426,56 @@ def start_xrf_maps(log_name, alias_path, job_dict, xrf_maps_path, xrf_maps_exe, 
 			exitcode = subprocess.call(args, cwd=xrf_maps_path, stdout=log_file, stderr=log_file, shell=True)
 		else:
 			exitcode = subprocess.call(args, cwd=xrf_maps_path, stdout=log_file, stderr=log_file, shell=False)
+		print 'exitcode = ', exitcode
+		log_file.close()
+	except:
+		exc_str = traceback.format_exc()
+		print exc_str
+		exitcode = -1
+
+# Function used to create a new process for jobs
+def start_pty(log_name, alias_path, job_dict, pty_path, pty_exe, exitcode):
+	try:
+		#
+		#for each file
+		#parse_mda(job_dict[Constants.JOB_DATA_PATH])
+		args = [pty_exe]
+		args += ['--dir', alias_path]
+		if str(job_dict[Constants.JOB_NNLS]).strip() == '1':
+			args += ['--nnls']
+		if str(job_dict[Constants.JOB_QUICK_AND_DIRTY]).strip() == '1':
+			args += ['--quick-and-dirty']
+		mda_files = str(job_dict[Constants.JOB_DATASET_FILES_TO_PROC]).strip()
+		if len (mda_files) > 0 and (not mda_files == 'all'):
+			args += ['--files', mda_files]
+		num_threads = str(job_dict[Constants.JOB_MAX_LINES_TO_PROC]).strip()
+		if not num_threads == '-1':
+			args += ['--nthreads', num_threads]
+
+		detector_start = int( str(job_dict[Constants.JOB_DETECTOR_TO_START_WITH]).strip() )
+		detector_amount = int( str(job_dict[Constants.JOB_DETECTOR_ELEMENTS]).strip() )
+		detector_end = detector_start + (detector_amount -1)
+
+		if detector_start < 0 or detector_start > 3: # we only have 4 detectors
+			detector_start = 0
+		if detector_end < detector_start or detector_end > 3: # we only have 4 detectors
+			detector_end = 3
+
+		str_detector_range = str(detector_start) + ':' + str(detector_end)
+		args += ['--detector-range', str_detector_range]
+
+		if len(str(job_dict[Constants.JOB_STANDARDS])) > 0:
+			args += ['--quantify-with', str(job_dict[Constants.JOB_STANDARDS])]
+
+		proc_mask = int(job_dict[Constants.JOB_PROC_MASK])
+		key_d = 0
+		key_f = 0 # for netcdf to hdf5 future feature
+		log_file = open('job_logs/' + log_name, 'w')
+		print args
+		if os.name == "nt":
+			exitcode = subprocess.call(args, cwd=pty_path, stdout=log_file, stderr=log_file, shell=True)
+		else:
+			exitcode = subprocess.call(args, cwd=pty_path, stdout=log_file, stderr=log_file, shell=False)
 		print 'exitcode = ', exitcode
 		log_file.close()
 	except:
