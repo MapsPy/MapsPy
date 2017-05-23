@@ -73,6 +73,7 @@ JOB_NNLS = 'NNLS'  # INTEGER
 JOB_XANES_SCAN = 'XANES_Scan'  # INTEGER
 JOB_DETECTOR_TO_START_WITH = 'DetectorToStartWith'  # INTEGER
 JOB_BEAM_LINE = 'BeamLine'  # TEXT
+JOB_EXPERIMENT = 'Experiment'  # TEXT
 JOB_STANDARDS = 'Standards'  # TEXT
 JOB_DATASET_FILES_TO_PROC = 'DatasetFilesToProc'  # TEXT
 JOB_PRIORITY = 'Priority'  # INTEGER
@@ -84,8 +85,8 @@ JOB_PROCESS_NODE_ID = 'Process_Node_Id'  # INTEGER
 JOB_IS_LIVE_JOB = 'Is_Live_Job'  # INTEGER
 JOB_EMAILS = 'Emails' # TEXT comma separated
 
-JOB_BEAM_LINE_PTY = 'PTY'
-JOB_BEAM_LINE_XRF = 'XRF'
+JOB_EXPERIMENT_PTY = 'PTY'
+JOB_EXPERIMENT_XRF = 'XRF'
 
 # ===================================== General Keys =======================================
 STR_JOB_LOG_DIR_NAME = 'job_logs'

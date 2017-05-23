@@ -281,9 +281,9 @@ class ProcessNode(RestBase):
 				self.send_job_update(job_dict)
 				self.send_status_update()
 
-				if job_dict[Constants.JOB_BEAM_LINE] == Constants.JOB_BEAM_LINE_PTY:
+				if job_dict[Constants.JOB_EXPERIMENT] == Constants.JOB_EXPERIMENT_PTY:
 					proc = multiprocessing.Process(target=start_pty, args=(log_name, alias_path, job_dict, self.pty_path, self.pty_exe, exitcode))
-				elif job_dict[Constants.JOB_BEAM_LINE] == Constants.JOB_BEAM_LINE_XRF:
+				elif job_dict[Constants.JOB_EXPERIMENT] == Constants.JOB_EXPERIMENT_XRF:
 					if job_dict[Constants.JOB_XANES_SCAN] == 1:
 						exitcode = -2
 						proc = multiprocessing.Process(target=start_xrf_maps, args=(log_name, alias_path, job_dict, self.xrf_maps_path, self.xrf_maps_exe, exitcode))
