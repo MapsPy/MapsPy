@@ -772,6 +772,10 @@
         $("#pty-rotate").val(0);
         $("#chk_all_datasets").prop("checked", true);
         $("#pty_chk_all_datasets").prop("checked", true);
+        
+        $("#analysis-type-roi").prop("checked", true);
+        $("#analysis-type-svd").prop("checked", true);
+        
         $("#analysis-type-a").prop("checked", true);
         $("#analysis-type-g").prop("checked", true);
         $("#datasets_list").hide();
