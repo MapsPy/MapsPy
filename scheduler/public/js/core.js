@@ -70,33 +70,33 @@
         {
             var $str = "";
         
-            if(aData.Experiment === 'XRF')
+            if(aData.Experiment === 'XRF-Maps' || aData.Experiment === 'MapsPy')
             {
-                if( (aData.ProcMask & 1) === 1)
+                if( (aData.Args.ProcMask & 1) === 1)
                 {
                     $str += '(A) Analyze datasets using ROI and ROI+ :: ';
                 }
-                if( (aData.ProcMask & 2) === 2)
+                if( (aData.Args.ProcMask & 2) === 2)
                 {
                     $str += '(B) Extract integrated spectra from analyzed files and fit the spectra to optimize fit parameters :: ';
                 }
-                if( (aData.ProcMask & 4) === 4)
+                if( (aData.Args.ProcMask & 4) === 4)
                 {
                     $str += '(C) Analyze datasets using ROI, ROI+ and per pixel fitting :: ';
                 }
-                if( (aData.ProcMask & 8) === 8)
+                if( (aData.Args.ProcMask & 8) === 8)
                 {
                     $str += '(D) :: ';
                 }
-                if( (aData.ProcMask & 16) === 16)
+                if( (aData.Args.ProcMask & 16) === 16)
                 {
                     $str += '(E) Add exchange information to analyzed files :: ';
                 }
-                if( (aData.ProcMask & 32) === 32)
+                if( (aData.Args.ProcMask & 32) === 32)
                 {
                     $str += '(F) Create hdf5 file from single line netcdf files for flyscan :: ';
                 }
-                if( (aData.ProcMask & 64) === 64)
+                if( (aData.Args.ProcMask & 64) === 64)
                 {
                     $str += '(G) Generate average .h5 from each detector :: ';
                 }
@@ -209,50 +209,42 @@
                     $host_name = node.ComputerName;
                 }
             });
-            if(d.Experiment === 'XRF')
+            
+            var ret_str = 'Id: '+d.Id+'<br>'+
+                          'Version: '+d.Version+'<br>'+
+                          'Experiment: '+d.Experiment+'<br>'+
+                          'DataPath: '+d.DataPath+'<br>'+
+                          'Priority: '+d.Priority+'<br>'+
+                          'BeamLine: '+d.BeamLine+'<br>'+
+                          'StartProcTime: '+d.StartProcTime+'<br>'+
+                          'FinishProcTime: '+d.FinishProcTime+'<br>'+
+                          'Dataset Files To Process: ' + d.DatasetFilesToProc +'<br>'+
+                          'Process Node: '+$host_name+'<br>'+ 
+                          'Email Addresses: '+d.Emails+'<br>'+
+                          '<a href=http://'+$host_and_port+'/get_job_log?log_path='+d.Log_Path+'>Job Log</a><br>';
+                          
+            if(d.Experiment === 'XRF-Maps' || d.Experiment === 'MapsPy')
             {
-            return  'Id: '+d.Id+'<br>'+
-                    'DataPath: '+d.DataPath+'<br>'+
-                    'Processing Type: '+convert_procmask_number_to_string(d)+'<br>'+
-                    'Priority: '+d.Priority+'<br>'+
-                    'Detector Elements: '+d.DetectorElements+'<br>'+
-                    'Detector To Start With: '+d.DetectorToStartWith+'<br>'+
-                    'Version: '+d.Version+'<br>'+
-                    'Quick and Dirty: '+d.QuickAndDirty+'<br>'+
-                    'NNLS: '+d.NNLS+'<br>'+
-                    'XRF-Maps: '+d.XANES_Scan+'<br>'+
-                    'BeamLine: '+d.BeamLine+'<br>'+
-                    'Priority: '+d.Priority+'<br>'+
-                    'Lines processed in parrallel: '+d.MaxLinesToProc+'<br>'+
-                    'Files processed in parrallel: '+d.MaxFilesToProc+'<br>'+
-                    'StartProcTime: '+d.StartProcTime+'<br>'+
-                    'FinishProcTime: '+d.FinishProcTime+'<br>'+
-                    'Dataset Files To Process: ' + d.DatasetFilesToProc +'<br>'+
-                    'Process Node: '+$host_name+'<br>'+ 
-                    'Email Addresses: '+d.Emails+'<br>'+ 
-                    '<a href=/get_output_list?job_path='+d.DataPath+'>Output Directory</a> (output_old) <br>'+
-                    '<a href=/get_output_list?job_path='+d.DataPath+'&process_type=PER_PIXEL>Output Directory</a> (output.fits) Per Pixel Fitting<br>'+
-                    '<a href=http://'+$host_and_port+'/get_job_log?log_path='+d.Log_Path+'>Job Log</a>';
+                ret_str += 'Processing Type: '+convert_procmask_number_to_string(d)+'<br>'+
+                           'Detector Elements: '+d.Args.DetectorElements+'<br>'+
+                           'Detector To Start With: '+d.Args.DetectorToStartWith+'<br>'+
+                           'Quick and Dirty: '+d.Args.QuickAndDirty+'<br>'+
+                           'NNLS: '+d.Args.NNLS+'<br>'+
+                           'Lines processed in parrallel: '+d.Args.MaxLinesToProc+'<br>'+
+                           'Files processed in parrallel: '+d.Args.MaxFilesToProc+'<br>'+
+                           '<a href=/get_output_list?job_path='+d.DataPath+'>Output Directory</a> (output_old) <br>'+
+                           '<a href=/get_output_list?job_path='+d.DataPath+'&process_type=PER_PIXEL>Output Directory</a> (output.fits) Per Pixel Fitting<br>';
+                           
             }
-            else if(d.Experiment === 'PTY')
+            else if(d.Experiment === 'PtychoLib')
             {
-            return  'Id: '+d.Id+'<br>'+
-                    'DataPath: '+d.DataPath+'<br>'+
-                    'Priority: '+d.Priority+'<br>'+
-                    'Version: '+d.Version+'<br>'+
-                    'BeamLine: '+d.BeamLine+'<br>'+
-                    'Priority: '+d.Priority+'<br>'+
-                    'StartProcTime: '+d.StartProcTime+'<br>'+
-                    'FinishProcTime: '+d.FinishProcTime+'<br>'+
-                    'Dataset Files To Process: ' + d.DatasetFilesToProc +'<br>'+
-                    'Process Node: '+$host_name+'<br>'+ 
-                    'Email Addresses: '+d.Emails+'<br>'+ 
-                    '<a href=http://'+$host_and_port+'/get_job_log?log_path='+d.Log_Path+'>Job Log</a>';
+                ret_str += 'N/A';
             }
             else
             {
-                return 'Unknown type!';    
+                ret_str += d.Args;
             }
+            return  ret_str;
         }
 
         //----------------------------------------------------------------------
@@ -270,7 +262,8 @@
                     'Process Mem Percent: '+d.ProcessMemPercent + '%<br>'+
                     'System Cpu Percent: '+d.SystemCpuPercent + '%<br>'+
                     'System Mem Percent: '+d.SystemMemPercent + '%<br>'+
-                    'System Swap Percent: '+d.SystemSwapPercent + '%';
+                    'System Swap Percent: '+d.SystemSwapPercent + '%<br>' +
+                    'Supported Software: '+d.SupportedSoftware ;
         }
         
         //----------------------------------------------------------------------
@@ -379,11 +372,17 @@
                 $dataset_filenames = $('#datasets_list').val().join();
             }
             
+            var $experiment = 'MapsPy';
+            if (is_xrf_maps_job)
+                $experiment = 'XRF-Maps';
+            
             if($procMask === 0 && $nnls === 0)
             {
                 $.notify("No analysis type selected! Select A, B, C, D, E, or F", "error");
                 return;
             }
+            
+            
             
             $.ajax(
             {
@@ -391,7 +390,7 @@
                 url:"/job",
                 contentType: 'application/json; charset=utf-8',
                 data: JSON.stringify({
-                    'Experiment': 'XRF',
+                    'Experiment': $experiment,
                     'BeamLine': '2-ID-E',
                     'DataPath': $("#DataPath").val(),
                     'Version': '9.00',
@@ -402,18 +401,21 @@
                     'Log_Path': '',
                     'Emails': $("#option-emails").val(),
                     'Process_Node_Id': parseInt($pn_id, 10),
-                    'ProcMask': $procMask,
-                    'Standards': 'maps_standardinfo.txt', //$("#option-standard").val(),
-                    'DetectorToStartWith': parseInt($("#option-detector-to-start-with").val(), 10),
-                    'XRF_Bin': $xrfbin,
-                    'MaxLinesToProc': parseInt($("#option-proc-per-line").val(), 10),
-                    'MaxFilesToProc': parseInt($("#option-proc-per-file").val(), 10),
-                    'DetectorElements': parseInt($("#option-detector-elements").val(), 10),
-                    'XANES_Scan': $xanes,
-                    'NNLS': $nnls,
-                    'QuickAndDirty': $quickNdirty,
-                    'Is_Live_Job': $is_live_job,
-                    'DatasetFilesToProc': $dataset_filenames
+                    'DatasetFilesToProc': $dataset_filenames,
+                    'Args': {
+                        'ProcMask': $procMask,
+                        'Standards': 'maps_standardinfo.txt', //$("#option-standard").val(),
+                        'DetectorToStartWith': parseInt($("#option-detector-to-start-with").val(), 10),
+                        'XRF_Bin': $xrfbin,
+                        'MaxLinesToProc': parseInt($("#option-proc-per-line").val(), 10),
+                        'MaxFilesToProc': parseInt($("#option-proc-per-file").val(), 10),
+                        'DetectorElements': parseInt($("#option-detector-elements").val(), 10),
+                        'XANES_Scan': $xanes,
+                        'NNLS': $nnls,
+                        'QuickAndDirty': $quickNdirty,
+                        'Is_Live_Job': $is_live_job 
+                            }
+                    
                 }),
                 datatype: "json",
                 success: function(data) 
@@ -469,7 +471,7 @@
                 url:"/job",
                 contentType: 'application/json; charset=utf-8',
                 data: JSON.stringify({
-                    'Experiment': 'PTY',
+                    'Experiment': 'Ptycholib',
                     'BeamLine': '2-ID-D',
                     'DataPath': $("#Pty-DataPath").val(),
                     'Version': '1.00',
@@ -480,21 +482,24 @@
                     'Log_Path': '',
                     'Emails': $("#pty-option-emails").val(),
                     'Process_Node_Id': $node_id,
-                    'CalcSTXM': $calc_stxm,
-                    'AlgorithmEPIE': $alg_epie,
-                    'AlgorithmDM': $alg_dm,
-                    'DetectorDistance': $det_dist,
-                    'PixelSize': $pixel_size,
-                    'CenterY': $center_y,
-                    'CenterX': $center_x,
-                    'DiffractionSize': $diff_size,
-                    'Rotation': $rot,
-                    'GPU_ID': $gpu_id,
-                    'ProbeSize': $probe_size,
-                    'ProbeModes': $probe_modes,
-                    'Threshold': $threshold,
-                    'Iterations': $iter,
-                    'DatasetFilesToProc': $dataset_filenames
+                    'DatasetFilesToProc': $dataset_filenames,
+                    'Args': {
+                        'CalcSTXM': $calc_stxm,
+                        'AlgorithmEPIE': $alg_epie,
+                        'AlgorithmDM': $alg_dm,
+                        'DetectorDistance': $det_dist,
+                        'PixelSize': $pixel_size,
+                        'CenterY': $center_y,
+                        'CenterX': $center_x,
+                        'DiffractionSize': $diff_size,
+                        'Rotation': $rot,
+                        'GPU_ID': $gpu_id,
+                        'ProbeSize': $probe_size,
+                        'ProbeModes': $probe_modes,
+                        'Threshold': $threshold,
+                        'Iterations': $iter
+                        }
+                 
                 }),
                 datatype: "json",
                 success: function(data) 

@@ -32,129 +32,208 @@ SUCH DAMAGE.
 
 
 import sqlite3 as sql
-
-CREATE_PROCESS_NODES_TABLE_STR = 'CREATE TABLE IF NOT EXISTS ProcessNodes(Id INTEGER PRIMARY KEY, ComputerName TEXT, NumThreads INTEGER, Hostname TEXT, Port INTEGER, Status TEXT, Heartbeat TIMESTAMP, ProcessCpuPercent REAL, ProcessMemPercent REAL, SystemCpuPercent REAL, SystemMemPercent REAL, SystemSwapPercent REAL);'
-CREATE_JOBS_TABLE_STR = 'CREATE TABLE IF NOT EXISTS Jobs(Id INTEGER PRIMARY KEY, DataPath TEXT, DatasetFilesToProc TEXT, Version TEXT, Experiment TEXT, BeamLine TEXT, Priority INTEGER, Status INTEGER, StartProcTime TIMESTAMP, FinishProcTime TIMESTAMP, Log_Path TEXT, Process_Node_Id INTEGER, Emails, TEXT);'
-CREATE_JOBS_XRF_ARGS_TABLE_STR = 'CREATE TABLE IF NOT EXISTS JobsXrfArgs(Id INTEGER, ProcMask INTEGER, DetectorElements INTEGER, MaxFilesToProc INTEGER, MaxLinesToProc INTEGER, QuickAndDirty INTEGER, XRF_Bin INTEGER, NNLS INTEGER, XANES_Scan INTEGER, DetectorToStartWith INTEGER, Standards TEXT, Is_Live_Job INTEGER, FOREIGN KEY(Id) REFERENCES Jobs(Id));'
-CREATE_JOBS_PTY_ARGS_TABLE_STR = 'CREATE TABLE IF NOT EXISTS JobsPtyArgs(Id INTEGER, CalcSTXM INTEGER, AlgorithmEPIE INTEGER, AlgorithmDM INTEGER, DetectorDistance INTEGER, PixelSize INTEGER, CenterY INTEGER, CenterX INTEGER, DiffractionSize INTEGER, Rotation INTEGER, GPU_ID INTEGER, ProbeSize INTEGER, ProbeModes INTEGER, Threshold INTEGER, Iterations INTEGER,  FOREIGN KEY(Id) REFERENCES Jobs(Id));'
-
-DROP_ALL_TABLES_STR = 'DROP TABLE IF EXISTS ProcessNodes; \
-                       DROP TABLE IF EXISTS Jobs; \
-                       DROP TABLE IF EXISTS JobsXrfArgs; \
-                       DROP TABLE IF EXISTS JobsPtyArgs;'
-
-INSERT_PROCESS_NODE = 'INSERT INTO ProcessNodes (ComputerName, NumThreads, Hostname, Port, Status, Heartbeat, ProcessCpuPercent, ProcessMemPercent, SystemCpuPercent, SystemMemPercent, SystemSwapPercent) VALUES(:ComputerName, :NumThreads, :Hostname, :Port, :Status, :Heartbeat, :ProcessCpuPercent, :ProcessMemPercent, :SystemCpuPercent, :SystemMemPercent, :SystemSwapPercent)'
-
-INSERT_JOB = 'INSERT INTO Jobs (DataPath, Version, Experiment, BeamLine, DatasetFilesToProc, Priority, Status, StartProcTime, FinishProcTime, Log_Path, Process_Node_Id, Emails) VALUES(:DataPath, :Version, :Experiment, :BeamLine, :DatasetFilesToProc, :Priority, :Status, :StartProcTime, :FinishProcTime, :Log_Path, :Process_Node_Id, :Emails)'
-INSERT_XRF_JOB = 'INSERT INTO JobsXrfArgs (Id, ProcMask, DetectorElements, MaxFilesToProc, MaxLinesToProc, QuickAndDirty, XRF_Bin, NNLS, XANES_Scan, DetectorToStartWith, Standards, Is_Live_Job) VALUES(last_insert_rowid(), :ProcMask, :DetectorElements, :MaxFilesToProc, :MaxLinesToProc, :QuickAndDirty, :XRF_Bin, :NNLS, :XANES_Scan, :DetectorToStartWith, :Standards, :Is_Live_Job)'
-INSERT_PTY_JOB = 'INSERT INTO JobsPtyArgs (Id, CalcSTXM, AlgorithmEPIE, AlgorithmDM, DetectorDistance, PixelSize, CenterY, CenterX, DiffractionSize, Rotation, GPU_ID, ProbeSize, ProbeModes, Threshold, Iterations) VALUES(last_insert_rowid(), :CalcSTXM, :AlgorithmEPIE, :AlgorithmDM, :DetectorDistance, :PixelSize, :CenterY, :CenterX, :DiffractionSize, :Rotation, :GPU_ID, :ProbeSize, :ProbeModes, :Threshold, :Iterations)'
-
-INSERT_JOB_WTIH_ID = 'INSERT INTO Jobs (Id, DataPath, Version, Experiment, BeamLine, DatasetFilesToProc, Priority, Status, StartProcTime, FinishProcTime, Log_Path, Process_Node_Id, Emails) VALUES(:Id, :DataPath, :Version, :Experiment, :BeamLine, :DatasetFilesToProc, :Priority, :Status, :StartProcTime, :FinishProcTime, :Log_Path, :Process_Node_Id, :Emails)'
-INSERT_XRF_JOB_WTIH_ID = 'INSERT INTO JobsXrfArgs (Id, ProcMask, DetectorElements, MaxFilesToProc, MaxLinesToProc, QuickAndDirty, XRF_Bin, NNLS, XANES_Scan, DetectorToStartWith, Standards, Is_Live_Job) VALUES(:Id, :ProcMask, :DetectorElements, :MaxFilesToProc, :MaxLinesToProc, :QuickAndDirty, :XRF_Bin, :NNLS, :XANES_Scan, :DetectorToStartWith, :Standards, :Is_Live_Job)'
-INSERT_PTY_JOB_WITH_ID = 'INSERT INTO JobsPtyArgs (Id, CalcSTXM, AlgorithmEPIE, AlgorithmDM, DetectorDistance, PixelSize, CenterY, CenterX, DiffractionSize, Rotation, GPU_ID, ProbeSize, ProbeModes, Threshold, Iterations) VALUES(:Id, :CalcSTXM, :AlgorithmEPIE, :AlgorithmDM, :DetectorDistance, :PixelSize, :CenterY, :CenterX, :DiffractionSize, :Rotation, :GPU_ID, :ProbeSize, :ProbeModes, :Threshold, :Iterations)'
-
-UPDATE_PROCESS_NODE_BY_ID = 'UPDATE ProcessNodes SET ComputerName=:ComputerName NumThreads=:NumThreads Hostname=:Hostname, Port=:Port Status=:Status Heartbeat=:Heartbeat, ProcessCpuPercent=:ProcessCpuPercent, ProcessMemPercent=:ProcessMemPercent, SystemCpuPercent=:SystemCpuPercent, SystemMemPercent=:SystemMemPercent, SystemSwapPercent=:SystemSwapPercent WHERE Id=:Id'
-UPDATE_PROCESS_NODE_BY_NAME = 'UPDATE ProcessNodes SET NumThreads=:NumThreads, Hostname=:Hostname, Port=:Port, Status=:Status, Heartbeat=:Heartbeat, ProcessCpuPercent=:ProcessCpuPercent, ProcessMemPercent=:ProcessMemPercent, SystemCpuPercent=:SystemCpuPercent, SystemMemPercent=:SystemMemPercent, SystemSwapPercent=:SystemSwapPercent WHERE ComputerName=:ComputerName'
-
-UPDATE_JOB_BY_ID = 'UPDATE Jobs SET DataPath=:DataPath, Version=:Version, Experiment=:Experiment, BeamLine=:BeamLine, DatasetFilesToProc=:DatasetFilesToProc, Priority=:Priority, Status=:Status, StartProcTime=:StartProcTime, FinishProcTime=:FinishProcTime, Log_Path=:Log_Path, Process_Node_Id=:Process_Node_Id, Emails=:Emails WHERE Id=:Id'
-UPDATE_JOB_PN = 'UPDATE Jobs SET Process_Node_Id=:Process_Node_Id WHERE Id=:Id'
-
-RESET_PN_STATUS = 'UPDATE ProcessNodes SET Status="Offline", ProcessCpuPercent=0.0, ProcessMemPercent=0.0 WHERE Id>0;'
-
-SELECT_ALL_PROCESS_NODES = 'SELECT Id, ComputerName, NumThreads, Hostname, Port, Status, Heartbeat, ProcessCpuPercent, ProcessMemPercent, SystemCpuPercent, SystemMemPercent, SystemSwapPercent FROM ProcessNodes'
-SELECT_PROCESS_NODE_BY_NAME = SELECT_ALL_PROCESS_NODES + ' WHERE ComputerName=:ComputerName'
-SELECT_PROCESS_NODE_BY_ID = SELECT_ALL_PROCESS_NODES + ' WHERE Id=:Id'
-
-SELECT_ALL_JOBS = 'SELECT Jobs.Id, Jobs.Experiment, Jobs.BeamLine, Jobs.Version, Jobs.DataPath, Jobs.DatasetFilesToProc, Jobs.Priority, Jobs.Status, Jobs.StartProcTime, Jobs.FinishProcTime, Jobs.Log_Path, Jobs.Process_Node_Id, Jobs.Emails, JobsXrfArgs.ProcMask, JobsXrfArgs.DetectorElements, JobsXrfArgs.MaxFilesToProc, JobsXrfArgs.MaxLinesToProc, JobsXrfArgs.QuickAndDirty, JobsXrfArgs.XRF_Bin, JobsXrfArgs.NNLS, JobsXrfArgs.XANES_Scan, JobsXrfArgs.DetectorToStartWith, JobsXrfArgs.Standards, JobsXrfArgs.Is_Live_Job, JobsPtyArgs.CalcSTXM, JobsPtyArgs.AlgorithmEPIE, JobsPtyArgs.AlgorithmDM, JobsPtyArgs.DetectorDistance, JobsPtyArgs.PixelSize, JobsPtyArgs.CenterY, JobsPtyArgs.CenterX, JobsPtyArgs.DiffractionSize, JobsPtyArgs.Rotation, JobsPtyArgs.GPU_ID, JobsPtyArgs.ProbeSize, JobsPtyArgs.ProbeModes, JobsPtyArgs.Threshold, JobsPtyArgs.Iterations FROM Jobs LEFT JOIN JobsXrfArgs ON Jobs.Id == JobsXrfArgs.Id LEFT JOIN JobsPtyArgs ON Jobs.Id == JobsPtyArgs.Id'
-#SELECT_ALL_JOBS = 'SELECT Id, DataPath, ProcMask, Version, DetectorElements, MaxFilesToProc, MaxLinesToProc, QuickAndDirty, XRF_Bin, NNLS, XANES_Scan, DetectorToStartWith, BeamLine, Standards, DatasetFilesToProc, Priority, Status, StartProcTime, FinishProcTime, Log_Path, Process_Node_Id, Emails, Is_Live_Job FROM Jobs'
-SELECT_ALL_UNPROCESSED_JOBS = SELECT_ALL_JOBS + ' WHERE Jobs.Status=0'
-SELECT_ALL_UNPROCESSED_JOBS_ANY_NODE = SELECT_ALL_JOBS + ' WHERE Jobs.Status=0 and Jobs.Process_Node_Id=-1'
-SELECT_ALL_PROCESSING_JOBS = SELECT_ALL_JOBS + ' WHERE Jobs.Status=1'
-SELECT_ALL_FINISHED_JOBS = SELECT_ALL_JOBS + ' WHERE Jobs.Status>=2'
-SELECT_ALL_FINISHED_JOBS_LIMIT = SELECT_ALL_JOBS + ' WHERE Jobs.Status>=2 ORDER BY Jobs.Id DESC LIMIT '
-SELECT_ALL_UNPROCESSED_AND_PROCESSING_JOBS = SELECT_ALL_JOBS + ' WHERE Jobs.Status<=1 ORDER BY Jobs.Status DESC'
-SELECT_ALL_UNPROCESSED_JOBS_FOR_PN_ID = SELECT_ALL_JOBS + ' WHERE Jobs.Status<=1 AND Jobs.Process_Node_Id=:Process_Node_Id ORDER BY Jobs.Priority ASC'
-SELECT_JOB_BY_ID = SELECT_ALL_JOBS + ' WHERE Jobs.Id=:Id'
-SELECT_JOBS_BY_STATUS = SELECT_ALL_JOBS + ' WHERE Jobs.Status=:Status ORDER BY Jobs.Priority DESC'
+import Constants
+import json
 
 DELETE_JOB_BY_ID = 'DELETE FROM Jobs WHERE Id=:Id'
 
+SQL_ORDER_BY_JOB_ID_DESC = ' ORDER BY ' + Constants.TABLE_JOBS + '.' + Constants.JOB_ID + ' DESC'
+SQL_ORDER_BY_JOB_PRIORITY_ASC = ' ORDER BY ' + Constants.TABLE_JOBS + '.' + Constants.JOB_PRIORITY + ' ASC'
+SQL_ORDER_BY_JOB_STATUS_DESC = ' ORDER BY ' + Constants.TABLE_JOBS + '.' + Constants.JOB_STATUS + ' DESC'
+
+SQL_UNASSIGNED_JOB = ' ' + Constants.TABLE_JOBS + '.' + Constants.JOB_PROCESS_NODE_ID + '=-1'
+
+SQL_WHERE_JOB_ID_IS = ' WHERE ' + Constants.TABLE_JOBS + '.' + Constants.JOB_ID + '='
+SQL_WHERE_JOB_STATUS_IS = ' WHERE ' + Constants.TABLE_JOBS + '.' + Constants.JOB_STATUS + '='
+SQL_WHERE_JOB_STATUS_NEW = ' WHERE ' + Constants.TABLE_JOBS + '.' + Constants.JOB_STATUS + '=' + str(Constants.JOB_STATUS_NEW)
+SQL_WHERE_JOB_STATUS_PROCESSING = ' WHERE ' + Constants.TABLE_JOBS + '.' + Constants.JOB_STATUS + '=' + str(Constants.JOB_STATUS_PROCESSING)
+SQL_WHERE_JOB_STATUS_COMPLETED = ' WHERE ' + Constants.TABLE_JOBS + '.' + Constants.JOB_STATUS + '>=' + str(Constants.JOB_STATUS_COMPLETED)
+SQL_WHERE_JOB_STATUS_NEW_OR_PROCESSING = ' WHERE ' + Constants.TABLE_JOBS + '.' + Constants.JOB_STATUS + '<=' + str(Constants.JOB_STATUS_PROCESSING)
+SQL_WHERE_UNPROCESSED_AND_PROCESSING_JOBS = SQL_WHERE_JOB_STATUS_NEW_OR_PROCESSING + SQL_ORDER_BY_JOB_STATUS_DESC
+
+TABLES = { Constants.TABLE_PROCESS_NODES:{ 'Name':Constants.TABLE_PROCESS_NODES,
+										   'Columns':[ {'Key':Constants.PROCESS_NODE_ID, 'Type':'INTEGER', 'Prop':'PRIMARY KEY'},
+													  {'Key':Constants.PROCESS_NODE_COMPUTERNAME, 'Type':'TEXT', 'Prop':''},
+													  {'Key':Constants.PROCESS_NODE_NUM_THREADS, 'Type':'INTEGER', 'Prop':''},
+													  {'Key':Constants.PROCESS_NODE_HOSTNAME, 'Type':'TEXT', 'Prop':''},
+													  {'Key':Constants.PROCESS_NODE_PORT, 'Type':'INTEGER', 'Prop':''},
+													  {'Key':Constants.PROCESS_NODE_STATUS, 'Type':'TEXT', 'Prop':''},
+													  {'Key':Constants.PROCESS_NODE_HEARTBEAT, 'Type':'TIMESTAMP', 'Prop':''},
+													  {'Key':Constants.PROCESS_NODE_PROCESS_CPU_PERCENT, 'Type':'REAL', 'Prop':''},
+													  {'Key':Constants.PROCESS_NODE_PROCESS_MEM_PERCENT, 'Type':'REAL', 'Prop':''},
+													  {'Key':Constants.PROCESS_NODE_SYSTEM_CPU_PERCENT, 'Type':'REAL', 'Prop':''},
+													  {'Key':Constants.PROCESS_NODE_SYSTEM_MEM_PERCENT, 'Type':'REAL', 'Prop':''},
+													  {'Key':Constants.PROCESS_NODE_SYSTEM_SWAP_PERCENT, 'Type':'REAL', 'Prop':''},
+													  {'Key':Constants.PROCESS_NODE_SUPPORTED_SOFTWARE, 'Type':'TEXT', 'Prop':''},
+													   ]
+		   								},
+			Constants.TABLE_JOBS:{ 'Name':Constants.TABLE_JOBS,
+									'Columns':[ {'Key':Constants.JOB_ID, 'Type':'INTEGER', 'Prop':'PRIMARY KEY'},
+									  {'Key':Constants.JOB_EXPERIMENT, 'Type':'TEXT', 'Prop':''},
+									  {'Key':Constants.JOB_DATA_PATH, 'Type':'TEXT', 'Prop':''},
+									  {'Key':Constants.JOB_VERSION, 'Type':'TEXT', 'Prop':''},
+									  {'Key':Constants.JOB_BEAM_LINE, 'Type':'TEXT', 'Prop':''},
+									  {'Key':Constants.JOB_DATASET_FILES_TO_PROC, 'Type':'TEXT', 'Prop':''},
+									  {'Key':Constants.JOB_PRIORITY, 'Type':'INTEGER', 'Prop':''},
+									  {'Key':Constants.JOB_STATUS, 'Type':'INTEGER', 'Prop':''},
+									  {'Key':Constants.JOB_START_PROC_TIME, 'Type':'TIMESTAMP', 'Prop':''},
+									  {'Key':Constants.JOB_FINISH_PROC_TIME, 'Type':'TIMESTAMP', 'Prop':''},
+									  {'Key':Constants.JOB_LOG_PATH, 'Type':'TEXT', 'Prop':''},
+									  {'Key':Constants.JOB_PROCESS_NODE_ID, 'Type':'INTEGER', 'Prop':''},
+									  {'Key':Constants.JOB_EMAILS, 'Type':'TEXT', 'Prop':''},
+									  {'Key':Constants.JOB_ARGS, 'Type':'TEXT', 'Prop':''} ]
+								   }
+		   }
+
+
+def Gen_Create_Table(table):
+	ret_str = 'CREATE TABLE IF NOT EXISTS '
+	ret_str += table['Name']
+	ret_str += '('
+	for col in table['Columns']:
+		ret_str += col['Key'] + ' ' + col['Type'] + ' ' + col['Prop'] + ', '
+	#  remove last ','
+	ret_str = ret_str[0:len(ret_str) - 2]
+	ret_str += ');'
+	return ret_str
+
+
+def Gen_Drop(table_name):
+	return 'DROP TABLE IF EXISTS ' + table_name
+
+
+def Gen_Insert_Into_Table(table, insert_dict):
+	ret_str = 'INSERT INTO '
+	ret_str += table['Name']
+	ret_str += '('
+	values_str = ' )VALUES( '
+	for col in table['Columns']:
+		if insert_dict.has_key(col['Key']):
+			ret_str += col['Key'] + ', '
+			if col['Type'] == 'TEXT' or col['Type'] == 'TIMESTAMP':
+				values_str += "'" + str(insert_dict[col['Key']]) + "', "
+			else:
+				values_str += str(insert_dict[col['Key']]) + ', '
+	#  remove last ','
+	ret_str = ret_str[0:len(ret_str) - 2]
+	values_str = values_str[0:len(values_str) - 2]
+	ret_str += values_str
+	ret_str += ');'
+	return ret_str
+
+
+def Gen_Update_Table(table, update_dict, by_statement):
+	ret_str = 'UPDATE '
+	ret_str += table['Name']
+	ret_str += ' SET '
+	cnt = 0
+	for col in table['Columns']:
+		if update_dict.has_key(col['Key']):
+			cnt += 1
+			if col['Type'] == 'TEXT' or col['Type'] == 'TIMESTAMP':
+				ret_str += col['Key'] + "='" + str(update_dict[col['Key']]) + "', "
+			else:
+				ret_str += col['Key'] + '=' + str(update_dict[col['Key']]) + ', '
+	#  remove last ','
+	if cnt > 0:
+		ret_str = ret_str[0:len(ret_str) - 2]
+	ret_str += ' WHERE ' + by_statement
+	return ret_str
+
+
+def Gen_Select_All_Cols(table):
+	node_idxs = {}
+	i = 0
+	ret_str = 'SELECT '
+	for col in table['Columns']:
+		node_idxs[i] = col
+		i += 1
+		ret_str += col['Key'] + ', '
+	#  remove last ','
+	ret_str = ret_str[0:len(ret_str) - 2]
+	ret_str += ' FROM '
+	ret_str += table['Name']
+	return ret_str, node_idxs
+
+
+def Gen_Select_Count_By_Id(table, key, value):
+	ret_str = 'SELECT Count('
+	ret_str += table['Name'] + '.' +str(key) + ')'
+	ret_str += ' FROM ' + table['Name'] + ' WHERE ' + table['Name'] + '.' + str(key) + '='
+	ret_str += "'" + str(value) + "'"
+	return ret_str
+
+
 
 class SQLiteDB:
+
 	def __init__(self, db_name='MapsPy.db'):
 		self.uri = db_name
 
 	def create_tables(self, drop=False):
 		con = sql.connect(self.uri)
 		cur = con.cursor()
-		if drop:
-			cur.executescript(DROP_ALL_TABLES_STR)
-		cur.execute(CREATE_PROCESS_NODES_TABLE_STR)
-		cur.execute(CREATE_JOBS_TABLE_STR)
-		cur.execute(CREATE_JOBS_XRF_ARGS_TABLE_STR)
-		cur.execute(CREATE_JOBS_PTY_ARGS_TABLE_STR)
+		for table in TABLES.itervalues():
+			if drop:
+				drop_str = Gen_Drop(table['Name'])
+				cur.executescript(drop_str)
+			create_str = Gen_Create_Table(table)
+			cur.execute(create_str)
 		con.commit()
 
 	def insert_process_node(self, proc_node_dict):
 		#first check if this process node exists
+		sql_statement = Gen_Select_Count_By_Id(TABLES[Constants.TABLE_PROCESS_NODES], Constants.PROCESS_NODE_COMPUTERNAME, proc_node_dict[Constants.PROCESS_NODE_COMPUTERNAME])
 		con = sql.connect(self.uri)
 		cur = con.cursor()
-		cur.execute(SELECT_PROCESS_NODE_BY_NAME, proc_node_dict)
+		cur.execute(sql_statement)
 		con.commit()
 		row = cur.fetchone()
-		if row == None:
+		if row[0] == 0:
 			print 'insert',proc_node_dict
-			cur.execute(INSERT_PROCESS_NODE, proc_node_dict)
+			insert_str = Gen_Insert_Into_Table(TABLES[Constants.TABLE_PROCESS_NODES], proc_node_dict)
+			cur.execute(insert_str, proc_node_dict)
 		else:
 			print 'update', proc_node_dict
-			cur.execute(UPDATE_PROCESS_NODE_BY_NAME, proc_node_dict)
+			str_by_statement = Constants.PROCESS_NODE_COMPUTERNAME + '=:' + Constants.PROCESS_NODE_COMPUTERNAME
+			update_str = Gen_Update_Table(TABLES[Constants.TABLE_PROCESS_NODES], proc_node_dict, str_by_statement)
+			cur.execute(update_str, proc_node_dict)
 		con.commit()
 
 	def insert_job(self, job_dict):
 		print 'insert job', job_dict
-		INSERT_STR = ''
-		if 'Experiment' in job_dict:
-			if job_dict['Experiment'] == 'XRF':
-				INSERT_STR = INSERT_XRF_JOB
-			elif job_dict['Experiment'] == 'PTY':
-				INSERT_STR = INSERT_PTY_JOB
+		if Constants.JOB_ARGS in job_dict:
+			#jenc = json.JSONEncoder()
+			#job_dict[Constants.JOB_ARGS] = jenc.encode(job_dict[Constants.JOB_ARGS])
+			if type(job_dict[Constants.JOB_ARGS]) == type({}):
+				job_dict[Constants.JOB_ARGS] = json.dumps(job_dict[Constants.JOB_ARGS])
+		sql_statement = Gen_Insert_Into_Table(TABLES[Constants.TABLE_JOBS], job_dict)
 		con = sql.connect(self.uri)
 		cur = con.cursor()
-		cur.execute(INSERT_JOB, job_dict)
-		cur.execute(INSERT_STR, job_dict)
+		cur.execute(sql_statement)
 		con.commit()
 		return cur.lastrowid
 
-	def insert_job_with_id(self, job_dict):
-		print 'insert job with id', job_dict
-		INSERT_STR = ''
-		if 'Experiment' in job_dict:
-			if job_dict['Experiment'] == 'XRF':
-				INSERT_STR = INSERT_XRF_JOB_WTIH_ID
-			elif job_dict['Experiment'] == 'PTY':
-				INSERT_STR = INSERT_PTY_JOB_WITH_ID
-		con = sql.connect(self.uri)
-		cur = con.cursor()
-		cur.execute(INSERT_JOB_WTIH_ID, job_dict)
-		cur.execute(INSERT_STR, job_dict)
-		con.commit()
-
 	def get_process_node_by_name(self, proc_node_name):
-		nodes = self._get_proc_node(SELECT_PROCESS_NODE_BY_NAME, {'ComputerName':proc_node_name})
+		where_statement = ' WHERE ' + Constants.PROCESS_NODE_COMPUTERNAME + '="' + proc_node_name + '"'
+		nodes = self._get_where(TABLES[Constants.TABLE_PROCESS_NODES], where_statement)
 		if len(nodes) > 0:
 			return nodes[0]
 		return None
 
 	def get_process_node_by_id(self, proc_node_id):
-		nodes = self._get_proc_node(SELECT_PROCESS_NODE_BY_ID, {'Id':proc_node_id})
+		where_statement = ' WHERE ' + Constants.PROCESS_NODE_ID + '=' + str(proc_node_id)
+		nodes = self._get_where(TABLES[Constants.TABLE_PROCESS_NODES], where_statement)
 		if len(nodes) > 0:
 			return nodes[0]
 		return None
 
 	def get_all_process_nodes(self):
-		return self._get_proc_node(SELECT_ALL_PROCESS_NODES)
+		return self._get_where(TABLES[Constants.TABLE_PROCESS_NODES], ' ')
 
-	def _get_proc_node(self, sql_statement, opt_dict=None):
+	def _get_where(self, table, where_statement, opt_dict=None):
+		sql_statement, node_idxs = Gen_Select_All_Cols(table)
+		sql_statement += ' ' + where_statement
 		con = sql.connect(self.uri)
 		cur = con.cursor()
 		if opt_dict == None:
@@ -164,62 +243,56 @@ class SQLiteDB:
 		con.commit()
 		all_nodes = cur.fetchall()
 		ret_list = []
-		#SELECT_ALL_PROCESS_NODES = 'SELECT ComputerName, NumThreads, Hostname, Port, Status, Heartbeat FROM ProcessNodes'
 		for node in all_nodes:
-			ret_list += [ {'DT_RowId':'row_'+str(node[0]), 'Id':node[0], 'ComputerName':node[1], 'NumThreads':node[2], 'Hostname':node[3], 'Port':node[4], 'Status': node[5], 'Heartbeat': node[6], 'ProcessCpuPercent':node[7], 'ProcessMemPercent':node[8], 'SystemCpuPercent':node[9], 'SystemMemPercent': node[10], 'SystemSwapPercent':node[11] } ]
-		return ret_list
-
-
-	def _get_jobs_(self, sql_statement, opt_dict=None):
-		con = sql.connect(self.uri)
-		cur = con.cursor()
-		if opt_dict == None:
-			cur.execute(sql_statement)
-		else:
-			cur.execute(sql_statement, opt_dict)
-		con.commit()
-		all_nodes = cur.fetchall()
-		ret_list = []
-		#SELECT_ALL_JOBS = 'SELECT Id, DataPath, ProcMask, Version, DetectorElements, MaxFilesToProc, MaxLinesToProc, QuickAndDirty, XRF_Bin, NNLS, XANES_Scan, DetectorToStartWith, BeamLine, Standards, DatasetFilesToProc, Status, StartProcTime, FinishProcTime FROM Jobs'
-		for node in all_nodes:
-			if node[1] == 'XRF':
-				ret_list += [ {'DT_RowId':node[0],  'Id':int(node[0]), 'Experiment':node[1], 'BeamLine':node[2], 'Version': node[3], 'DataPath':node[4], 'DatasetFilesToProc': node[5], 'Priority':int(node[6]), 'Status':int(node[7]), 'StartProcTime':node[8], 'FinishProcTime':node[9], 'Log_Path':node[10], 'Process_Node_Id':node[11], 'Emails':node[12], 'ProcMask':int(node[13]), 'DetectorElements':int(node[14]), 'MaxFilesToProc':int(node[15]), 'MaxLinesToProc':int(node[16]), 'QuickAndDirty':int(node[17]), 'XRF_Bin':int(node[18]), 'NNLS':int(node[19]), 'XANES_Scan':(node[20]), 'DetectorToStartWith':int(node[21]), 'Standards':node[22], 'Is_Live_Job':node[23]  } ]
-			elif node[1] == 'PTY':
-				ret_list += [ {'DT_RowId':node[0],  'Id':int(node[0]), 'Experiment':node[1], 'BeamLine':node[2], 'Version': node[3], 'DataPath':node[4], 'DatasetFilesToProc': node[5], 'Priority':int(node[6]), 'Status':int(node[7]), 'StartProcTime':node[8], 'FinishProcTime':node[9], 'Log_Path':node[10], 'Process_Node_Id':node[11], 'Emails':node[12], 'CalcSTXM':int(node[24]), 'AlgorithmEPIE':int(node[25]), 'AlgorithmDM':int(node[26]), 'DetectorDistance':int(node[27]), 'PixelSize':int(node[28]), 'CenterY':int(node[29]), 'CenterX':int(node[30]), 'DiffractionSize':int(node[31]), 'Rotation':int(node[32]), 'GPU_ID':int(node[33]), 'ProbeSize':int(node[34]), 'ProbeModes':int(node[35]), 'Threshold':int(node[36]), 'Iterations':int(node[37])  } ]
+			row = {}
+			for i in range(len(node)):
+				key = node_idxs[i]['Key']
+				row[key] = node[i]
+			row['DT_RowId'] = row['Id']
+			if table['Name'] == Constants.TABLE_JOBS and not row[Constants.JOB_ARGS] == None:
+				#jdec = json.JSONDecoder()
+				#a = jdec.decode(row[Constants.JOB_ARGS])
+				#a = json.loads(row[Constants.JOB_ARGS])
+				row[Constants.JOB_ARGS] = json.loads(row[Constants.JOB_ARGS])
+			ret_list += [row]
 		return ret_list
 
 	def get_all_jobs(self):
-		return self._get_jobs_(SELECT_ALL_JOBS)
+		return self._get_where(TABLES[Constants.TABLE_JOBS], ' ')
 
 	def get_all_unprocessed_jobs(self):
-		return self._get_jobs_(SELECT_ALL_UNPROCESSED_JOBS)
+		return self._get_where(TABLES[Constants.TABLE_JOBS], SQL_WHERE_JOB_STATUS_NEW)
 
 	def get_all_unprocessed_jobs_for_pn_id(self, pn_id):
-		return self._get_jobs_(SELECT_ALL_UNPROCESSED_JOBS_FOR_PN_ID, {'Process_Node_Id': pn_id})
+		where_clause = SQL_WHERE_JOB_STATUS_NEW_OR_PROCESSING + ' AND ' + Constants.TABLE_JOBS + '.' + Constants.JOB_PROCESS_NODE_ID + '=' + str(pn_id) + SQL_ORDER_BY_JOB_PRIORITY_ASC
+		return self._get_where(TABLES[Constants.TABLE_JOBS], where_clause)
 
 	def get_all_unprocessed_jobs_for_any_node(self):
-		return self._get_jobs_(SELECT_ALL_UNPROCESSED_JOBS_ANY_NODE)
+		where_clause = SQL_WHERE_JOB_STATUS_NEW + ' AND ' + SQL_UNASSIGNED_JOB
+		return self._get_where(TABLES[Constants.TABLE_JOBS], where_clause)
 
 	def get_all_unprocessed_and_processing_jobs(self):
-		return self._get_jobs_(SELECT_ALL_UNPROCESSED_AND_PROCESSING_JOBS)
+		return self._get_where(TABLES[Constants.TABLE_JOBS], SQL_WHERE_UNPROCESSED_AND_PROCESSING_JOBS)
 
 	def get_all_processing_jobs(self):
-		return self._get_jobs_(SELECT_ALL_PROCESSING_JOBS)
+		return self._get_where(TABLES[Constants.TABLE_JOBS], SQL_WHERE_JOB_STATUS_PROCESSING)
 
 	def get_all_finished_jobs(self, limit=None):
-		if limit == None:
-			return self._get_jobs_(SELECT_ALL_FINISHED_JOBS)
-		else:
-			return self._get_jobs_(SELECT_ALL_FINISHED_JOBS_LIMIT + str(limit))
+		where_clause = SQL_WHERE_JOB_STATUS_COMPLETED + SQL_ORDER_BY_JOB_ID_DESC
+		if not limit == None:
+			where_clause + ' LIMIT ' + str(limit)
+		return self._get_where(TABLES[Constants.TABLE_JOBS], where_clause)
 
 	def get_job(self, job_id):
-		jobs = self._get_jobs_(SELECT_JOB_BY_ID, {'Id': int(job_id)})
+		where_clause = SQL_WHERE_JOB_ID_IS + str(job_id)
+		jobs = self._get_where(TABLES[Constants.TABLE_JOBS], where_clause)
 		if len(jobs) > 0:
 			return jobs[0]
 		return None
 
 	def get_jobs_by_status(self, status):
-		jobs = self._get_jobs_(SELECT_JOBS_BY_STATUS, {'Status':status})
+		where_clause = SQL_WHERE_JOB_STATUS_IS + str(status)
+		jobs = self._get_where(TABLES[Constants.TABLE_JOBS], where_clause)
 		if len(jobs) > 0:
 			return jobs[0]
 		return None
@@ -227,19 +300,30 @@ class SQLiteDB:
 	def update_job(self, job_dict):
 		try:
 			print 'updating job', job_dict
+			saved_args = {}
+			if Constants.JOB_ARGS in job_dict:
+				saved_args = job_dict[Constants.JOB_ARGS]
+				if type(job_dict[Constants.JOB_ARGS]) == type({}):
+					job_dict[Constants.JOB_ARGS] = json.dumps(job_dict[Constants.JOB_ARGS])
+			where_clause = Constants.JOB_ID + '=' + str(job_dict[Constants.JOB_ID])
+			sql_statement = Gen_Update_Table(TABLES[Constants.TABLE_JOBS], job_dict, where_clause)
 			con = sql.connect(self.uri)
 			cur = con.cursor()
-			cur.execute(UPDATE_JOB_BY_ID, job_dict)
+			cur.execute(sql_statement)
 			con.commit()
+			if Constants.JOB_ARGS in job_dict:
+				job_dict[Constants.JOB_ARGS] = saved_args
 			return True
 		except:
 			return False
 
 	def update_job_pn(self, job_id, pn_id):
 		try:
+			where_clause = Constants.JOB_ID + '=' + str(job_id)
+			sql_statement = Gen_Update_Table(TABLES[Constants.TABLE_JOBS], {Constants.JOB_PROCESS_NODE_ID:pn_id}, where_clause)
 			con = sql.connect(self.uri)
 			cur = con.cursor()
-			cur.execute(UPDATE_JOB_PN, {'Process_Node_Id':pn_id, 'Id':job_id})
+			cur.execute(sql_statement)
 			con.commit()
 			return True
 		except:
@@ -249,7 +333,7 @@ class SQLiteDB:
 		try:
 			con = sql.connect(self.uri)
 			cur = con.cursor()
-			cur.execute(DELETE_JOB_BY_ID, {'Id': int(job_id)})
+			cur.execute(DELETE_JOB_BY_ID, {Constants.JOB_ID: int(job_id)})
 			con.commit()
 			return True
 		except:
@@ -259,42 +343,71 @@ class SQLiteDB:
 		pass
 
 	def reset_process_nodes_status(self):
+		update_dict = {Constants.PROCESS_NODE_STATUS:Constants.PROCESS_NODE_STATUS_OFFLINE,
+					 Constants.PROCESS_NODE_PROCESS_CPU_PERCENT:0.0,
+					 Constants.PROCESS_NODE_PROCESS_MEM_PERCENT:0.0,
+					 Constants.PROCESS_NODE_SYSTEM_CPU_PERCENT:0.0,
+					 Constants.PROCESS_NODE_SYSTEM_MEM_PERCENT:0.0,
+					 Constants.PROCESS_NODE_SYSTEM_SWAP_PERCENT:0.0
+					 }
+		where_clause = Constants.PROCESS_NODE_ID + '>0;'
+		sql_statement = Gen_Update_Table(TABLES[Constants.TABLE_PROCESS_NODES], update_dict, where_clause)
 		con = sql.connect(self.uri)
 		cur = con.cursor()
-		cur.execute(RESET_PN_STATUS)
+		cur.execute(sql_statement)
 		con.commit()
 
 if __name__ == '__main__':
 	from datetime import datetime
 	proc_node = { 'ComputerName':'Comp1', 'NumThreads':1, 'Hostname':'127.0.0.2', 'Port':8080, 'Status':'idle', 'Heartbeat':datetime.now(), 'ProcessCpuPercent':0.0, 'ProcessMemPercent':1.0, 'SystemCpuPercent':2.0, 'SystemMemPercent':10.0, 'SystemSwapPercent':0.0}
 	proc_node2 = { 'ComputerName':'Comp2', 'NumThreads':2, 'Hostname':'127.0.0.3', 'Port':8080, 'Status':'idle', 'Heartbeat':datetime.now(), 'ProcessCpuPercent':0.0, 'ProcessMemPercent':1.0, 'SystemCpuPercent':2.0, 'SystemMemPercent':10.0, 'SystemSwapPercent':0.0}
-	xrf_job1 = { 'DataPath':'/data/mapspy1/', 'Experiment':'XRF', 'ProcMask':1, 'Version':'1.00', 'DetectorElements':1, 'MaxFilesToProc':1, 'MaxLinesToProc':11, 'QuickAndDirty':0, 'XRF_Bin':0, 'NNLS':0, 'XANES_Scan':0, 'DetectorToStartWith':0, 'BeamLine':'2-ID-E', 'Standards':'', 'DatasetFilesToProc': 'all', 'Priority':5, 'Status':0, 'StartProcTime':datetime.ctime(datetime.now()), 'FinishProcTime':0, 'Log_Path': '', 'Process_Node_Id': -1, 'Emails':'', 'Is_Live_Job':0 }
-	xrf_job2 = { 'DataPath':'/data/mapspy2/', 'Experiment':'XRF', 'ProcMask':4, 'Version':'1.00', 'DetectorElements':1, 'MaxFilesToProc':1, 'MaxLinesToProc':11, 'QuickAndDirty':0, 'XRF_Bin':0, 'NNLS':0, 'XANES_Scan':0, 'DetectorToStartWith':0, 'BeamLine':'2-ID-E', 'Standards':'', 'DatasetFilesToProc': 'all', 'Priority':10, 'Status':0, 'StartProcTime':datetime.ctime(datetime.now()), 'FinishProcTime':0, 'Log_Path': '', 'Process_Node_Id': -1, 'Emails':'', 'Is_Live_Job':0 }
-	xrf_job3 = { 'DataPath':'/data/mapspy3/', 'Experiment':'XRF', 'ProcMask':8, 'Version':'1.00', 'DetectorElements':1, 'MaxFilesToProc':1, 'MaxLinesToProc':11, 'QuickAndDirty':0, 'XRF_Bin':0, 'NNLS':0, 'XANES_Scan':0, 'DetectorToStartWith':0, 'BeamLine':'2-ID-E', 'Standards':'', 'DatasetFilesToProc': 'all', 'Priority':7, 'Status':0, 'StartProcTime':datetime.ctime(datetime.now()), 'FinishProcTime':0, 'Log_Path': '', 'Process_Node_Id': -1, 'Emails':'', 'Is_Live_Job':1 }
-	pty_job1 = { 'DataPath':'/data/pty1/', 'Version':'1.00', 'Experiment':'PTY', 'BeamLine':'2-ID-D', 'DatasetFilesToProc': 'all', 'Priority':7, 'Status':0, 'StartProcTime':datetime.ctime(datetime.now()), 'FinishProcTime':0, 'Log_Path': '', 'Process_Node_Id': -1, 'Emails':'', 'CalcSTXM':0, 'AlgorithmEPIE':1, 'AlgorithmDM':0, 'DetectorDistance':2, 'PixelSize':3, 'CenterY':4, 'CenterX':5, 'DiffractionSize':6, 'Rotation':0, 'GPU_ID':1, 'ProbeSize':7, 'ProbeModes':8, 'Threshold':9, 'Iterations':10 }
+	xrf_job1 = { 'DataPath':'/data/mapspy1/', 'Experiment':'XRF', 'Version':'9.00', 'BeamLine':'2-ID-E', 'DatasetFilesToProc':'all', 'Priority':5, 'Status':0, 'StartProcTime':datetime.ctime(datetime.now()), 'FinishProcTime':0, 'Log_Path': '', 'Process_Node_Id': -1, 'Emails':'', 'Args':{'ProcMask':1, 'DetectorElements':1, 'MaxFilesToProc':1, 'MaxLinesToProc':11, 'QuickAndDirty':0, 'XRF_Bin':0, 'NNLS':0, 'XANES_Scan':0, 'DetectorToStartWith':0, 'Is_Live_Job':0, 'Standards':''} }
+	xrf_job2 = { 'DataPath':'/data/mapspy2/', 'Experiment':'XRF', 'Version':'9.00', 'BeamLine':'2-ID-E', 'DatasetFilesToProc':'all', 'Priority':5, 'Status':1, 'StartProcTime':datetime.ctime(datetime.now()), 'FinishProcTime':0, 'Log_Path': '', 'Process_Node_Id': -1, 'Emails':'', 'Args':{'ProcMask':4, 'DetectorElements':1, 'MaxFilesToProc':1, 'MaxLinesToProc':11, 'QuickAndDirty':0, 'XRF_Bin':0, 'NNLS':0, 'XANES_Scan':0, 'DetectorToStartWith':0, 'Is_Live_Job':0, 'Standards':''} }
+	xrf_job3 = { 'DataPath':'/data/mapspy3/', 'Experiment':'XRF', 'Version':'9.00', 'BeamLine':'2-ID-E', 'DatasetFilesToProc':'all', 'Priority':5, 'Status':2, 'StartProcTime':datetime.ctime(datetime.now()), 'FinishProcTime':0, 'Log_Path': '', 'Process_Node_Id': -1, 'Emails':'', 'Args':{'ProcMask':8, 'DetectorElements':1, 'MaxFilesToProc':1, 'MaxLinesToProc':11, 'QuickAndDirty':0, 'XRF_Bin':0, 'NNLS':0, 'XANES_Scan':0, 'DetectorToStartWith':0, 'Is_Live_Job':0, 'Standards':''} }
+	pty_job1 = { 'DataPath':'/data/pty1/', 'Experiment':'PTY', 'Version':'1.00', 'BeamLine':'2-ID-D', 'DatasetFilesToProc': 'all', 'Priority':7, 'Status':0, 'StartProcTime':datetime.ctime(datetime.now()), 'FinishProcTime':0, 'Log_Path': '', 'Process_Node_Id': -1, 'Emails':'', 'Args':{'CalcSTXM':0, 'AlgorithmEPIE':1, 'AlgorithmDM':0, 'DetectorDistance':2, 'PixelSize':3, 'CenterY':4, 'CenterX':5, 'DiffractionSize':6, 'Rotation':0, 'GPU_ID':1, 'ProbeSize':7, 'ProbeModes':8, 'Threshold':9, 'Iterations':10 } }
 	db = SQLiteDB('TestDatabase.db')
 	db.create_tables(True)
 	db.insert_process_node(proc_node)
+	proc_node = db.get_process_node_by_name(proc_node['ComputerName'])
 	db.insert_process_node(proc_node2)
+	proc_node2 = db.get_process_node_by_name(proc_node2['ComputerName'])
+	print db.get_process_node_by_name(proc_node['ComputerName'])
+	print ' '
+	print db.get_process_node_by_id(proc_node2['Id'])
+	print ' '
 	proc_node['Status'] = 'Offline'
 	proc_node['Heartbeat'] = datetime.now()
 	db.insert_process_node(proc_node)
-	import json
-	result = db.get_all_process_nodes()
 	print ' '
-	d = datetime.strptime(result[0]['Heartbeat'], '%Y-%m-%d %H:%M:%S.%f')
-	print type(d), d
-	print ' '
-	jenc = json.JSONEncoder()
-	print jenc.encode(result)
+	print db.get_process_node_by_id(proc_node['Id'])
+	db.reset_process_nodes_status()
+	print db.get_all_process_nodes()
+	print '-------------------------------'
 	#add job
 	xrf_job1['Id'] = db.insert_job(xrf_job1)
 	pty_job1['Id'] = db.insert_job(pty_job1)
 	xrf_job2['Id'] = db.insert_job(xrf_job2)
+	print db.get_all_jobs()
+	db.update_job_pn(xrf_job1['Id'], proc_node['Id'])
+	db.update_job_pn(xrf_job2['Id'], proc_node2['Id'])
+	print ' '
 	print db.get_jobs_by_status(0)
+	print ' '
 	xrf_job3['Id'] = 10
-	db.insert_job_with_id(xrf_job3)
+	db.insert_job(xrf_job3)
 	print db.get_jobs_by_status(0)
 	print ' '
 	print db.get_all_jobs()
-	#print db.get_all_jobs()
+	print ' '
+	xrf_job3['Status'] = 0
+	db.update_job(xrf_job3)
+	print db.get_all_unprocessed_jobs()
+	db.delete_job_by_id(xrf_job2['Id'])
+	db.delete_job_by_id(xrf_job3['Id'])
+	print ' '
+	print db.get_all_jobs()
+	print db.get_job(xrf_job1['Id'])
+	print db.get_all_unprocessed_jobs_for_pn_id(proc_node['Id'])
+	print db.get_all_unprocessed_jobs_for_any_node()
+	print db.get_all_unprocessed_and_processing_jobs()
+	print db.get_all_processing_jobs()

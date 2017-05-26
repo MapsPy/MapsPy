@@ -45,6 +45,10 @@ PROCESS_NODE_STATUS_PROCESSING_IDL = 'Processing IDL'
 PROCESS_NODE_STATUS_OFFLINE = 'Offline'
 PROCESS_NODE_STATUS_BOOT_UP = 'BootUp'
 
+# ===================================== Table Names =======================================
+TABLE_PROCESS_NODES = 'ProcessNodes'
+TABLE_JOBS = 'Jobs'
+
 # ===================================== Process Node Keys =======================================
 PROCESS_NODE_ID = 'Id'  # INTEGER
 PROCESS_NODE_COMPUTERNAME = 'ComputerName'  # TEXT
@@ -58,23 +62,14 @@ PROCESS_NODE_PROCESS_MEM_PERCENT = 'ProcessMemPercent'  # REAL
 PROCESS_NODE_SYSTEM_CPU_PERCENT = 'SystemCpuPercent'  # REAL
 PROCESS_NODE_SYSTEM_MEM_PERCENT = 'SystemMemPercent'  # REAL
 PROCESS_NODE_SYSTEM_SWAP_PERCENT = 'SystemSwapPercent'  # REAL
+PROCESS_NODE_SUPPORTED_SOFTWARE = 'SupportedSoftware'  # REAL
 
 # ===================================== Job Keys =======================================
 JOB_ID = 'Id'  # INTEGER
-JOB_DATA_PATH = 'DataPath'  # TEXT
-JOB_PROC_MASK = 'ProcMask'  # INTEGER
-JOB_VERSION = 'Version'  # TEXT
-JOB_DETECTOR_ELEMENTS = 'DetectorElements'  # INTEGER
-JOB_MAX_FILES_TO_PROC = 'MaxFilesToProc'  # INTEGER
-JOB_MAX_LINES_TO_PROC = 'MaxLinesToProc'  # INTEGER
-JOB_QUICK_AND_DIRTY = 'QuickAndDirty'  # INTEGER
-JOB_XRF_BIN = 'XRF_Bin'  # INTEGER
-JOB_NNLS = 'NNLS'  # INTEGER
-JOB_XANES_SCAN = 'XANES_Scan'  # INTEGER
-JOB_DETECTOR_TO_START_WITH = 'DetectorToStartWith'  # INTEGER
-JOB_BEAM_LINE = 'BeamLine'  # TEXT
 JOB_EXPERIMENT = 'Experiment'  # TEXT
-JOB_STANDARDS = 'Standards'  # TEXT
+JOB_DATA_PATH = 'DataPath'  # TEXT
+JOB_VERSION = 'Version'  # TEXT
+JOB_BEAM_LINE = 'BeamLine'  # TEXT
 JOB_DATASET_FILES_TO_PROC = 'DatasetFilesToProc'  # TEXT
 JOB_PRIORITY = 'Priority'  # INTEGER
 JOB_STATUS = 'Status'  # INTEGER
@@ -82,11 +77,8 @@ JOB_START_PROC_TIME = 'StartProcTime'  # TIMESTAMP
 JOB_FINISH_PROC_TIME = 'FinishProcTime'  # TIMESTAMP
 JOB_LOG_PATH = 'Log_Path'  # TEXT
 JOB_PROCESS_NODE_ID = 'Process_Node_Id'  # INTEGER
-JOB_IS_LIVE_JOB = 'Is_Live_Job'  # INTEGER
-JOB_EMAILS = 'Emails' # TEXT comma separated
-
-JOB_EXPERIMENT_PTY = 'PTY'
-JOB_EXPERIMENT_XRF = 'XRF'
+JOB_EMAILS = 'Emails'  # TEXT comma separated
+JOB_ARGS = 'Args'  # DICTIONARY
 
 # ===================================== General Keys =======================================
 STR_JOB_LOG_DIR_NAME = 'job_logs'
