@@ -987,6 +987,36 @@ class h5:
 				dataset_id = excGrp[entryname]
 				dataset_id[...] = data
 
+			entryname = 'extra_strings'
+			comment = 'extra pv name and values as strings'
+			data = XRFmaps_info.extra_str_arr
+			if entryname not in excGrp:
+				ds_data = excGrp.create_dataset(entryname, data=data)
+				ds_data.attrs['comments'] = comment
+			else:
+				dataset_id = excGrp[entryname]
+				dataset_id[...] = data
+
+			entryname = 'extra_pvs_as_csv'
+			comment = 'extra pvs strings as comma separated values'
+			data = [word.replace(';', ',') for word in XRFmaps_info.extra_str_arr]
+			if entryname not in excGrp:
+				ds_data = excGrp.create_dataset(entryname, data=data)
+				ds_data.attrs['comments'] = comment
+			else:
+				dataset_id = excGrp[entryname]
+				dataset_id[...] = data
+
+			entryname = 'extra_pvs'
+			comment = 'extra pvs'
+			data = [word.split(';')[0] for word in XRFmaps_info.extra_str_arr]
+			if entryname not in excGrp:
+				ds_data = excGrp.create_dataset(entryname, data=data)
+				ds_data.attrs['comments'] = comment
+			else:
+				dataset_id = excGrp[entryname]
+				dataset_id[...] = data
+
 			entryname = 'images_units'
 			comment = 'units of the xrf and scaler images'
 			data = units
