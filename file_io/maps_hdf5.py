@@ -573,6 +573,26 @@ class h5:
 				ds_data = mapsGrp.create_dataset(entryname, data = data) 
 			else:
 				ds_data = mapsGrp.create_dataset(entryname, data = ds_data)  
+		else:
+			entryname = 'extra_pvs_as_csv'
+			comment = 'extra pvs strings as comma separated values'
+			data = [word.replace(';', ',') for word in thisdata.extra_str_arr]
+			if entryname not in mapsGrp:
+				ds_data = mapsGrp.create_dataset(entryname, data=data)
+				ds_data.attrs['comments'] = comment
+			else:
+				dataset_id = mapsGrp[entryname]
+				dataset_id[...] = data
+
+			entryname = 'extra_pvs'
+			comment = 'extra pvs'
+			data = [word.split(';')[0] for word in thisdata.extra_str_arr]
+			if entryname not in mapsGrp:
+				ds_data = mapsGrp.create_dataset(entryname, data=data)
+				ds_data.attrs['comments'] = comment
+			else:
+				dataset_id = mapsGrp[entryname]
+				dataset_id[...] = data
 
 		f.close()
 		return
@@ -848,15 +868,17 @@ class h5:
 
 #-----------------------------------------------------------------------------	 
 	def add_exchange(self, main, make_maps_conf):
-		
 
-		files = os.listdir(main['XRFmaps_dir'])
 		imgdat_filenames = []
 		extension = '.h5'
-		for f in files:
-			if extension in f.lower():
-				imgdat_filenames.append(f)	  
-				
+		if main['dataset_files_to_proc'][0] == 'all':
+			files = os.listdir(main['XRFmaps_dir'])
+			for f in files:
+				if extension in f.lower():
+					imgdat_filenames.append(f)
+		else:
+			imgdat_filenames = [mdafile.replace('.mda', '.h5') for mdafile in main['dataset_files_to_proc']]
+
 
 		gzip = 7
 
