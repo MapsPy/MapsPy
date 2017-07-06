@@ -1382,7 +1382,7 @@ class analyze:
 			fxt = 0
 
 			xy = 2j * np.math.pi * (fx + 1j * fy)
-			xy[(nx - 1) / 2, (ny - 1) / 2] = 1  # to avoid 0/0 error
+			xy[int((nx - 1) / 2), int((ny - 1) / 2)] = 1  # to avoid 0/0 error
 			xy = np.fft.fftshift(xy)
 
 			Fdpc = np.fft.fft2(dpc)
