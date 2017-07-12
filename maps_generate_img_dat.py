@@ -1796,7 +1796,7 @@ class analyze:
 					avg_XRFmaps_info.max_chan_spec[:, :] = avg_XRFmaps_info.max_chan_spec[:, :] / added_number_detectors
 					avg_XRFmaps_info.raw_spec[:, :] = avg_XRFmaps_info.raw_spec[:, :] / added_number_detectors
 
-					h5p.write_hdf5(avg_XRFmaps_info, os.path.join(self.main_dict['XRFmaps_dir'], imgdat_filenames[n_filenumber] + '.h5'), avg_mca_arr, energy_channels, extra_pv=extra_pv)
+					h5p.write_hdf5(avg_XRFmaps_info, os.path.join(self.main_dict['XRFmaps_dir'], imgdat_filenames[n_filenumber] + '.h5'), avg_mca_arr, energy_channels, extra_pv=XRFmaps_info.extra_pv, extra_pv_order=XRFmaps_info.extra_pv_as_csv)
 			except:
 				self.logger.exception('exception occured')
 		return
