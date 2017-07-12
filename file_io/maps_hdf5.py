@@ -548,51 +548,40 @@ class h5:
 		data = thisdata.make_maps_conf.fit_t_GE
 		ds_data = mmcGrp.create_dataset(entryname, data = data)
 
-		if extra_pv: 
-			entryname = 'extra_pvs'
-			comment = 'additional process variables saved in the original dataset'
-			data = []
-			#self.logger.debug('extra_pv: %s', extra_pv)
-			if extra_pv_order:
-				for k in extra_pv_order:
-					v = extra_pv[k]
-					data.append([k, str(v[2]), v[0], v[1]])				   
-			else:
-				for k in sorted(extra_pv.iterkeys()):
-					v = extra_pv[k]
-					data.append([k, str(v[2]), v[0], v[1]])
-			ds_data = mapsGrp.create_dataset(entryname, data = np.transpose(data))
-
-			entryname = 'extra_pvs_as_csv'
-			comment = 'additional process variables saved in the original dataset, name and value fields reported as comma seperated values'
-			if extra_pv_order:
+		if not extra_pv == None:
+			if type(extra_pv) == dict:
+				entryname = 'extra_pvs'
+				comment = 'additional process variables saved in the original dataset'
 				data = []
-				for k in extra_pv_order:
-					v = extra_pv[k]
-					data.append(k + ', '+ str(v[2]))
-				ds_data = mapsGrp.create_dataset(entryname, data = data) 
-			else:
-				ds_data = mapsGrp.create_dataset(entryname, data = ds_data)  
-		else:
-			entryname = 'extra_pvs_as_csv'
-			comment = 'extra pvs strings as comma separated values'
-			data = [word.replace(';', ',') for word in thisdata.extra_str_arr]
-			if entryname not in mapsGrp:
-				ds_data = mapsGrp.create_dataset(entryname, data=data)
-				ds_data.attrs['comments'] = comment
-			else:
-				dataset_id = mapsGrp[entryname]
-				dataset_id[...] = data
+				#self.logger.debug('extra_pv: %s', extra_pv)
+				if extra_pv_order:
+					for k in extra_pv_order:
+						v = extra_pv[k]
+						data.append([k, str(v[2]), v[0], v[1]])
+				else:
+					for k in sorted(extra_pv.iterkeys()):
+						v = extra_pv[k]
+						data.append([k, str(v[2]), v[0], v[1]])
+				ds_data = mapsGrp.create_dataset(entryname, data = np.transpose(data))
 
-			entryname = 'extra_pvs'
-			comment = 'extra pvs'
-			data = [word.split(';')[0] for word in thisdata.extra_str_arr]
-			if entryname not in mapsGrp:
-				ds_data = mapsGrp.create_dataset(entryname, data=data)
-				ds_data.attrs['comments'] = comment
+				entryname = 'extra_pvs_as_csv'
+				comment = 'additional process variables saved in the original dataset, name and value fields reported as comma seperated values'
+				if extra_pv_order:
+					data = []
+					for k in extra_pv_order:
+						v = extra_pv[k]
+						data.append(k + ', '+ str(v[2]))
+					ds_data = mapsGrp.create_dataset(entryname, data = data)
+				else:
+					ds_data = mapsGrp.create_dataset(entryname, data = ds_data)
 			else:
-				dataset_id = mapsGrp[entryname]
-				dataset_id[...] = data
+				entryname = 'extra_pvs'
+				comment = 'additional process variables saved in the original dataset'
+				ds_data = mapsGrp.create_dataset(entryname, data=extra_pv)
+				if not extra_pv_order == None:
+					entryname = 'extra_pvs_as_csv'
+					comment = 'additional process variables saved in the original dataset, name and value fields reported as comma seperated values'
+					ds_data = mapsGrp.create_dataset(entryname, data=extra_pv_order)
 
 		f.close()
 		return
@@ -827,6 +816,21 @@ class h5:
 		else:
 			self.logger.warning('could not read '+dset_name+' in file '+sfile)
 
+		dset_name = 'extra_pvs'
+		this_data, valid_read = self.read_hdf5_core(maps_group_id, dset_name)
+		if valid_read:
+			XRFmaps_info.extra_pv = this_data[...]
+		else:
+			self.logger.warning('could not read '+dset_name+' in file '+sfile)
+
+		dset_name = 'extra_pvs_as_csv'
+		this_data, valid_read = self.read_hdf5_core(maps_group_id, dset_name)
+		if valid_read:
+			XRFmaps_info.extra_pv_as_csv = this_data[...]
+		else:
+			self.logger.warning('could not read '+dset_name+' in file '+sfile)
+
+
 		XRFmaps_info.img_type = 7
 		
 		f.close()
@@ -870,15 +874,14 @@ class h5:
 	def add_exchange(self, main, make_maps_conf):
 
 		imgdat_filenames = []
-		extension = '.h5'
 		if main['dataset_files_to_proc'][0] == 'all':
 			files = os.listdir(main['XRFmaps_dir'])
+			extension = '.h5'
 			for f in files:
 				if extension in f.lower():
 					imgdat_filenames.append(f)
 		else:
 			imgdat_filenames = [mdafile.replace('.mda', '.h5') for mdafile in main['dataset_files_to_proc']]
-
 
 		gzip = 7
 
@@ -999,16 +1002,6 @@ class h5:
 				dataset_id = excGrp[entryname]
 				dataset_id[...] = data
 
-			entryname = 'images_names'
-			comment = 'names of the xrf and scaler images'
-			data = names
-			if entryname not in excGrp:
-				ds_data = excGrp.create_dataset(entryname, data=data)
-				ds_data.attrs['comments'] = comment
-			else:
-				dataset_id = excGrp[entryname]
-				dataset_id[...] = data
-
 			entryname = 'extra_strings'
 			comment = 'extra pv name and values as strings'
 			data = XRFmaps_info.extra_str_arr
@@ -1032,6 +1025,16 @@ class h5:
 			entryname = 'extra_pvs'
 			comment = 'extra pvs'
 			data = [word.split(';')[0] for word in XRFmaps_info.extra_str_arr]
+			if entryname not in excGrp:
+				ds_data = excGrp.create_dataset(entryname, data=data)
+				ds_data.attrs['comments'] = comment
+			else:
+				dataset_id = excGrp[entryname]
+				dataset_id[...] = data
+
+			entryname = 'images_names'
+			comment = 'names of the xrf and scaler images'
+			data = names
 			if entryname not in excGrp:
 				ds_data = excGrp.create_dataset(entryname, data=data)
 				ds_data.attrs['comments'] = comment
