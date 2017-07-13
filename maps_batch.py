@@ -49,7 +49,6 @@ from file_io import maps_hdf5
 import maps_fit_parameters
 import maps_calibration
 import make_maps
-import Constants
 from file_io.file_util import open_file_with_retry, call_function_with_retry
 
 
@@ -67,71 +66,6 @@ def setup_logger(log_name, stream_to_console=True):
 		ch.setLevel(logging.WARNING)
 		logger.addHandler(ch)
 	return logger, fHandler
-
-# ------------------------------------------------------------------------------------------------
-
-# Function used to create a new process for jobs
-def new_process_func(log_name, alias_path, job_dict):
-	global _log_name
-	_log_name = log_name
-	logger, fHandler = setup_logger('job_logs/' + log_name)
-	logger.info('Start Job Process')
-	try:
-		maps_set_str = os.path.join(str(alias_path), 'maps_settings.txt')
-		f = open(maps_set_str, 'w')
-		f.write('	  This file will set some MAPS settings mostly to do with fitting' + '\n')
-		f.write('VERSION:' + str(job_dict[Constants.JOB_VERSION]).strip() + '\n')
-		f.write('DETECTOR_ELEMENTS:' + str(job_dict[Constants.JOB_DETECTOR_ELEMENTS]).strip() + '\n')
-		f.write('MAX_NUMBER_OF_FILES_TO_PROCESS:' + str(job_dict[Constants.JOB_MAX_FILES_TO_PROC]).strip() + '\n')
-		f.write('MAX_NUMBER_OF_LINES_TO_PROCESS:' + str(job_dict[Constants.JOB_MAX_LINES_TO_PROC]).strip() + '\n')
-		f.write('QUICK_DIRTY:' + str(job_dict[Constants.JOB_QUICK_AND_DIRTY]).strip() + '\n')
-		f.write('XRF_BIN:' + str(job_dict[Constants.JOB_XRF_BIN]).strip() + '\n')
-		f.write('NNLS:' + str(job_dict[Constants.JOB_NNLS]).strip() + '\n')
-		f.write('XANES_SCAN:' + str(job_dict[Constants.JOB_XANES_SCAN]).strip() + '\n')
-		f.write('DETECTOR_TO_START_WITH:' + str(job_dict[Constants.JOB_DETECTOR_TO_START_WITH]).strip() + '\n')
-		f.write('BEAMLINE:' + str(job_dict[Constants.JOB_BEAM_LINE]).strip() + '\n')
-		f.write('DatasetFilesToProc:' + str(job_dict[Constants.JOB_DATASET_FILES_TO_PROC]).strip() + '\n')
-		standard_filenames = job_dict[Constants.JOB_STANDARDS].split(';')
-		for item in standard_filenames:
-			f.write('STANDARD:' + item.strip() + '\n')
-		f.close()
-		proc_mask = int(job_dict[Constants.JOB_PROC_MASK])
-		key_a = 0
-		key_b = 0
-		key_c = 0
-		key_d = 0
-		key_e = 0
-		key_f = 0 # for netcdf to hdf5 future feature
-		key_g = 0
-		if proc_mask & 1 == 1:
-			key_a = 1
-		if proc_mask & 2 == 2:
-			key_b = 1
-		if proc_mask & 4 == 4:
-			key_c = 1
-		if proc_mask & 8 == 8:
-			key_d = 1
-		if proc_mask & 16 == 16:
-			key_e = 1
-		if proc_mask & 32 == 32:
-			key_f = 1
-		if proc_mask & 64 == 64:
-			key_g = 1
-		maps_batch(wdir=alias_path, option_a_roi_plus=key_a, option_b_extract_spectra=key_b, option_c_per_pixel=key_c, option_d_image_extract=key_d, option_e_exchange_format=key_e, option_g_avg_hdf=key_g, logger=logger)
-		logger.info('Completed Job')
-	except:
-		logger.exception('job process')
-		handlers = logger.handlers[:]
-		for handler in handlers:
-			handler.close()
-			logger.removeHandler(handler)
-		raise SystemError("Error Processing Dataset")
-	logger.info('Done Job Process')
-	handlers = logger.handlers[:]
-	for handler in handlers:
-		handler.close()
-		logger.removeHandler(handler)
-	return 0
 
 # ------------------------------------------------------------------------------------------------
 
