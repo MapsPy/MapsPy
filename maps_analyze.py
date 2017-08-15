@@ -1381,15 +1381,9 @@ class analyze:
             fx = fxt
             fxt = 0
 
-<<<<<<< HEAD
-			xy = 2j * np.math.pi * (fx + 1j * fy)
-			xy[int((nx - 1) / 2), int((ny - 1) / 2)] = 1  # to avoid 0/0 error
-			xy = np.fft.fftshift(xy)
-=======
             xy = 2j * np.math.pi * (fx + 1j * fy)
             xy[int( (nx - 1) / 2), int((ny - 1) / 2)] = 1  # to avoid 0/0 error
             xy = np.fft.fftshift(xy)
->>>>>>> ptycho
 
             Fdpc = np.fft.fft2(dpc)
 

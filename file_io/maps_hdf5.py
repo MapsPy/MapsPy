@@ -1024,7 +1024,7 @@ class h5:
 
 			entryname = 'extra_pvs'
 			comment = 'extra pvs'
-			data = [word.split(';')[0] for word in XRFmaps_info.extra_str_arr]
+			data = XRFmaps_info.extra_pv
 			if entryname not in excGrp:
 				ds_data = excGrp.create_dataset(entryname, data=data)
 				ds_data.attrs['comments'] = comment
