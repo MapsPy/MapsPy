@@ -563,7 +563,7 @@ class h5:
 						v = extra_pv[k]
 						data.append([k, str(v[2]), v[0], v[1]])
 				ds_data = mapsGrp.create_dataset(entryname, data = np.transpose(data))
-
+				ds_data.attrs['comments'] = comment
 				entryname = 'extra_pvs_as_csv'
 				comment = 'additional process variables saved in the original dataset, name and value fields reported as comma seperated values'
 				if extra_pv_order:
@@ -572,16 +572,20 @@ class h5:
 						v = extra_pv[k]
 						data.append(k + ', '+ str(v[2]))
 					ds_data = mapsGrp.create_dataset(entryname, data = data)
+					ds_data.attrs['comments'] = comment
 				else:
 					ds_data = mapsGrp.create_dataset(entryname, data = ds_data)
+					ds_data.attrs['comments'] = comment
 			else:
 				entryname = 'extra_pvs'
 				comment = 'additional process variables saved in the original dataset'
 				ds_data = mapsGrp.create_dataset(entryname, data=extra_pv)
+				ds_data.attrs['comments'] = comment
 				if not extra_pv_order == None:
 					entryname = 'extra_pvs_as_csv'
 					comment = 'additional process variables saved in the original dataset, name and value fields reported as comma seperated values'
 					ds_data = mapsGrp.create_dataset(entryname, data=extra_pv_order)
+					ds_data.attrs['comments'] = comment
 
 		f.close()
 		return
@@ -956,8 +960,10 @@ class h5:
 					if calib_factor > 0:
 						dataset[:, :, k] = dataset[:, :, k] / calib_factor / calib
 					else:
-						dataset[:, :, k] = dataset[:, :, k] / calib * np.mean(calib)
+						mean_calib = np.mean(np.nan_to_num(calib))
+						dataset[:, :, k] = dataset[:, :, k] / calib * mean_calib
 					dataset[:, :, k] = dataset[:, :, k] * ic_correction_factor
+
 
 			data = np.transpose(dataset)
 			dimensions = data.shape
