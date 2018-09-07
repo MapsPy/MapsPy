@@ -1071,33 +1071,35 @@ class analyze:
         covar = None
         perror = None
         # set the covariance matrix
-        if (not n == None) and (not fjac == None) and (not ipvt == None):
-            sz = fjac.shape
-            if (n > 0) and (sz[0] >= n) and (sz[1] >= n) and (len(ipvt) >= n):
+        if n == None and fjac == None and ipvt == None:
+            return perror
 
-                if verbose:
-                    self.logger.debug('computing the covariance matrix')
+        sz = fjac.shape
+        if (n > 0) and (sz[0] >= n) and (sz[1] >= n) and (len(ipvt) >= n):
 
-                cv = self.calc_covar(fjac[0:n, 0:n], ipvt[0:n])
-                cv.shape = [n, n]
-                # nn = len(xall)
-                nn = npars
+            if verbose:
+                self.logger.debug('computing the covariance matrix')
 
-                # Fill in actual covariance matrix, accounting for fixed
-                # parameters.
-                covar = np.zeros([nn, nn], dtype=float)
-                for i in range(n):
-                    # covar[ifree,ifree[i]] = cv[:,i]
-                    covar[:, i] = cv[:, i]
+            cv = self.calc_covar(fjac[0:n, 0:n], ipvt[0:n])
+            cv.shape = [n, n]
+            # nn = len(xall)
+            nn = npars
 
-                # Compute errors in parameters
-                if verbose:
-                    self.logger.debug('computing parameter errors')
-                perror = np.zeros(nn, dtype=float)
-                d = np.diagonal(covar)
-                wh = (np.nonzero(d >= 0))[0]
-                if len(wh) > 0:
-                    perror[wh] = np.sqrt(d[wh])
+            # Fill in actual covariance matrix, accounting for fixed
+            # parameters.
+            covar = np.zeros([nn, nn], dtype=float)
+            for i in range(n):
+                # covar[ifree,ifree[i]] = cv[:,i]
+                covar[:, i] = cv[:, i]
+
+            # Compute errors in parameters
+            if verbose:
+                self.logger.debug('computing parameter errors')
+            perror = np.zeros(nn, dtype=float)
+            d = np.diagonal(covar)
+            wh = (np.nonzero(d >= 0))[0]
+            if len(wh) > 0:
+                perror[wh] = np.sqrt(d[wh])
 
         return perror
 
@@ -1116,7 +1118,7 @@ class analyze:
             self.logger.error('ERROR: r must be a square matrix')
             return -1
 
-        if ipvt == None:
+        if ipvt is None:
             self.logger.info('ipvrt none')
             ipvt = np.arange(n)
 

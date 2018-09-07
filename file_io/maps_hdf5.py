@@ -548,7 +548,7 @@ class h5:
 		data = thisdata.make_maps_conf.fit_t_GE
 		ds_data = mmcGrp.create_dataset(entryname, data = data)
 
-		if not extra_pv == None:
+		if not extra_pv is None:
 			if type(extra_pv) == dict:
 				entryname = 'extra_pvs'
 				comment = 'additional process variables saved in the original dataset'
@@ -581,7 +581,7 @@ class h5:
 				comment = 'additional process variables saved in the original dataset'
 				ds_data = mapsGrp.create_dataset(entryname, data=extra_pv)
 				ds_data.attrs['comments'] = comment
-				if not extra_pv_order == None:
+				if not extra_pv_order is None:
 					entryname = 'extra_pvs_as_csv'
 					comment = 'additional process variables saved in the original dataset, name and value fields reported as comma seperated values'
 					ds_data = mapsGrp.create_dataset(entryname, data=extra_pv_order)
@@ -596,7 +596,7 @@ class h5:
 		maps_def = maps_definitions.maps_definitions(self.logger)
 
 		f = call_function_with_retry(h5py.File, 5, 0.1, 1.1, (sfile, 'r'))
-		if f == None:
+		if f is None:
 			self.logger.error('Error could not open file %s', sfile)
 			return None, None, None, None, 0
 

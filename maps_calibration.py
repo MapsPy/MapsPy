@@ -248,10 +248,10 @@ class calibration:
 		maps_standardInfoFilename = os.path.join(self.main_dict['master_dir'], 'maps_standardinfo.txt')
 		self.logger.info('opening %s', maps_standardInfoFilename)
 		standardInfoFile = open_file_with_retry(maps_standardInfoFilename, 'rt') 
-		if standardInfoFile == None:
+		if standardInfoFile is None:
 			# try to look for axo mda and create std calib from it.
 			standardInfoFile = self.search_for_axo()
-			if standardInfoFile == None:
+			if standardInfoFile is None:
 				self.logger.warning('Warning: Could not load maps_standardinfo.txt.')
 				return False
 		# parse the file for filename, elements, and weights
@@ -368,9 +368,16 @@ class calibration:
 			f.close()
 			self.logger.info('this_standard_filename: %s', std.name)
 			have_standard = 1
-		except: 
-			self.logger.error('Could not open standard: %s', std.name)
-			return False
+		except:
+			standardInfoFile = self.search_for_axo()
+			try:
+				f = open(os.path.join(self.main_dict['master_dir'], std.name), 'rt')
+				f.close()
+				self.logger.info('this_standard_filename: %s', std.name)
+				have_standard = 1
+			except:
+				self.logger.error('Could not open standard: %s', std.name)
+				return False
 
 		if have_standard == 1:
 			filename = os.path.join(self.main_dict['master_dir'], std.name)
@@ -379,7 +386,7 @@ class calibration:
 																														srcurrent_name=srcurrent_name,
 																														us_ic_name=us_ic_name,
 																														ds_ic_name=ds_ic_name)
-			if calibration == None:
+			if calibration is None:
 				return False
 
 			if data.size <=1 :
@@ -462,7 +469,7 @@ class calibration:
 					u, fitted_spec, background, xmin, xmax, perror = fit.fit_spectrum(fitp, this_spectrum, used_chan, calib,
 								first=first, matrix=True, maxiter=maxiter)
 
-					if u == None:
+					if u is None:
 						self.logger.error('Error calling fit_spectrum!. returning')
 						return False
 
@@ -471,12 +478,12 @@ class calibration:
 				if self.maps_conf.use_fit == 2:
 					this_w_uname = "DO_FIT_ALL_W_TAILS"
 					fitp, avg_fitp, spectra = self.do_fits(this_w_uname, fitp, spectra, per_pix=1, generate_img=1, maxiter=maxiter, suffix=suffix, info_elements=info_elements)
-					if fitp == None:
+					if fitp is None:
 						return False
 				else:
 					this_w_uname = "DO_MATRIX_FIT"
 					fitp, avg_fitp, spectra = self.do_fits(this_w_uname, fitp, spectra, per_pix=1, generate_img=1, maxiter=maxiter, suffix=suffix, info_elements=info_elements)
-					if fitp == None:
+					if fitp is None:
 						return False
 
 				std.calibration.offset[0] = fitp.s.val[0]
@@ -1033,7 +1040,7 @@ class calibration:
 		live_time = 0
 
 		f = open_file_with_retry(filename, 'rt')
-		if f == None:
+		if f is None:
 			self.logger.error('Could not open file: %s', filename)
 			return None, None, None, None, None, None, None, None, None, None
 
@@ -1303,7 +1310,7 @@ class calibration:
 																														 srcurrent_name = srcurrent_name, 
 																														 us_ic_name = us_ic_name, 
 																														 ds_ic_name = ds_ic_name)
-			if calibration == None:
+			if calibration is None:
 				return None
 			if self.maps_conf.use_det.sum() > 0:
 				if current == 0:
@@ -1393,7 +1400,7 @@ class calibration:
 
 		try:
 			f = open_file_with_retry(filename, 'w')
-			if f == None:
+			if f is None:
 				self.logger.error('Could not open info_file: %s', filename)
 				return
 		except :
@@ -1801,7 +1808,7 @@ class calibration:
 			fit = maps_analyze.analyze(self.logger)
 			u, fitted_spec, background, xmin, xmax, perror = fit.fit_spectrum(fitp, spectra[wo[i]].data, spectra[wo[i]].used_chan, spectra[wo[i]].calib, 
 							first=first, matrix=matrix, maxiter=maxiter)
-			if u == None:
+			if u is None:
 				self.logger.error('Error calling fit_spectrum!. returning')
 				return None, None, None
 
@@ -1823,7 +1830,7 @@ class calibration:
 				for j in range(keywords.kele_pos[0]): fitp.s.use[j] = fitp.s.batch[j, 3]
 				u, fitted_spec, background, xmin, xmax, perror = fit.fit_spectrum(fitp, spectra[wo[i]].data, spectra[wo[i]].used_chan, spectra[wo[i]].calib, 
 																				first=first, matrix=matrix, maxiter=maxiter)
-				if u == None:
+				if u is None:
 					self.logger.error('Error calling fit_spectrum!. returning')
 					return None, None, None
 

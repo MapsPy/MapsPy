@@ -700,7 +700,7 @@ class henke:
 		if len(wo) > 1:
 			energies_all, f1_all, f2_all, energies_extra, f1_extra, f2_extra = self.extra(ielement=z[0])
 		else:
-			energies_all, f1_all, f2_all, energies_extra, f1_extra, f2_extra = self.extra(ielement=z - 1)
+			energies_all, f1_all, f2_all, energies_extra, f1_extra, f2_extra = self.extra(ielement=z[0] - 1)
 
 		if isinstance(energy_array, float):
 			n_array = 1
