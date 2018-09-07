@@ -723,8 +723,9 @@ def _option_b_(main_dict, maps_conf, maps_def, total_number_detectors, info_elem
 		if len(main_dict['dataset_files_to_proc']) < 1 or main_dict['dataset_files_to_proc'][0] == 'all':
 			files = os.listdir(main_dict['XRFmaps_dir'])
 			extension = '.h5' + suffix
+			bad_extension = '.mda.h5' + suffix
 			for f in files:
-				if extension in f.lower():
+				if extension in f.lower() and not bad_extension in f.lower():
 					imgdat_filenames.append(f)
 			imgdat_filenames.sort()
 
