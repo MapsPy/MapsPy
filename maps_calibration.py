@@ -91,6 +91,18 @@ def translate_amps_val(amp_val):
 	if amp_val == 8:
 		return 500
 
+	return 1
+
+def translate_amp_unit_val(amp_unit_val):
+	if amp_unit_val == 0:
+		return "pA/V"
+	if amp_unit_val == 1:
+		return "nA/V"
+	if amp_unit_val == 2:
+		return "uA/V"
+	if amp_unit_val == 3:
+		return "mA/V"
+	return "N/A"
 
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
@@ -1424,13 +1436,13 @@ class calibration:
 		line = str(make_maps_conf.element_standard.ds_ic)
 		print>>f, 'DS_IC[cts/s]:,	' + line.strip()
 		line = str(make_maps_conf.element_standard.us_amp[0]) + ', '
-		for ii in range(2):
-			line = line + str( translate_amps_val( make_maps_conf.element_standard.us_amp[ii] ) ) + ', '
-		print>>f, 'US_AMP[sensitivity/units/factor]:,	' + line.strip()
+		line = line + translate_amp_unit_val( make_maps_conf.element_standard.us_amp[1] ) + ', '
+		line = line + str( translate_amps_val( make_maps_conf.element_standard.us_amp[0] ) )
+		print>>f, 'US_AMP[sensitivity/units/factor]:,' + line.strip()
 		line = str(make_maps_conf.element_standard.ds_amp[0]) + ', '
-		for ii in range(2):
-			line = line + str( translate_amps_val( make_maps_conf.element_standard.ds_amp[ii] ) ) + ', '
-		print>>f, 'DS_AMP[sensitivity/units/factor]:,	' + line.strip()
+		line = line + translate_amp_unit_val(make_maps_conf.element_standard.ds_amp[1]) + ', '
+		line = line + str(translate_amps_val(make_maps_conf.element_standard.ds_amp[0]))
+		print>>f, 'DS_AMP[sensitivity/units/factor]:,' + line.strip()
 		line = ' '
 		print>>f, line
 
@@ -1551,7 +1563,7 @@ class calibration:
 					for child in axes.get_children():
 						if isinstance(child, mplot.spines.Spine):
 							child.set_color(foreground_color)
-					axes.set_axis_bgcolor(background_color)
+					#axes.set_axis_bgcolor(background_color)
 					ya = axes.yaxis
 					xa = axes.xaxis
 					ya.set_tick_params(labelcolor=foreground_color)
