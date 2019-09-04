@@ -1522,29 +1522,6 @@ class calibration:
 			fontsize = 9
 			mplot.rcParams['font.size'] = fontsize
 
-			colortable = []
-
-			colortable.append((0., 0., 0.)) # ; black
-			colortable.append((1., 0., 0.)) # ; red
-			colortable.append((0., 1., 0.)) # ; green
-			colortable.append((0., 0., 1.)) # ; blue
-			colortable.append((0., 1., 1.)) # ; turquois
-			colortable.append((1., 0., 1.)) # ; magenta
-			colortable.append((1., 1., 0.)) # ; yellow
-			colortable.append((0.7, 0.7, 0.7)) # ; light grey
-			colortable.append((1., 0.8, 0.75)) # ; flesh
-			colortable.append(( 0.35,  0.35,  0.35)) # ; dark grey		 
-			colortable.append((0., 0.5, 0.5)) # ; sea green
-			colortable.append((1., 0., 0.53)) # ; pink-red
-			colortable.append((0., 1., 0.68)) # ; bluegreen 
-			colortable.append((1., 0.5, 0.)) # ; orange
-			colortable.append((0., 0.68, 1.)) # ; another blue
-			colortable.append((0.5, 0., 1.)) # ; violet
-			colortable.append((1., 1., 1.)) # ; white
-
-			foreground_color = colortable[-1]
-			background_color = colortable[0]
-
 			dpi = 100
 			canvas_xsize_in = 1000. / dpi
 			canvas_ysize_in = 700. / dpi
@@ -1556,20 +1533,20 @@ class calibration:
 			for k in range(3):
 				for l in range(3):
 
-					fig = mplot.figure.Figure(figsize=(canvas_xsize_in, canvas_ysize_in), dpi=dpi, facecolor=background_color, edgecolor=None)
+					fig = mplot.figure.Figure(figsize=(canvas_xsize_in, canvas_ysize_in), dpi=dpi, edgecolor=None)
 					canvas = FigureCanvas(fig)
 					fig.add_axes()
 					axes = fig.gca()
 					for child in axes.get_children():
 						if isinstance(child, mplot.spines.Spine):
-							child.set_color(foreground_color)
+							child.set_color((0., 0., 0.))
 					#axes.set_axis_bgcolor(background_color)
 					ya = axes.yaxis
 					xa = axes.xaxis
-					ya.set_tick_params(labelcolor=foreground_color)
-					ya.set_tick_params(color=foreground_color)
-					xa.set_tick_params(labelcolor=foreground_color)
-					xa.set_tick_params(color=foreground_color)
+					ya.set_tick_params(labelcolor=(0., 0., 0.))
+					ya.set_tick_params(color=(0., 0., 0.))
+					xa.set_tick_params(labelcolor=(0., 0., 0.))
+					xa.set_tick_params(color=(0., 0., 0.))
 
 					title = 'AXO calibration curve '
 					if l == 0: title = title +'for ROI sum'
@@ -1644,28 +1621,28 @@ class calibration:
 					#if y_min < 1e-10 : yrange = [1e-4, max(y)*1.5]    
 
 					try:	
-						plot1 = axes.semilogy(x_p+0.5, y_p, color = foreground_color, linewidth=1.0, linestyle='steps')
+						plot1 = axes.semilogy(x_p+0.5, y_p,color='black', linewidth=1.0, linestyle='steps')
 						#plot1a = axes.semilogy(x_p,y_p, color = 'yellow', linewidth=1.0, linestyle='None', marker = '*')  
 						plot2 = axes.semilogy(x_p, measured_p, color='blue', linewidth=1.0, linestyle='None', marker='x', markersize=7, mew=1.2)
 
 						axes.xaxis.set_ticks(xtickv)
-						axes.set_ylabel(ytitle, color=foreground_color)
+						axes.set_ylabel(ytitle)
 
 						axes.set_xlim((x_p[0], x_p[-1]))
 						axes.set_ylim(yrange)
 						#axes.autoscale_view()
 						axes.set_xticklabels(xtickname)
 						axes.set_position([0.10,0.08,0.85,0.85])
-						axes.set_title(title, color=foreground_color)
+						axes.set_title(title)
 
 						axes.text(0.60, 0.13, 'NBS 1832', color = 'green', transform = axes.transAxes) 
 						axes.text(0.60, 0.10, 'NBS 1833', color = 'red', transform = axes.transAxes) 
 						axes.text(0.60, 0.07, 'axo', color = 'blue', transform = axes.transAxes) 
 
-						axes.text(0.97, -0.08, 'mapspy', color = foreground_color, transform = axes.transAxes) 
+						axes.text(0.97, -0.08, 'mapspy', transform = axes.transAxes)
 						image_filename = 'calib'+str(l)+'_'+str(k)+'standard.png'
 						self.logger.info('saving standard png %s', os.path.join(directory,image_filename))
-						fig.savefig(os.path.join(directory, image_filename), dpi=dpi, facecolor=background_color, edgecolor=None)
+						fig.savefig(os.path.join(directory, image_filename), dpi=dpi, edgecolor=None)
 					except:
 						self.logger.warning('Warning: Could not save standard calibration plot.')
 

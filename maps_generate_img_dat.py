@@ -1845,8 +1845,8 @@ class analyze:
 		colortable.append((0.5, 0., 1.)) # ; violet
 		colortable.append((1., 1., 1.)) # ; white
 
-		foreground_color = colortable[-1]
-		background_color = colortable[0]
+		#foreground_color = colortable[-1]
+		#background_color = colortable[0]
 
 		droplist_spectrum = 0
 		#droplist_scale = 0
@@ -1874,20 +1874,20 @@ class analyze:
 				dpi = 100
 				canvas_xsize_in = 900. / dpi
 				canvas_ysize_in = 700. / dpi
-				fig = mplot.figure.Figure(figsize=(canvas_xsize_in, canvas_ysize_in), dpi=dpi, facecolor=background_color, edgecolor=None)
+				fig = mplot.figure.Figure(figsize=(canvas_xsize_in, canvas_ysize_in), dpi=dpi, edgecolor=None)
 				canvas = FigureCanvas(fig)
 				fig.add_axes()
 				axes = fig.gca()
 				for child in axes.get_children():
 					if isinstance(child, mplot.spines.Spine):
-						child.set_color(foreground_color)
-				axes.set_axis_bgcolor(background_color)
+						child.set_color((0., 0., 0.))
+				#axes.set_axis_bgcolor(background_color)
 				ya = axes.yaxis
 				xa = axes.xaxis
-				ya.set_tick_params(labelcolor=foreground_color)
-				ya.set_tick_params(color=foreground_color)
-				xa.set_tick_params(labelcolor=foreground_color)
-				xa.set_tick_params(color=foreground_color)
+				ya.set_tick_params(labelcolor=(0., 0., 0.))
+				ya.set_tick_params(color=(0., 0., 0.))
+				xa.set_tick_params(labelcolor=(0., 0., 0.))
+				xa.set_tick_params(color=(0., 0., 0.))
 
 			if ps > 0:
 				ps_filename = 'ps_' + filename + '.pdf'
@@ -1954,16 +1954,16 @@ class analyze:
 			if len(wo) > 0:
 				this_spec[wo] = ymin
 
-			plot1 = axes.semilogy(xaxis, this_spec, color=foreground_color, linewidth=1.0)
-			axes.set_xlabel(xtitle, color=foreground_color)
-			axes.set_ylabel('counts', color=foreground_color)
+			plot1 = axes.semilogy(xaxis, this_spec, linewidth=1.0)
+			axes.set_xlabel(xtitle)
+			axes.set_ylabel('counts')
 			axes.set_xlim((xmin, xmax))
 			axes.set_ylim((ymin, ymax))
 
 			axes.set_position([0.10,0.18,0.85,0.75])
 			self.logger.debug('spectra[droplist_spectrum].name %s', spectra[droplist_spectrum].name)
 
-			axes.text(-0.10, -0.12, spectra[droplist_spectrum].name,color=foreground_color, transform=axes.transAxes)
+			axes.text(-0.10, -0.12, spectra[droplist_spectrum].name, transform=axes.transAxes)
 
 			if add_plot_spectra.any():
 				size = add_plot_spectra.shape
@@ -2001,11 +2001,11 @@ class analyze:
 
 			if (png > 0) or (ps > 0):
 				if png > 0:
-					axes.text(0.97, -0.23, 'mapspy', color=foreground_color, transform=axes.transAxes)
+					axes.text(0.97, -0.23, 'mapspy', transform=axes.transAxes)
 					if (png == 1) or (png == 2):
 						image_filename = filename + '.png'
 						self.logger.info('saving png %s', os.path.join(self.main_dict['output_dir'], image_filename))
-						fig.savefig(os.path.join(self.main_dict['output_dir'], image_filename), dpi=dpi, facecolor=background_color, edgecolor=None)
+						fig.savefig(os.path.join(self.main_dict['output_dir'], image_filename), dpi=dpi, edgecolor=None)
 
 					if ps > 0:
 						fig.savefig(file_ps)
